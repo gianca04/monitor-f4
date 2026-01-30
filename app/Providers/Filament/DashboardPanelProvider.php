@@ -29,6 +29,7 @@ class DashboardPanelProvider extends PanelProvider
             ->id('dashboard')
             ->path('dashboard')
             ->login()
+            ->font('Poppins')
             ->darkMode(false)
             ->viteTheme('resources/css/filament/dashboard/theme.css')
 

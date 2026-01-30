@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Observers\QuoteObserver;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -38,7 +39,7 @@ class Quote extends Model
 
     protected static function booted()
     {
-        static::observe(\App\Observers\QuoteObserver::class);
+        static::observe(QuoteObserver::class);
     }
 
     /**

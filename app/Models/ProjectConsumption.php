@@ -53,7 +53,6 @@ class ProjectConsumption extends Model
     {
         return $this->belongsTo(Project::class);
     }
-    /*
     public function quoteWarehouseDetail(): BelongsTo
     {
         return $this->belongsTo(QuoteWarehouseDetail::class, 'quote_warehouse_detail_id');
@@ -63,7 +62,6 @@ class ProjectConsumption extends Model
     {
         return $this->belongsTo(WorkReport::class);
     }
-
 
 
     public function scopeWithPricelist($query)
@@ -80,5 +78,4 @@ class ProjectConsumption extends Model
         $totalConsumed = self::where('quote_warehouse_detail_id', $quoteWarehouseDetailId)->sum('quantity');
         return ($totalConsumed + $quantity) <= $detail->attended_quantity;
     }
-    */
 }
