@@ -54,11 +54,12 @@ class Employee extends Model
         $lastName = explode(' ', trim($this->last_name ?? ''))[0] ?? '';
         return trim("$firstName $lastName");
     }
-/*
-public function position()
+    public function position()
     {
         return $this->belongsTo(Position::class);
     }
+    /*
+
     public function timesheets()
     {
         return $this->hasMany(Timesheet::class);
