@@ -17,7 +17,9 @@ use Filament\Tables\Table;
 class ClientResource extends Resource
 {
     protected static ?string $model = Client::class;
+    protected static ?string $pluralModelLabel = 'Clientes';
 
+    protected static ?string $modelLabel = 'Cliente';
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedBriefcase;
 
     protected static ?string $recordTitleAttribute = 'business_name';

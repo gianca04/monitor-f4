@@ -54,8 +54,8 @@ class Client extends Model
     //    return $this->belongsToMany(Project::class, 'client_project')->withTimestamps();
     //}
 
-    //public function subClients()
-    //{
-    //    return $this->hasMany(SubClient::class);
-    //}
+    public function subClients()
+    {
+       return $this->hasMany(SubClient::class);
+    }
 }
