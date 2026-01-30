@@ -149,4 +149,4 @@ Route::get('/sub-clients/{id}', function ($id) {
     $subClient = \App\Models\SubClient::select('id', 'name', 'client_id', 'ceco')->findOrFail($id);
     return response()->json($subClient);
 });
-Route::get('/sub-clients', [\App\Http\Controllers\SubClientController::class, 'index']);
+Route::get('/sub-clients', [SubClientController::class, 'index']);
