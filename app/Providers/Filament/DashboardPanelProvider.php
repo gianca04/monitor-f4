@@ -2,6 +2,7 @@
 
 namespace App\Providers\Filament;
 
+use BezhanSalleh\FilamentShield\FilamentShieldPlugin;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
@@ -53,6 +54,13 @@ class DashboardPanelProvider extends PanelProvider
                 DisableBladeIconComponents::class,
                 DispatchServingFilamentEvent::class,
             ])
+            ->plugins([
+                FilamentShieldPlugin::make(),
+            ])
+            // Logo de SAT Industriales
+            ->brandLogo(asset('images/logo.svg'))
+            ->brandLogoHeight('2rem')
+            ->favicon(asset('images/favicon.svg'))
             ->authMiddleware([
                 Authenticate::class,
             ]);
