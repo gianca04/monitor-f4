@@ -5,3 +5,4 @@
 @source '../../storage/framework/views/*.php';
 @source '../**/*.blade.php';
 @source '../**/*.js';
+@source '../../../../vendor/saade/filament-autograph/resources/views/**/*.blade.php';

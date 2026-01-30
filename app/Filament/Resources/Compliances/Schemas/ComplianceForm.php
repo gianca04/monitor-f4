@@ -333,16 +333,17 @@ class ComplianceForm
                                 return view('filament.components.employee-info', ['employee' => $employee]);
                             }),
 
-                        SignaturePad::make('employee_signature')
-                            ->label('Firma del Supervisor / Técnico')
-                            ->columnSpanFull()
-                            ->backgroundColor('white')
-                            ->penColor('black')
-                            ->lineMinWidth(1.5)
-                            ->lineMaxWidth(4.0)
-                            ->dotSize(2.5)
-                            ->confirmable(),
+
                     ]),
+                SignaturePad::make('employee_signature')
+                    ->label('Firma del Supervisor / Técnico')
+                    ->columnSpanFull()
+                    ->backgroundColor('white')
+                    ->penColor('black')
+                    ->lineMinWidth(1.5)
+                    ->lineMaxWidth(4.0)
+                    ->dotSize(2.5)
+                    ->confirmable(),
             ]);
     }
 }
