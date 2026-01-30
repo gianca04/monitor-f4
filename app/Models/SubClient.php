@@ -38,20 +38,10 @@ class SubClient extends Model
         return $this->belongsTo(Client::class);
     }
 
-    /*public function quotes()
+    public function quotes()
     {
         return $this->hasMany(Quote::class, 'sub_client_id');
     }
-        */
-
-    /*
-     Requests associated with this sub client
-     
-    public function requests()
-    {
-        return $this->hasMany(Request::class, 'sub_client_id');
-    }
-        */
 
     /**
      * Get the latitude from the location JSON field

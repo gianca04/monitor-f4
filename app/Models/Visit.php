@@ -1,0 +1,32 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+
+class Visit extends Model
+{
+    //
+    protected $fillable = [
+
+        'project_id',      // ID del Proyecto (Vínculo principal)
+        'inspector_id',      // Inspector (Nuevo) (por ahora oculto)
+        'quoted_by_id',      // Cotizador (Nuevo)
+        'visit_date',        // Fecha visita
+        'entry_time',        // Hora ingreso
+        'exit_time',         // Hora salida
+        'amount',            // Monto SOL
+        'description',       // "Descripción"
+    ];
+
+    public function project()
+    {
+        return $this->belongsTo(Project::class);
+    }
+
+    // Relación con el Cotizador
+    public function quotedBy()
+    {
+        return $this->belongsTo(Employee::class, 'quoted_by_id');
+    }
+}

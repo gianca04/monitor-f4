@@ -58,6 +58,19 @@ class Employee extends Model
     {
         return $this->belongsTo(Position::class);
     }
+    // Relación muchos a muchos usando la tabla pivote y el modelo EmployeeProject
+    public function employeeProjects()
+    {
+        return $this->hasMany(EmployeeProject::class, 'employee_id');
+    }
+
+
+    // Relación directa a proyectos a través de la tabla pivote
+    public function projects()
+    {
+        return $this->belongsToMany(Project::class, 'employee_project')
+            ->withTimestamps();
+    }
     /*
 
     public function timesheets()
@@ -70,18 +83,6 @@ class Employee extends Model
         return $this->hasMany(Quote::class, 'employee_id'); // Relación con la tabla quotes
     }
 
-    // Relación muchos a muchos usando la tabla pivote y el modelo EmployeeProject
-    public function employeeProjects()
-    {
-        return $this->hasMany(EmployeeProject::class, 'employee_id');
-    }
-
-    // Relación directa a proyectos a través de la tabla pivote
-    public function projects()
-    {
-        return $this->belongsToMany(Project::class, 'employee_project')
-            ->withTimestamps();
-    }
     */
     // Scope para empleados activos
     public function scopeActive($query)
