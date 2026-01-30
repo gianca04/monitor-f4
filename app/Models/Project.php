@@ -156,9 +156,6 @@ class Project extends Model
     {
         return $this->belongsToMany(Client::class, 'client_project');
     }
-    /*
-
-
 
     public function timesheets()
     {
@@ -170,8 +167,6 @@ class Project extends Model
     {
         return $this->hasManyThrough(Photo::class, WorkReport::class, 'project_id', 'work_report_id');
     }
-
-
 
     public function getLocationLatitudeAttribute()
     {
@@ -192,8 +187,6 @@ class Project extends Model
         return $this->belongsToMany(WorkReport::class, 'work_report_project')
             ->withTimestamps();
     }
-
-*/
 
     public function inspectors()
     {
