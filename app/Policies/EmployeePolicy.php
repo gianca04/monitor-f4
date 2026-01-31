@@ -1,108 +1,70 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Policies;
 
-use App\Models\User;
+use Illuminate\Foundation\Auth\User as AuthUser;
 use App\Models\Employee;
 use Illuminate\Auth\Access\HandlesAuthorization;
 
 class EmployeePolicy
 {
     use HandlesAuthorization;
-
-    /**
-     * Determine whether the user can view any models.
-     */
-    public function viewAny(User $user): bool
+    
+    public function viewAny(AuthUser $authUser): bool
     {
-        return $user->can('view_any_employee');
+        return $authUser->can('ViewAny:Employee');
     }
 
-    /**
-     * Determine whether the user can view the model.
-     */
-    public function view(User $user, Employee $employee): bool
+    public function view(AuthUser $authUser, Employee $employee): bool
     {
-        return $user->can('view_employee');
+        return $authUser->can('View:Employee');
     }
 
-    /**
-     * Determine whether the user can create models.
-     */
-    public function create(User $user): bool
+    public function create(AuthUser $authUser): bool
     {
-        return $user->can('create_employee');
+        return $authUser->can('Create:Employee');
     }
 
-    /**
-     * Determine whether the user can update the model.
-     */
-    public function update(User $user, Employee $employee): bool
+    public function update(AuthUser $authUser, Employee $employee): bool
     {
-        return $user->can('update_employee');
+        return $authUser->can('Update:Employee');
     }
 
-    /**
-     * Determine whether the user can delete the model.
-     */
-    public function delete(User $user, Employee $employee): bool
+    public function delete(AuthUser $authUser, Employee $employee): bool
     {
-        return $user->can('delete_employee');
+        return $authUser->can('Delete:Employee');
     }
 
-    /**
-     * Determine whether the user can bulk delete.
-     */
-    public function deleteAny(User $user): bool
+    public function restore(AuthUser $authUser, Employee $employee): bool
     {
-        return $user->can('delete_any_employee');
+        return $authUser->can('Restore:Employee');
     }
 
-    /**
-     * Determine whether the user can permanently delete.
-     */
-    public function forceDelete(User $user, Employee $employee): bool
+    public function forceDelete(AuthUser $authUser, Employee $employee): bool
     {
-        return $user->can('force_delete_employee');
+        return $authUser->can('ForceDelete:Employee');
     }
 
-    /**
-     * Determine whether the user can permanently bulk delete.
-     */
-    public function forceDeleteAny(User $user): bool
+    public function forceDeleteAny(AuthUser $authUser): bool
     {
-        return $user->can('force_delete_any_employee');
+        return $authUser->can('ForceDeleteAny:Employee');
     }
 
-    /**
-     * Determine whether the user can restore.
-     */
-    public function restore(User $user, Employee $employee): bool
+    public function restoreAny(AuthUser $authUser): bool
     {
-        return $user->can('restore_employee');
+        return $authUser->can('RestoreAny:Employee');
     }
 
-    /**
-     * Determine whether the user can bulk restore.
-     */
-    public function restoreAny(User $user): bool
+    public function replicate(AuthUser $authUser, Employee $employee): bool
     {
-        return $user->can('restore_any_employee');
+        return $authUser->can('Replicate:Employee');
     }
 
-    /**
-     * Determine whether the user can replicate.
-     */
-    public function replicate(User $user, Employee $employee): bool
+    public function reorder(AuthUser $authUser): bool
     {
-        return $user->can('replicate_employee');
+        return $authUser->can('Reorder:Employee');
     }
 
-    /**
-     * Determine whether the user can reorder.
-     */
-    public function reorder(User $user): bool
-    {
-        return $user->can('reorder_employee');
-    }
 }

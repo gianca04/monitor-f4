@@ -1,108 +1,70 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Policies;
 
-use App\Models\User;
+use Illuminate\Foundation\Auth\User as AuthUser;
 use App\Models\Quote;
 use Illuminate\Auth\Access\HandlesAuthorization;
 
 class QuotePolicy
 {
     use HandlesAuthorization;
-
-    /**
-     * Determine whether the user can view any models.
-     */
-    public function viewAny(User $user): bool
+    
+    public function viewAny(AuthUser $authUser): bool
     {
-        return $user->can('view_any_quote');
+        return $authUser->can('ViewAny:Quote');
     }
 
-    /**
-     * Determine whether the user can view the model.
-     */
-    public function view(User $user, Quote $quote): bool
+    public function view(AuthUser $authUser, Quote $quote): bool
     {
-        return $user->can('view_quote');
+        return $authUser->can('View:Quote');
     }
 
-    /**
-     * Determine whether the user can create models.
-     */
-    public function create(User $user): bool
+    public function create(AuthUser $authUser): bool
     {
-        return $user->can('create_quote');
+        return $authUser->can('Create:Quote');
     }
 
-    /**
-     * Determine whether the user can update the model.
-     */
-    public function update(User $user, Quote $quote): bool
+    public function update(AuthUser $authUser, Quote $quote): bool
     {
-        return $user->can('update_quote');
+        return $authUser->can('Update:Quote');
     }
 
-    /**
-     * Determine whether the user can delete the model.
-     */
-    public function delete(User $user, Quote $quote): bool
+    public function delete(AuthUser $authUser, Quote $quote): bool
     {
-        return $user->can('delete_quote');
+        return $authUser->can('Delete:Quote');
     }
 
-    /**
-     * Determine whether the user can bulk delete.
-     */
-    public function deleteAny(User $user): bool
+    public function restore(AuthUser $authUser, Quote $quote): bool
     {
-        return $user->can('delete_any_quote');
+        return $authUser->can('Restore:Quote');
     }
 
-    /**
-     * Determine whether the user can permanently delete.
-     */
-    public function forceDelete(User $user, Quote $quote): bool
+    public function forceDelete(AuthUser $authUser, Quote $quote): bool
     {
-        return $user->can('force_delete_quote');
+        return $authUser->can('ForceDelete:Quote');
     }
 
-    /**
-     * Determine whether the user can permanently bulk delete.
-     */
-    public function forceDeleteAny(User $user): bool
+    public function forceDeleteAny(AuthUser $authUser): bool
     {
-        return $user->can('force_delete_any_quote');
+        return $authUser->can('ForceDeleteAny:Quote');
     }
 
-    /**
-     * Determine whether the user can restore.
-     */
-    public function restore(User $user, Quote $quote): bool
+    public function restoreAny(AuthUser $authUser): bool
     {
-        return $user->can('restore_quote');
+        return $authUser->can('RestoreAny:Quote');
     }
 
-    /**
-     * Determine whether the user can bulk restore.
-     */
-    public function restoreAny(User $user): bool
+    public function replicate(AuthUser $authUser, Quote $quote): bool
     {
-        return $user->can('restore_any_quote');
+        return $authUser->can('Replicate:Quote');
     }
 
-    /**
-     * Determine whether the user can replicate.
-     */
-    public function replicate(User $user, Quote $quote): bool
+    public function reorder(AuthUser $authUser): bool
     {
-        return $user->can('replicate_quote');
+        return $authUser->can('Reorder:Quote');
     }
 
-    /**
-     * Determine whether the user can reorder.
-     */
-    public function reorder(User $user): bool
-    {
-        return $user->can('reorder_quote');
-    }
 }
