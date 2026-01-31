@@ -9,6 +9,7 @@ use App\Filament\Resources\Pricelists\Schemas\PricelistForm;
 use App\Filament\Resources\Pricelists\Tables\PricelistsTable;
 use App\Models\Pricelist;
 use BackedEnum;
+use Filament\Navigation\NavigationItem;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
@@ -47,6 +48,16 @@ class PricelistResource extends Resource
             'index' => ListPricelists::route('/'),
             //'create' => CreatePricelist::route('/create'),
             //'edit' => EditPricelist::route('/{record}/edit'),
+        ];
+    }
+    public static function getNavigationItems(): array
+    {
+        return [
+            NavigationItem::make('Administrar preciarios')
+                ->icon(Heroicon::OutlinedDocumentCheck)
+                ->group('Ventas y Cotizaciones')
+                ->url(static::getUrl())
+                ->sort(3),
         ];
     }
 }

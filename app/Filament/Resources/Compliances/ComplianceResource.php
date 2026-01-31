@@ -12,6 +12,7 @@ use App\Filament\Resources\Compliances\Tables\CompliancesTable;
 use App\Models\Compliance;
 use App\Models\Project;
 use BackedEnum;
+use Filament\Navigation\NavigationItem;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
@@ -64,6 +65,16 @@ class ComplianceResource extends Resource
             'index' => ListCompliances::route('/'),
             'create' => CreateCompliance::route('/create'),
             'edit' => EditCompliance::route('/{record}/edit'),
+        ];
+    }
+    public static function getNavigationItems(): array
+    {
+        return [
+            NavigationItem::make('Orden de trabajo')
+                ->icon(Heroicon::OutlinedDocumentCheck)
+                ->group('Operaciones')
+                ->url(static::getUrl())
+                ->sort(2),
         ];
     }
 }

@@ -9,6 +9,7 @@ use App\Filament\Resources\Employees\Schemas\EmployeeForm;
 use App\Filament\Resources\Employees\Tables\EmployeesTable;
 use App\Models\Employee;
 use BackedEnum;
+use Filament\Navigation\NavigationItem;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
@@ -47,6 +48,16 @@ class EmployeeResource extends Resource
             'index' => ListEmployees::route('/'),
             'create' => CreateEmployee::route('/create'),
             'edit' => EditEmployee::route('/{record}/edit'),
+        ];
+    }
+    public static function getNavigationItems(): array
+    {
+        return [
+            NavigationItem::make('Administrar colaboradores')
+                ->icon(Heroicon::OutlinedUsers)
+                ->group('Administración')
+                ->url(static::getUrl())
+                ->sort(1),
         ];
     }
 }
