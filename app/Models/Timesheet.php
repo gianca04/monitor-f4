@@ -79,8 +79,4 @@ class Timesheet extends Model
     {
         return $this->belongsTo(Project::class);
     }
-    public function attendances()
-    {
-        return $this->hasMany(Attendance::class);
-    }
 }

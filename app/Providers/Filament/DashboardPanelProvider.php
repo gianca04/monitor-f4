@@ -2,6 +2,9 @@
 
 namespace App\Providers\Filament;
 
+use App\Filament\Widgets\ApprovedQuotesBarChartWidget;
+use App\Filament\Widgets\ProjectStatusPieChartWidget;
+use App\Filament\Widgets\UnifiedStatsWidget;
 use BezhanSalleh\FilamentShield\FilamentShieldPlugin;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
@@ -32,7 +35,7 @@ class DashboardPanelProvider extends PanelProvider
             ->font('Poppins')
             ->darkMode(false)
             ->viteTheme('resources/css/filament/dashboard/theme.css')
-
+            ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\Filament\Widgets')
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\Filament\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\Filament\Pages')
             ->pages([
@@ -40,8 +43,9 @@ class DashboardPanelProvider extends PanelProvider
             ])
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\Filament\Widgets')
             ->widgets([
-                AccountWidget::class,
-                FilamentInfoWidget::class,
+                UnifiedStatsWidget::class,
+                ProjectStatusPieChartWidget::class,
+                ApprovedQuotesBarChartWidget::class,
             ])
             ->authMiddleware([
                 Authenticate::class,
