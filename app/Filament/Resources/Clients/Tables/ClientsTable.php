@@ -105,17 +105,15 @@ class   ClientsTable
             ])
             ->recordActions([
                 ActionGroup::make([
-                ViewAction::make()
-                    ->icon('heroicon-o-eye')
-                    ->color('info')
-                    ->modalWidth(fn() => strpos(request()->userAgent(), 'Mobile') !== false ? 'screen' : '7xl'),
-                EditAction::make()
-                    ->icon('heroicon-o-pencil-square')
-                    ->color('primary')
-                    ->modalWidth(fn() => strpos(request()->userAgent(), 'Mobile') !== false ? 'screen' : '7xl'),
-                DeleteAction::make()
-                    ->icon('heroicon-o-trash')
-                    ->color('danger'),
+                    ViewAction::make()
+                        ->icon('heroicon-o-eye')
+                        ->color('info'),
+                    EditAction::make()
+                        ->icon('heroicon-o-pencil-square')
+                        ->color('primary'),
+                    DeleteAction::make()
+                        ->icon('heroicon-o-trash')
+                        ->color('danger'),
                 ])
             ])
             ->toolbarActions([

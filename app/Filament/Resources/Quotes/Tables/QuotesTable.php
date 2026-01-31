@@ -2,9 +2,13 @@
 
 namespace App\Filament\Resources\Quotes\Tables;
 
+use Filament\Actions\ActionGroup;
 use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
+use Filament\Actions\ViewAction;
+use Filament\Schemas\Components\View;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 
@@ -52,7 +56,17 @@ class QuotesTable
                 //
             ])
             ->recordActions([
-                EditAction::make(),
+                ActionGroup::make([
+                    ViewAction::make()
+                        ->icon('heroicon-o-eye')
+                        ->color('info'),
+                    EditAction::make()
+                        ->icon('heroicon-o-pencil-square')
+                        ->color('primary'),
+                    DeleteAction::make()
+                        ->icon('heroicon-o-trash')
+                        ->color('danger'),
+                ])
             ])
             ->toolbarActions([
                 BulkActionGroup::make([

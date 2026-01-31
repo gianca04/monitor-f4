@@ -281,8 +281,7 @@ class ProjectsTable
                     // 1. ACCIÓN EDITAR
                     EditAction::make()
                         ->label('Editar Registro')
-                        ->color('info')
-                        ->modalWidth(fn() => strpos(request()->userAgent(), 'Mobile') !== false ? 'screen' : '7xl'),
+                        ->color('info'),
                     Action::make('aprobar_proyecto')
                         ->label('Marcar como Aprobado')
                         ->icon('heroicon-m-check-badge')

@@ -94,10 +94,8 @@ class EmployeesTable
                 //
             ])
             ->actions([
-                ViewAction::make()
-                    ->modalWidth(fn() => strpos(request()->userAgent(), 'Mobile') !== false ? 'screen' : '7xl'),
-                EditAction::make()
-                    ->modalWidth(fn() => strpos(request()->userAgent(), 'Mobile') !== false ? 'screen' : '7xl'),
+                ViewAction::make(),
+                EditAction::make(),
                 DeleteAction::make(),
             ])
             ->headerActions(

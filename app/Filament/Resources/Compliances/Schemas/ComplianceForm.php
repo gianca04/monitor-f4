@@ -267,10 +267,10 @@ class ComplianceForm
                             ]),
                     ]),
 
-
                 Section::make('Datos del Cliente')
                     ->icon('heroicon-o-user')
-                    ->columnSpanFull()
+                    ->collapsible()
+                    ->collapsed()
                     ->schema([
                         TextInput::make('fullname_cliente')
                             ->label('Nombre Completo')
@@ -319,7 +319,8 @@ class ComplianceForm
 
                 Section::make('Datos del Empleado')
                     ->icon('heroicon-o-identification')
-                    ->columnSpanFull()
+                    ->collapsible()
+                    ->collapsed()
                     ->schema([
                         Placeholder::make('employee_info')
                             ->label('Responsable del contratista')
@@ -333,17 +334,17 @@ class ComplianceForm
                                 return view('filament.components.employee-info', ['employee' => $employee]);
                             }),
 
-
+                        SignaturePad::make('employee_signature')
+                            ->label('Firma del Supervisor / Técnico')
+                            ->columnSpanFull()
+                            ->backgroundColor('white')
+                            ->penColor('black')
+                            ->lineMinWidth(1.5)
+                            ->lineMaxWidth(4.0)
+                            ->dotSize(2.5)
+                            ->confirmable(),
                     ]),
-                SignaturePad::make('employee_signature')
-                    ->label('Firma del Supervisor / Técnico')
-                    ->columnSpanFull()
-                    ->backgroundColor('white')
-                    ->penColor('black')
-                    ->lineMinWidth(1.5)
-                    ->lineMaxWidth(4.0)
-                    ->dotSize(2.5)
-                    ->confirmable(),
+
             ]);
     }
 }

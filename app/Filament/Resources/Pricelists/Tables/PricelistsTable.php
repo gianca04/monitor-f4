@@ -2,7 +2,9 @@
 
 namespace App\Filament\Resources\Pricelists\Tables;
 
+use Filament\Actions\ActionGroup;
 use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
@@ -54,10 +56,17 @@ class PricelistsTable
                 //
             ])
             ->recordActions([
-                ViewAction::make()
-                    ->icon('heroicon-o-eye')
-                    ->color('info')
-                    ->modalWidth(fn() => strpos(request()->userAgent(), 'Mobile') !== false ? 'screen' : '7xl'),
+                ActionGroup::make([
+                    ViewAction::make()
+                        ->icon('heroicon-o-eye')
+                        ->color('info'),
+                    EditAction::make()
+                        ->icon('heroicon-o-pencil-square')
+                        ->color('primary'),
+                    DeleteAction::make()
+                        ->icon('heroicon-o-trash')
+                        ->color('danger'),
+                ])
             ])
             ->toolbarActions([
                 BulkActionGroup::make([
