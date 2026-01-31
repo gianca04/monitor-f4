@@ -10,9 +10,11 @@ use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\DissociateAction;
 use Filament\Actions\DissociateBulkAction;
 use Filament\Actions\EditAction;
+use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Textarea;
 use Filament\Resources\RelationManagers\RelationManager;
+use Filament\Schemas\Components\Flex;
 use Filament\Schemas\Schema;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
@@ -25,16 +27,51 @@ class PhotosRelationManager extends RelationManager
     {
         return $schema
             ->components([
-                TextInput::make('photo_path')
-                    ->default(null),
-                TextInput::make('before_work_photo_path')
-                    ->default(null),
-                Textarea::make('descripcion')
-                    ->default(null)
-                    ->columnSpanFull(),
-                Textarea::make('before_work_descripcion')
-                    ->default(null)
-                    ->columnSpanFull(),
+                Flex::make([
+                    FileUpload::make('before_work_photo_path')
+                        ->label('Evidencia Inicial')
+                        ->image()
+                        ->downloadable()
+                        ->directory('work-reports/photos')
+                        ->visibility('public')
+                        ->acceptedFileTypes(types: ['image/jpeg', 'image/png', 'image/webp'])
+                        ->maxSize(25600) // 25MB
+                        ->extraInputAttributes(['capture' => 'user'])
+                        ->columnSpanFull()
+                        ->helperText('Formatos soportados: JPEG, PNG, WebP. Se convertirá automáticamente a WebP. Tamaño máximo: 25MB.'),
+
+                    Textarea::make('before_work_descripcion')
+                        ->label('Descripción de la evidencia inicial')
+                        ->maxLength(500)
+                        ->placeholder('Describe brevemente lo que se muestra...')
+                        ->helperText('Máximo 500 caracteres')
+
+                ])->from('md')
+                    ->columnSpanFull()
+                    ->columns(2),
+
+                Flex::make([
+
+                    FileUpload::make('photo_path')
+                        ->label('Evidencia del Trabajo Realizado')
+                        ->image()
+
+                        ->downloadable()
+                        ->directory('work-reports/photos')
+                        ->visibility('public')
+                        ->acceptedFileTypes(types: ['image/jpeg', 'image/png', 'image/webp'])
+                        ->maxSize(25600) // 25MB
+                        ->extraInputAttributes(['capture' => 'user'])
+                        ->helperText('Formatos soportados: JPEG, PNG, WebP. Se convertirá automáticamente a WebP. Tamaño máximo: 25MB.'),
+
+                    Textarea::make('descripcion')
+                        ->label('Descripción de la evidencia del trabajo realizado')
+                        ->maxLength(500)
+                        ->placeholder('Describe brevemente lo que se muestra...')
+                        ->helperText('Máximo 500 caracteres'),
+                ])->from('md')
+                    ->columnSpanFull()
+                    ->columns(2),
             ]);
     }
 

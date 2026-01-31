@@ -19,15 +19,6 @@ class WorkReportExcelController extends Controller
      * Ruta de la plantilla Excel
      */
     private string $templatePath;
-
-    protected CloudConvertService $cloudConvertService;
-
-    public function __construct(CloudConvertService $cloudConvertService)
-    {
-        $this->templatePath = app_path('documents/reporte_trabajo.xlsx');
-        $this->cloudConvertService = $cloudConvertService;
-    }
-
     // ==================== MÉTODOS PÚBLICOS DE DESCARGA ====================
 
     /**
@@ -49,25 +40,6 @@ class WorkReportExcelController extends Controller
     /**
      * Descarga el reporte de trabajo como PDF
      */
-    public function downloadPdf(int $id)
-    {
-        if (!$this->cloudConvertService->isConfigured()) {
-            return CloudConvertService::errorResponse(
-                'CloudConvert API key no configurada. Agrega CLOUDCONVERT_API_KEY en tu archivo .env'
-            );
-        }
-
-        $spreadsheet = $this->generateWorkReportSpreadsheet($id);
-        $filename = $this->getWorkReportFilename($id);
-
-        $result = $this->cloudConvertService->spreadsheetToPdf($spreadsheet, $filename);
-
-        if (!$result['success']) {
-            return CloudConvertService::errorResponse($result['error']);
-        }
-
-        return CloudConvertService::downloadResponse($result['content'], $filename . '.pdf');
-    }
 
     //DESCARGA DE PDFS MULTIPLES DE WORK REPORT:
 
