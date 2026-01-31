@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Compliances\RelationManagers;
 
+use App\Filament\Resources\WorkReports\RelationManagers\PhotosRelationManager;
 use App\Models\Employee;
 use App\Models\Position;
 use App\Models\Project;
@@ -37,6 +38,7 @@ use Filament\Schemas\Components\View;
 use Filament\Schemas\Schema;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use Guava\FilamentModalRelationManagers\Actions\RelationManagerAction;
 use Illuminate\Support\Facades\Auth;
 
 class WorkreportsRelationManager extends RelationManager
@@ -548,6 +550,31 @@ class WorkreportsRelationManager extends RelationManager
                 //AssociateAction::make(),
             ])
             ->recordActions([
+                ActionGroup::make([
+                    Action::make('preview_report')
+                        ->label('Previsualizar')
+                        ->icon('heroicon-o-eye')
+                        ->color('info')
+                        ->url(fn($record) => route('work-report.preview', $record->id))
+                        ->openUrlInNewTab()
+                        ->tooltip('Ver previsualización del reporte'),
+                    // Relación de Fotos
+                    RelationManagerAction::make('photos-relation-manager')
+                        ->label('Ver fotografías')
+                        ->icon('heroicon-o-photo') // Icono más descriptivo
+                        ->slideOver(true)
+                        ->relationManager(PhotosRelationManager::class),
+
+                    // Reporte PDF
+                    Action::make('generate_evidence_report')
+                        ->label('Informe de Evidencias')
+                        ->color('danger')
+                        ->icon('heroicon-o-document-arrow-down') // Cambiado para indicar descarga/PDF
+                        ->url(fn($record) => route('evidence-report.pdf', $record->id))
+                        ->openUrlInNewTab()
+                        ->visible(fn($record) => $record->photos()->exists()) // .exists() es más eficiente que .count()
+                        ->tooltip('Generar informe PDF con evidencias fotográficas'),
+                ]),
                 ActionGroup::make([
                     ViewAction::make()
                         ->icon('heroicon-o-eye')
