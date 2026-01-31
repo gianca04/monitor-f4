@@ -6,3 +6,4 @@
 @source '../**/*.blade.php';
 @source '../**/*.js';
 @source '../../../../vendor/saade/filament-autograph/resources/views/**/*.blade.php';
+@source '../../../../vendor/guava/filament-modal-relation-managers/resources/**/*';

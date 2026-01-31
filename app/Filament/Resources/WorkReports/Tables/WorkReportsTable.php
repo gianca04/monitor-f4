@@ -55,7 +55,7 @@ class WorkReportsTable
                     ->label('Ver fotografías')
                     ->icon('heroicon-o-photo') // Icono más descriptivo
                     ->slideOver(true)
-                    ->relationManager(PhotosRelationManager::class),
+                    ->relationManager(PhotosRelationManager::make()),
             ])
             ->toolbarActions([
                 BulkActionGroup::make([

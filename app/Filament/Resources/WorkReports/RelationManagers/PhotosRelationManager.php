@@ -60,11 +60,17 @@ class PhotosRelationManager extends RelationManager
                 //
             ])
             ->headerActions([
-                CreateAction::make(),
-                AssociateAction::make(),
+                CreateAction::make()
+                    ->slideOver()
+                    ->extraModalWindowAttributes(['x-init' => 'isOpen = true']),
+                AssociateAction::make()
+                    ->slideOver()
+                    ->extraModalWindowAttributes(['x-init' => 'isOpen = true']),
             ])
             ->recordActions([
-                EditAction::make(),
+                EditAction::make()
+                    ->slideOver()
+                    ->extraModalWindowAttributes(['x-init' => 'isOpen = true']),
                 DissociateAction::make(),
                 DeleteAction::make(),
             ])
