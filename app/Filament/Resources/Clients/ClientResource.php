@@ -9,6 +9,7 @@ use App\Filament\Resources\Clients\Schemas\ClientForm;
 use App\Filament\Resources\Clients\Tables\ClientsTable;
 use App\Models\Client;
 use BackedEnum;
+use Filament\Navigation\NavigationItem;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
@@ -47,6 +48,16 @@ class ClientResource extends Resource
             'index' => ListClients::route('/'),
             'create' => CreateClient::route('/create'),
             'edit' => EditClient::route('/{record}/edit'),
+        ];
+    }
+    public static function getNavigationItems(): array
+    {
+        return [
+            NavigationItem::make('Administrar clientes')
+                ->icon(Heroicon::OutlinedBriefcase)
+                ->group('Administración')
+                ->url(static::getUrl())
+                ->sort(1),
         ];
     }
 }

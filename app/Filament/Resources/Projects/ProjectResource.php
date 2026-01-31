@@ -16,6 +16,7 @@ use Filament\Tables\Table;
 // AGREGA ESTOS DOS para las acciones de los inputs:
 use Filament\Forms\Components\Actions\Action;
 use Filament\Forms\Components\Actions\Action as FormAction;
+use Filament\Navigation\NavigationItem;
 
 class ProjectResource extends Resource
 {
@@ -49,6 +50,16 @@ class ProjectResource extends Resource
             'index' => ListProjects::route('/'),
             'create' => CreateProject::route('/create'),
             'edit' => EditProject::route('/{record}/edit'),
+        ];
+    }
+    public static function getNavigationItems(): array
+    {
+        return [
+            NavigationItem::make('Solicitudes de trabajo')
+                ->icon(Heroicon::OutlinedPuzzlePiece)
+                ->group('Operaciones')
+                ->url(static::getUrl())
+                ->sort(2),
         ];
     }
 }

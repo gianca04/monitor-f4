@@ -9,6 +9,7 @@ use App\Filament\Resources\Quotes\Schemas\QuoteForm;
 use App\Filament\Resources\Quotes\Tables\QuotesTable;
 use App\Models\Quote;
 use BackedEnum;
+use Filament\Navigation\NavigationItem;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
@@ -49,6 +50,16 @@ class QuoteResource extends Resource
             'index' => ListQuotes::route('/'),
             'create' => CreateQuote::route('/create'),
             'edit' => EditQuote::route('/{record}/edit'),
+        ];
+    }
+    public static function getNavigationItems(): array
+    {
+        return [
+            NavigationItem::make('Cotizaciones')
+                ->icon(Heroicon::OutlinedDocumentText)
+                ->group('Ventas y Cotizaciones')
+                ->url(static::getUrl())
+                ->sort(3),
         ];
     }
 }

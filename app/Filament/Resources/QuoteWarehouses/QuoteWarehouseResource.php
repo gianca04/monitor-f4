@@ -9,6 +9,7 @@ use App\Filament\Resources\QuoteWarehouses\Schemas\QuoteWarehouseForm;
 use App\Filament\Resources\QuoteWarehouses\Tables\QuoteWarehousesTable;
 use App\Models\QuoteWarehouse;
 use BackedEnum;
+use Filament\Navigation\NavigationItem;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
@@ -56,6 +57,16 @@ class QuoteWarehouseResource extends Resource
             'index' => ListQuoteWarehouses::route('/'),
             'create' => CreateQuoteWarehouse::route('/create'),
             'edit' => EditQuoteWarehouse::route('/{record}/edit'),
+        ];
+    }
+    public static function getNavigationItems(): array
+    {
+        return [
+            NavigationItem::make('Atención de cotizaciones')
+                ->icon(Heroicon::OutlinedBuildingStorefront)
+                ->group('Ventas y Cotizaciones')
+                ->url(static::getUrl())
+                ->sort(3),
         ];
     }
 }
