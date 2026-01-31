@@ -60,12 +60,12 @@
 <body>
     <div class="header">
         <img src="{{ public_path('images/Logo2.png') }}" alt="Logo Empresa">
-        @if ($clientLogo)
-            <img src="{{ $clientLogo }}" alt="Logo Cliente" style="height: 60px;">
-        @endif
     </div>
 
     <div class="content">
+        <div style="text-align: right;">
+            <p style="margin: 0;">Atendido por: {{ $quoteWarehouse->employee->short_name ?? 'N/A' }}</p>
+        </div>
         <h1>Atención de Suministros</h1>
         <p><strong>Cliente:</strong> {{ $clientName }}</p>
         <p><strong>Fecha de Cotización:</strong> {{ $quoteDate }}</p>
@@ -107,6 +107,7 @@
     </div>
 
     <div class="footer">
+        <p>Fecha y hora de descarga: {{ $downloadDate }}</p>
         <p>Generado automáticamente por el sistema de gestión de almacén.</p>
     </div>
 </body>

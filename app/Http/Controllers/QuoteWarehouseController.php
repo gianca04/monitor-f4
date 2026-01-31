@@ -196,6 +196,7 @@ class QuoteWarehouseController extends Controller
     {
         $quote = $quoteWarehouse->quote;
         $quote->load(['subClient', 'quoteDetails.pricelist.unit']);
+        $quoteWarehouse->load('employee'); // Nueva línea: cargar la relación employee
 
         // Obtener los detalles atendidos por almacén (quote_warehouse_details)
         $warehouseDetails = \App\Models\QuoteWarehouseDetail::where('quote_warehouse_id', $quoteWarehouse->id)
@@ -238,6 +239,7 @@ class QuoteWarehouseController extends Controller
             'details'        => $details,
             'clientLogo'     => $clientLogo ? public_path('storage/' . $clientLogo) : null,
             'observations'   => $quoteWarehouse->observations, // Agregar observaciones
+            'downloadDate'   => now()->format('d/m/Y H:i:s'), // Nueva línea: fecha y hora de descarga
         ]);
 
         return $pdf->stream('Atencion_Suministros.pdf');
