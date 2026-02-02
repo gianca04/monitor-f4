@@ -78,12 +78,12 @@ class Employee extends Model
         return $this->hasMany(Timesheet::class);
     }
 
+    */
     public function quotes()
     {
         return $this->hasMany(Quote::class, 'employee_id'); // Relación con la tabla quotes
     }
 
-    */
     // Scope para empleados activos
     public function scopeActive($query)
     {

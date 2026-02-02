@@ -64,7 +64,7 @@
 
     <div class="content">
         <div style="text-align: right;">
-            <p style="margin: 0;">Atendido por: {{ $quoteWarehouse->employee->short_name ?? 'N/A' }}</p>
+            <p style="margin: 0;">Atendido por: {{ $quoteWarehouse->employee->employee->short_name ?? 'N/A' }}</p>
         </div>
         <h1>Atención de Suministros</h1>
         <p><strong>Cliente:</strong> {{ $clientName }}</p>

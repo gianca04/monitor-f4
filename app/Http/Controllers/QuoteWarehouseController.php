@@ -8,8 +8,10 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use App\Http\Requests\StoreQuoteWarehouseDetailRequest;
+use App\Models\QuoteWarehouse;
 use Illuminate\Support\Facades\Log;
 use Barryvdh\DomPDF\Facade\Pdf; // Asegúrate de tener instalado barryvdh/laravel-dompdf
+use Illuminate\Support\Facades\Auth;
 
 /**
  * Controlador para manejar las operaciones CRUD de cotizaciones (Quotes).
@@ -23,7 +25,7 @@ class QuoteWarehouseController extends Controller
      * @param \App\Models\QuoteWarehouse $quoteWarehouse
      * @return \Illuminate\View\View
      */
-    public function preview(\App\Models\QuoteWarehouse $quoteWarehouse, Request $request)
+    public function preview(QuoteWarehouse $quoteWarehouse, Request $request)
     {
         $quote = $quoteWarehouse->quote;
         $quote->load([
@@ -31,8 +33,11 @@ class QuoteWarehouseController extends Controller
             'quoteDetails.pricelist.unit'
         ]);
 
+        // Cambiar: Cargar relación anidada para acceder a Employee
+        $quoteWarehouse->load('employee.employee');
+
         // Obtener los detalles atendidos por almacén (quote_warehouse_details)
-        $warehouseDetails = \App\Models\QuoteWarehouseDetail::where('quote_warehouse_id', $quoteWarehouse->id)
+        $warehouseDetails = QuoteWarehouseDetail::where('quote_warehouse_id', $quoteWarehouse->id)
             ->get()
             ->keyBy('quote_detail_id');
 
@@ -52,7 +57,7 @@ class QuoteWarehouseController extends Controller
                         'unit_price'       => $detail->unit_price,
                         'subtotal'         => $detail->subtotal,
                         'unit_name'        => $detail->pricelist->unit->name ?? '',
-                        'entregado'        => $attended, // <-- Aquí se pasa el dato entregado
+                        'entregado'        => $attended,
                     ];
                 }
             }
@@ -71,11 +76,14 @@ class QuoteWarehouseController extends Controller
     /**
      * Guarda el detalle atendido de almacén.
      */
-    public function store(\App\Http\Requests\StoreQuoteWarehouseDetailRequest $request)
+    public function store(StoreQuoteWarehouseDetailRequest $request)
     {
         try {
             $quoteWarehouse = \App\Models\QuoteWarehouse::findOrFail($request->input('quote_warehouse_id'));
             $quoteWarehouse->observations = $request->input('observations');
+
+            // Cambiar: Guardar user_id en employee_id (para respetar la FK)
+            $quoteWarehouse->employee_id = Auth::user()->id;
 
             // Obtener el progreso total enviado desde la vista
             $progresoTotal = $request->input('progreso_total', 0);
@@ -131,7 +139,7 @@ class QuoteWarehouseController extends Controller
 
                 try {
                     // Verificar si ya existe un registro para este quote_detail_id
-                    $detalleExistente = \App\Models\QuoteWarehouseDetail::where('quote_warehouse_id', $quoteWarehouse->id)
+                    $detalleExistente = QuoteWarehouseDetail::where('quote_warehouse_id', $quoteWarehouse->id)
                         ->where('quote_detail_id', $detail['quote_detail_id'])
                         ->first();
 
@@ -142,7 +150,7 @@ class QuoteWarehouseController extends Controller
                         ]);
                     } else {
                         // Si no existe, creamos un nuevo registro
-                        \App\Models\QuoteWarehouseDetail::create([
+                        QuoteWarehouseDetail::create([
                             'quote_warehouse_id' => $quoteWarehouse->id,
                             'quote_detail_id'    => $detail['quote_detail_id'],
                             'attended_quantity'  => $detail['a_despachar'],
@@ -192,14 +200,14 @@ class QuoteWarehouseController extends Controller
      * @param \App\Models\QuoteWarehouse $quoteWarehouse
      * @return \Illuminate\Http\Response
      */
-    public function generatePdf(\App\Models\QuoteWarehouse $quoteWarehouse)
+    public function generatePdf(QuoteWarehouse $quoteWarehouse)
     {
         $quote = $quoteWarehouse->quote;
         $quote->load(['subClient', 'quoteDetails.pricelist.unit']);
-        $quoteWarehouse->load('employee'); // Nueva línea: cargar la relación employee
+        $quoteWarehouse->load('employee.employee');
 
         // Obtener los detalles atendidos por almacén (quote_warehouse_details)
-        $warehouseDetails = \App\Models\QuoteWarehouseDetail::where('quote_warehouse_id', $quoteWarehouse->id)
+        $warehouseDetails = QuoteWarehouseDetail::where('quote_warehouse_id', $quoteWarehouse->id)
             ->get()
             ->keyBy('quote_detail_id');
 
@@ -239,7 +247,7 @@ class QuoteWarehouseController extends Controller
             'details'        => $details,
             'clientLogo'     => $clientLogo ? public_path('storage/' . $clientLogo) : null,
             'observations'   => $quoteWarehouse->observations, // Agregar observaciones
-            'downloadDate'   => now()->format('d/m/Y H:i:s'), // Nueva línea: fecha y hora de descarga
+            'downloadDate'   => now()->timezone('America/Lima')->format('d/m/Y H:i:s'), // Cambiar: Ajustar zona horaria a Perú
         ]);
 
         return $pdf->stream('Atencion_Suministros.pdf');
