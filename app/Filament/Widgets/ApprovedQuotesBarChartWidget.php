@@ -4,6 +4,7 @@ namespace App\Filament\Widgets;
 
 use App\Models\Quote;
 use Filament\Widgets\ChartWidget;
+use Illuminate\Support\Facades\Auth;
 
 class ApprovedQuotesBarChartWidget extends ChartWidget
 {
@@ -84,5 +85,14 @@ class ApprovedQuotesBarChartWidget extends ChartWidget
                 ],
             ],
         ];
+    }
+    public static function canView(): bool
+    {
+        $user = Auth::user();
+
+        return $user->hasAnyRole([
+            'Administrador',
+            'Gerencial',
+        ]);
     }
 }

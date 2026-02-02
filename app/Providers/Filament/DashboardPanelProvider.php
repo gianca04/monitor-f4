@@ -5,6 +5,7 @@ namespace App\Providers\Filament;
 use App\Filament\Widgets\ApprovedQuotesBarChartWidget;
 use App\Filament\Widgets\ProjectStatusPieChartWidget;
 use App\Filament\Widgets\UnifiedStatsWidget;
+use App\Filament\Widgets\WelcomeWidget;
 use BezhanSalleh\FilamentShield\FilamentShieldPlugin;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
@@ -46,6 +47,7 @@ class DashboardPanelProvider extends PanelProvider
                 UnifiedStatsWidget::class,
                 ProjectStatusPieChartWidget::class,
                 ApprovedQuotesBarChartWidget::class,
+                WelcomeWidget::class,
             ])
             ->authMiddleware([
                 Authenticate::class,

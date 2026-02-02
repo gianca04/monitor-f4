@@ -11,6 +11,7 @@ use App\Models\Pricelist;
 use App\Models\ProjectConsumption;
 use App\Models\QuoteWarehouse;
 use Filament\Widgets\Widget;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 class UnifiedStatsWidget extends Widget
@@ -114,5 +115,14 @@ class UnifiedStatsWidget extends Widget
                 ],
             ],
         ];
+    }
+    public static function canView(): bool
+    {
+        $user = Auth::user();
+
+        return $user->hasAnyRole([
+            'Administrador',
+            'Gerencial',
+        ]);
     }
 }
