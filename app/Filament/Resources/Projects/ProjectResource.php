@@ -18,6 +18,8 @@ use Filament\Tables\Table;
 use Filament\Forms\Components\Actions\Action;
 use Filament\Forms\Components\Actions\Action as FormAction;
 use Filament\Navigation\NavigationItem;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\Auth;
 
 class ProjectResource extends Resource
 {
@@ -32,6 +34,12 @@ class ProjectResource extends Resource
     {
         return ProjectForm::configure($schema);
     }
+    public static function getEloquentQuery(): Builder
+    {
+        return parent::getEloquentQuery()
+            ->allowedForUser(Auth::user());
+    }
+
 
     public static function table(Table $table): Table
     {

@@ -152,28 +152,27 @@ class Project extends Model
     {
         $user = $user ?? Auth::user();
 
-        if (!$user) {
+        if (! $user) {
             return $query->whereRaw('1 = 0');
         }
 
-        // 1. Superusuarios ven todo
+        // 🔑 Admin y Gerencial ven todo
         if ($user->hasRole(['Administrador', 'Gerencial'])) {
             return $query;
         }
 
         $employeeId = $user->employee_id;
 
-        if (!$employeeId) {
+        if (! $employeeId) {
             return $query->whereRaw('1 = 0');
         }
 
-        // 2. Filtro: Es el creador O es un inspector asignado O es el supervisor
         return $query->where(function (Builder $q) use ($employeeId) {
-            $q->where('employee_id', $employeeId) // Es el creador
-                ->orWhereHas('inspectors', function (Builder $pivotQuery) use ($employeeId) {
-                    $pivotQuery->where('employee_id', $employeeId); // Está asignado como inspector
-                })
-                ->orWhere('supervisor_id', $employeeId); // Es el supervisor
+            $q->where('employee_id', $employeeId)          // Creador
+                ->orWhere('supervisor_id', $employeeId)      // Supervisor
+                ->orWhereHas('employees', function (Builder $sub) use ($employeeId) {
+                    $sub->where('employee_id', $employeeId); // Asignado (employee_project)
+                });
         });
     }
     public function clients()

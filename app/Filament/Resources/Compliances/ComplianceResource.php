@@ -31,16 +31,12 @@ class ComplianceResource extends Resource
     protected static ?string $modelLabel = 'Orden de trabajo';
     public static function getEloquentQuery(): Builder
     {
-        // 1. Obtenemos la consulta base de Compliance
-        $query = parent::getEloquentQuery();
-
-        // 2. Filtramos usando una subconsulta en la relación 'project'
-        // Esto significa: "Traeme las actas DONDE el proyecto asociado
-        // cumpla con las reglas de 'AllowedForUser'".
-        return $query->whereHas('project', function (Builder $projectQuery) {
-            $projectQuery->allowedForUser(Auth::user());
-        });
+        return parent::getEloquentQuery()
+            ->whereHas('project', function (Builder $query) {
+                $query->allowedForUser(Auth::user());
+            });
     }
+
     public static function form(Schema $schema): Schema
     {
         return ComplianceForm::configure($schema);
