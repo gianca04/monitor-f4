@@ -639,14 +639,13 @@ class ProjectForm
                                         'CAPEX' => 'CAPEX',
                                     ]),
 
-                                Select::make('has_quote')
+                                TextInput::make('has_quote')
                                     ->label('¿Tiene cotización?')
-                                    ->default('NO')
-                                    ->native(false)
-                                    ->options([
-                                        'SI' => 'SI',
-                                        'NO' => 'NO',
-                                    ]),
+                                    ->disabled()
+                                    ->dehydrated(false) // No guardar en BD
+                                    ->formatStateUsing(function ($record) {
+                                        return $record?->has_quote ?? 'NO';
+                                    }),
 
                                 Select::make('has_report')
                                     ->label('¿Tiene informe?')

@@ -28,6 +28,7 @@ class Project extends Model
                     'project_id' => $project->id,
                     'sub_client_id' => $project->sub_client_id,
                     'status' => 'Pendiente',
+                    'energy_sci_manager' => 'Raul Quispe',
                     'request_number' => Quote::generateNextRequestNumber($project->id),
                 ]);
             }
@@ -55,7 +56,6 @@ class Project extends Model
         'service_end_date',     // Antes: fecha_fin_servicio
         'service_days',         // Antes: dias
         'task_type',            // Antes: tarea
-        'has_quote',            // Antes: cotizacion
         'has_report',           // Antes: informe
 
         //3. BILLING
@@ -92,7 +92,6 @@ class Project extends Model
         'service_start_date' => 'date',
         'service_end_date' => 'date',
         'service_days' => 'integer',
-        'has_quote' => 'string',
         'has_report' => 'string',
 
         'fracttal_status' => 'string',
@@ -142,6 +141,11 @@ class Project extends Model
     public function latestQuote(): \Illuminate\Database\Eloquent\Relations\HasOne
     {
         return $this->hasOne(Quote::class, 'project_id')->latestOfMany();
+    }
+
+    public function scopeHasQuote(Builder $query)
+    {
+        return $query->has('quotes');
     }
 
     public function scopeAllowedForUser(Builder $query, ?User $user = null): Builder
@@ -223,6 +227,11 @@ class Project extends Model
     public function supervisors()
     {
         return $this->belongsToMany(Employee::class, 'employee_project');
+    }
+
+    public function getHasQuoteAttribute(): string
+    {
+        return $this->quotes()->exists() ? 'SI' : 'NO';
     }
 
 
