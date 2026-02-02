@@ -73,8 +73,9 @@ class Project extends Model
         'final_comments',     // comentario_observación: Observaciones finales
         'end_date',
 
-        //Supervisor string:
-        'supervisor_name',
+
+        //Supervisor
+        'supervisor_id',
         'employee_id',
     ];
 
@@ -106,6 +107,7 @@ class Project extends Model
         'days_to_completion' => 'integer',
         // Otros
         'quote_id' => 'integer',
+        'supervisor_id' => 'integer',
         // Se eliminaron tools, personnel y materials por no estar en fillable
     ];
 
@@ -210,6 +212,14 @@ class Project extends Model
         // Esto apunta al modelo intermedio EmployeeProject
         return $this->hasMany(EmployeeProject::class, 'project_id');
     }
+
+    // Relación BelongsTo para el supervisor único
+    public function supervisor()
+    {
+        return $this->belongsTo(Employee::class, 'supervisor_id');
+    }
+
+    // Mantenemos esto por si se usaba, pero advirtiendo que ahora hay un supervisor principal
     public function supervisors()
     {
         return $this->belongsToMany(Employee::class, 'employee_project');

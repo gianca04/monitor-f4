@@ -28,7 +28,7 @@ class QuoteController extends Controller
 
         // Filtrar cotizaciones para rol "asistente" - solo ve las que creó
         $user = Auth::user();
-        if ($user && $user->hasRole('asistente') && $user->employee) {
+        if ($user && $user->hasRole('Asistente') && $user->employee) {
             $employeeId = $user->employee->id;
             // Filtrar cotizaciones donde el proyecto tiene una visita con quoted_by_id del usuario
             $query->whereHas('project.visits', function ($q) use ($employeeId) {

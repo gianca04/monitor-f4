@@ -276,8 +276,10 @@ class ProjectForm
                         Tabs\Tab::make('Datos de la Visita')
                             ->schema([
                                 // ACA COLOCAREMOS SOLAMENTE  A Supervisor de seguimiento.
-                                Select::make('supervisor_name')
+                                // ACA COLOCAREMOS SOLAMENTE  A Supervisor de seguimiento.
+                                Select::make('supervisor_id')
                                     ->label('Supervisor de seguimiento')
+                                    ->relationship('supervisor', 'first_name') // Opcional: Para cargar la relación automáticamente si Filament lo soporta así, o usar options como estaba
                                     ->options(
                                         Employee::whereIn('id', [40, 50, 55])
                                             ->with('user')
@@ -287,12 +289,7 @@ class ProjectForm
                                             })
                                             ->toArray()
                                     )
-                                    ->searchable()
-                                    ->afterStateUpdated(function ($state, $set) {
-                                        // Busca el empleado y guarda el nombre en supervisor_name
-                                        $employee = Employee::find($state);
-                                        $set('supervisor_name', $employee ? $employee->fullname : null);
-                                    }),
+                                    ->searchable(),
                                 Repeater::make('inspectors')
                                     ->relationship()
                                     ->label('Inspectores asignados')
