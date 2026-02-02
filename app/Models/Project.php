@@ -29,6 +29,7 @@ class Project extends Model
                     'sub_client_id' => $project->sub_client_id,
                     'status' => 'Pendiente',
                     'energy_sci_manager' => 'Raul Quispe',
+                    'employee_id' => $project->visit?->quoted_by_id, // Asigna el cotizador de la visita
                     'request_number' => Quote::generateNextRequestNumber($project->id),
                 ]);
             }
