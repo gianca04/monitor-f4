@@ -17,6 +17,23 @@ class Project extends Model
 {
     use HasFactory;
 
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::created(function (Project $project) {
+            // Verificar si no existe ninguna cotización asociada a este proyecto
+            if (!$project->quotes()->exists()) {
+                Quote::create([
+                    'project_id' => $project->id,
+                    'sub_client_id' => $project->sub_client_id,
+                    'status' => 'Pendiente',
+                    'request_number' => Quote::generateNextRequestNumber($project->id),
+                ]);
+            }
+        });
+    }
+
     /**
      * The attributes that are mass assignable.
      *

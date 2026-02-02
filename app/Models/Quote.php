@@ -204,7 +204,7 @@ class Quote extends Model
         // Si no hay project_id, creamos un nuevo proyecto
         if (empty($data['project_id'])) {
             // Creamos el proyecto con los datos mínimos requeridos
-            $project = new \App\Models\Project();
+            $project = new Project();
             $project->sub_client_id = $data['sub_client_id'] ?? null;
             $project->name = $data['project_name'] ?? null;
             $project->service_code = null; // Se asigna después
