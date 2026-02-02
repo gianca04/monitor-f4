@@ -66,7 +66,13 @@ class QuoteWarehouseResource extends Resource
                 ->icon(Heroicon::OutlinedBuildingStorefront)
                 ->group('Ventas y Cotizaciones')
                 ->url(static::getUrl())
+                ->badge(fn() => static::getNavigationBadge())
                 ->sort(3),
         ];
+    }
+
+    public static function getNavigationBadge(): ?string
+    {
+        return (string) static::getModel()::whereIn('status', ['Pendiente', 'Parcial'])->count();
     }
 }
