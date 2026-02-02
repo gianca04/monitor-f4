@@ -167,12 +167,13 @@ class Project extends Model
             return $query->whereRaw('1 = 0');
         }
 
-        // 2. Filtro: Es el creador O es un inspector asignado
+        // 2. Filtro: Es el creador O es un inspector asignado O es el supervisor
         return $query->where(function (Builder $q) use ($employeeId) {
             $q->where('employee_id', $employeeId) // Es el creador
                 ->orWhereHas('inspectors', function (Builder $pivotQuery) use ($employeeId) {
                     $pivotQuery->where('employee_id', $employeeId); // Está asignado como inspector
-                });
+                })
+                ->orWhere('supervisor_id', $employeeId); // Es el supervisor
         });
     }
     public function clients()
