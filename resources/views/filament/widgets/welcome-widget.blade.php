@@ -1,5 +1,6 @@
 <x-filament-widgets::widget>
     <x-filament::section>
+        @vite(['resources/css/quote-cards.css', 'resources/js/app.js', 'resources/css/app.css'])
         <div
             class="flex flex-col items-center justify-center py-8 text-center rounded-lg shadow-md bg-gradient-to-br from-primary-50 to-primary-100 dark:from-gray-800 dark:to-gray-900">
             <img src="{{ asset('images/no-image.png') }}" alt="Imagen de bienvenida"
