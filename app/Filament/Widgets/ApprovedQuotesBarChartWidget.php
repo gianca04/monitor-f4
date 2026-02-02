@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\Auth;
 class ApprovedQuotesBarChartWidget extends ChartWidget
 {
     // ELIMINA 'static' de aquí:
-    protected ?string $heading = 'Cotizaciones Aprobadas por Mes';
+    protected ?string $heading = 'Subtotal de cotizaciones Aprobadas por Mes';
 
     // Para que aparezca debajo y pequeño:
     protected static ?int $sort = 3;
