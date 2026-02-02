@@ -26,12 +26,12 @@ class QuoteController extends Controller
     {
         $query = Quote::with(['employee', 'subClient.client', 'quoteCategory', 'quoteDetails', 'project']);
 
-        // Filtrar cotizaciones para rol "asistente" - solo ve las que creó
+        // Filtrar cotizaciones para rol "Cotizador" - solo ve las que creó
         $user = Auth::user();
-        if ($user && $user->hasRole('Asistente') && $user->employee) {
+        if ($user && $user->hasRole('Cotizador') && $user->employee) {
             $employeeId = $user->employee->id;
             // Filtrar cotizaciones donde el proyecto tiene una visita con quoted_by_id del usuario
-            $query->whereHas('project.visits', function ($q) use ($employeeId) {
+            $query->whereHas('project.visit', function ($q) use ($employeeId) {
                 $q->where('quoted_by_id', $employeeId);
             });
         }
