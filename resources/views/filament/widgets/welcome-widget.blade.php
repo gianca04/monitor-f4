@@ -22,6 +22,10 @@
                             Te encargarás de la logística de las cotizaciones aprobadas.
                         @break
 
+                        @case('Supervisor')
+                            Te encargarás de supervisar y gestionar las órdenes de trabajo.
+                        @break
+
                         @default
                             Descripción no disponible para este rol.
                     @endswitch
