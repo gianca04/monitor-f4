@@ -5,7 +5,13 @@ import tailwindcss from '@tailwindcss/vite';
 export default defineConfig({
     plugins: [
         laravel({
-            input: ['resources/css/app.css', 'resources/js/app.js', 'resources/css/filament/dashboard/theme.css', 'resources/css/custom-login.css'],
+            input: ['resources/css/app.css',
+                'resources/js/app.js',
+                'resources/css/filament/dashboard/theme.css',
+                'resources/css/custom-login.css',
+                'resources/css/quote-form.css',
+                'resources/css/quote-cards.css'
+            ],
             refresh: true,
         }),
         tailwindcss(),
