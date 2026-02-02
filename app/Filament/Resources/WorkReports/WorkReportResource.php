@@ -10,6 +10,7 @@ use App\Filament\Resources\WorkReports\RelationManagers\PhotosRelationManager;
 use App\Filament\Resources\WorkReports\Tables\WorkReportsTable;
 use App\Models\WorkReport;
 use BackedEnum;
+use Filament\Navigation\NavigationItem;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
@@ -21,8 +22,11 @@ class WorkReportResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
 
-    protected static ?string $recordTitleAttribute = 'name';
-
+    protected static ?string $recordTitleAttribute = 'Reportes de trabajo';
+    protected static ?string $title = 'Reportes de trabajo';
+    protected static ?string $modelLabel = 'Reportes de trabajo';
+    protected static ?string $pluralModelLabel = 'Reportes de trabajo';
+    protected static ?string $singularModelLabel = 'Reportes de trabajo';
     public static function form(Schema $schema): Schema
     {
         return WorkReportForm::configure($schema);
@@ -46,6 +50,16 @@ class WorkReportResource extends Resource
             'index' => ListWorkReports::route('/'),
             'create' => CreateWorkReport::route('/create'),
             'edit' => EditWorkReport::route('/{record}/edit'),
+        ];
+    }
+    public static function getNavigationItems(): array
+    {
+        return [
+            NavigationItem::make('Reportes de trabajo')
+                ->icon(Heroicon::OutlinedRectangleStack)
+                ->group('Operaciones')
+                ->url(static::getUrl())
+                ->sort(3),
         ];
     }
 }
