@@ -28,6 +28,7 @@ use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TimePicker;
 use Filament\Forms\Components\Toggle;
+use Filament\Forms\Components\FileUpload;
 use Filament\Notifications\Notification;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Schemas\Components\Grid;
@@ -497,8 +498,89 @@ class WorkreportsRelationManager extends RelationManager
                                         'undo',
                                     ]),
                             ]),
+                        // FIN DE TAB DE CONCLUSIONES
+
+                        // INICIO DE TAB DE FOTOGRAFÍAS (Solo visible en modo edición)
+                        //Tabs\Tab::make('Fotografías')
+                        //    ->icon('heroicon-o-camera')
+                        //    ->visible(fn(string $operation): bool => $operation === 'edit')
+                        //    ->schema([
+                        //        Grid::make(1)
+                        //            ->schema([]),
+                        //   ]),
+                        // FIN DE TAB DE FOTOGRAFÍAS
                     ])
                     ->columnSpan('full'),
+                Repeater::make('photos')
+                    ->relationship('photos')
+                    ->label('Evidencias Fotográficas')
+                    ->helperText('Agrega fotografías del antes y después del trabajo realizado.')
+                    ->visible(fn(string $operation): bool => in_array($operation, ['edit', 'view']))
+                    ->schema([
+                        Grid::make(2)
+                            ->schema([
+                                // Columna izquierda - Antes del trabajo
+                                Section::make('Antes del trabajo')
+                                    ->description('Fotografía del estado inicial')
+                                    ->icon('heroicon-o-arrow-left-circle')
+                                    ->schema([
+                                        FileUpload::make('before_work_photo_path')
+                                            ->label('Foto Antes')
+                                            ->image()
+                                            ->downloadable()
+                                            ->directory('work-reports/photos')
+                                            ->visibility('public')
+                                            ->acceptedFileTypes(types: ['image/jpeg', 'image/png', 'image/webp'])
+                                            ->maxSize(25600) // 25MB
+                                            ->extraInputAttributes(['capture' => 'user'])
+                                            ->columnSpanFull()
+                                            ->helperText('Formatos soportados: JPEG, PNG, WebP. Se convertirá automáticamente a WebP. Tamaño máximo: 25MB.'),
+                                        Textarea::make('before_work_descripcion')
+                                            ->label('Descripción (Antes)')
+                                            ->placeholder('Describe el estado inicial...')
+                                            ->rows(2)
+                                            ->maxLength(500)
+                                            ->columnSpanFull(),
+                                    ])
+                                    ->columnSpan(1),
+
+                                // Columna derecha - Después del trabajo
+                                Section::make('Después del trabajo')
+                                    ->description('Fotografía del resultado final')
+                                    ->icon('heroicon-o-arrow-right-circle')
+                                    ->schema([
+                                        FileUpload::make('photo_path')
+                                            ->label('Foto Después')
+                                            ->image()
+                                            ->downloadable()
+                                            ->directory('work-reports/photos')
+                                            ->visibility('public')
+                                            ->acceptedFileTypes(types: ['image/jpeg', 'image/png', 'image/webp'])
+                                            ->maxSize(25600) // 25MB
+                                            ->extraInputAttributes(['capture' => 'user'])
+                                            ->columnSpanFull()
+                                            ->helperText('Formatos soportados: JPEG, PNG, WebP. Se convertirá automáticamente a WebP. Tamaño máximo: 25MB.'),
+                                        Textarea::make('descripcion')
+                                            ->label('Descripción (Después)')
+                                            ->placeholder('Describe el resultado del trabajo...')
+                                            ->rows(2)
+                                            ->maxLength(500)
+                                            ->columnSpanFull(),
+                                    ])
+                                    ->columnSpan(1),
+                            ]),
+                    ])
+                    ->addActionLabel('Agregar fotografía')
+                    ->reorderable(false)
+                    ->defaultItems(0)
+                    ->collapsible()
+                    ->cloneable()
+                    ->itemLabel(
+                        fn(array $state): ?string => ($state['descripcion'] ?? null)
+                            ? 'Foto: ' . \Illuminate\Support\Str::limit($state['descripcion'], 30)
+                            : 'Nueva fotografía'
+                    )
+                    ->columnSpanFull(),
             ]);
     }
 
@@ -546,7 +628,8 @@ class WorkreportsRelationManager extends RelationManager
                 //
             ])
             ->headerActions([
-                CreateAction::make(),
+                CreateAction::make()
+                    ->modalWidth('xl'),
                 //AssociateAction::make(),
             ])
             ->recordActions([
@@ -559,11 +642,11 @@ class WorkreportsRelationManager extends RelationManager
                         ->openUrlInNewTab()
                         ->tooltip('Ver previsualización del reporte'),
                     // Relación de Fotos
-                    RelationManagerAction::make('photos-relation-manager')
-                        ->label('Ver fotografías')
-                        ->icon('heroicon-o-photo') // Icono más descriptivo
-                        ->slideOver(true)
-                        ->relationManager(PhotosRelationManager::class),
+                    //RelationManagerAction::make('photos-relation-manager')
+                    //    ->label('Ver fotografías')
+                    //    ->icon('heroicon-o-photo') // Icono más descriptivo
+                    //   ->slideOver(true)
+                    //    ->relationManager(PhotosRelationManager::class),
 
                     // Reporte PDF
                     Action::make('generate_evidence_report')
@@ -578,10 +661,12 @@ class WorkreportsRelationManager extends RelationManager
                 ActionGroup::make([
                     ViewAction::make()
                         ->icon('heroicon-o-eye')
-                        ->color('info'),
+                        ->color('info')
+                        ->modalWidth('screen'),
                     EditAction::make()
                         ->icon('heroicon-o-pencil-square')
-                        ->color('primary'),
+                        ->color('primary')
+                        ->modalWidth('screen'),
                     DeleteAction::make()
                         ->icon('heroicon-o-trash')
                         ->color('danger'),
