@@ -27,7 +27,7 @@ class Client extends Model
     {
         parent::boot();
 
-        /*static::saved(function ($client) {
+        static::saved(function ($client) {
             // Convert logo to WebP if exists
             if ($client->logo) {
                 $convertedPath = \App\Services\ImageConversionService::convertToWebP($client->logo);
@@ -36,7 +36,7 @@ class Client extends Model
                     $client->updateQuietly(['logo' => $convertedPath]);
                 }
             }
-        });*/
+        });
     }
 
     protected $casts = [
@@ -49,13 +49,13 @@ class Client extends Model
         'contact_phone'   => 'string',
     ];
 
-    //public function projects()
-    //{
-    //    return $this->belongsToMany(Project::class, 'client_project')->withTimestamps();
-    //}
+    public function projects()
+    {
+        return $this->belongsToMany(Project::class, 'client_project')->withTimestamps();
+    }
 
     public function subClients()
     {
-       return $this->hasMany(SubClient::class);
+        return $this->hasMany(SubClient::class);
     }
 }
