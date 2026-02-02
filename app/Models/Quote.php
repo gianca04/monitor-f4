@@ -215,6 +215,15 @@ class Quote extends Model
             $project->save();
 
             $data['project_id'] = $project->id;
+
+            // Creamos la visita asociada al proyecto con el cotizador
+            if (!empty($data['employee_id'])) {
+                Visit::create([
+                    'project_id' => $project->id,
+                    'quoted_by_id' => $data['employee_id'],
+                    'visit_date' => now()->toDateString(),
+                ]);
+            }
         }
 
         // Generamos el request_number para la cotización

@@ -26,6 +26,16 @@ class QuoteController extends Controller
     {
         $query = Quote::with(['employee', 'subClient.client', 'quoteCategory', 'quoteDetails', 'project']);
 
+        // Filtrar cotizaciones para rol "asistente" - solo ve las que creó
+        $user = Auth::user();
+        if ($user && $user->hasRole('asistente') && $user->employee) {
+            $employeeId = $user->employee->id;
+            // Filtrar cotizaciones donde el proyecto tiene una visita con quoted_by_id del usuario
+            $query->whereHas('project.visits', function ($q) use ($employeeId) {
+                $q->where('quoted_by_id', $employeeId);
+            });
+        }
+
         if ($request->filled('q')) {
             $query->search($request->q);
         }
@@ -312,7 +322,7 @@ class QuoteController extends Controller
      */
     public function getStatistics(): JsonResponse
     {
-        $quotes = \App\Models\Quote::with('employee')->get();
+        $quotes = Quote::with('employee')->get();
 
         $totalQuotes = $quotes->count();
         $totalAmount = $quotes->sum(function ($quote) {

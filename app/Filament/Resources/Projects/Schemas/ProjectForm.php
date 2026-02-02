@@ -435,6 +435,10 @@ class ProjectForm
                                                 function (callable $get) {
                                                     return Employee::query()
                                                         ->select('id', 'first_name', 'last_name', 'document_number')
+                                                        // Filtrar solo empleados con rol 'cotizador'
+                                                        ->whereHas('user.roles', function ($query) {
+                                                            $query->where('name', 'cotizador');
+                                                        })
                                                         ->when($get('search'), function ($query, $search) {
                                                             $query->where('first_name', 'like', "%{$search}%")
                                                                 ->orWhere('last_name', 'like', "%{$search}%")
@@ -449,7 +453,7 @@ class ProjectForm
                                             )
                                             ->searchable() // Activa la búsqueda asincrónica
                                             ->placeholder('Seleccionar un empleado') // Placeholder
-                                            ->helperText('Selecciona el empleado responsable de la visita.') // Ayuda para el campo de empleado
+                                            ->helperText('Selecciona el empleado responsable de la cotización.') // Ayuda para el campo de empleado
 
                                             ->createOptionForm([
                                                 Section::make('Nuevo Empleado')

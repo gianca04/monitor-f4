@@ -6,6 +6,7 @@ use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TimePicker;
+use Filament\Schemas\Components\View;
 use Filament\Schemas\Schema;
 
 class WorkReportForm
@@ -52,6 +53,10 @@ class WorkReportForm
                 TimePicker::make('start_time'),
                 TimePicker::make('end_time'),
                 DatePicker::make('report_date'),
+
+                // Galería de fotos antes/después
+                View::make('filament.components.photo-gallery')
+                    ->columnSpanFull(),
             ]);
     }
 }
