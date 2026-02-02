@@ -12,10 +12,6 @@ use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 /**
  * Controlador para generar Informes de Evidencias (PDF con fotos)
- *
- * Este controlador genera un PDF que incluye:
- * - Información del reporte de trabajo
- * - Fotografías/evidencias asociadas
  */
 class EvidenceReportController extends Controller
 {
@@ -33,19 +29,16 @@ class EvidenceReportController extends Controller
     public function generateReport(int $workReportId, Request $request)
     {
         try {
-            // Validar parámetros de la request
             $request->validate([
                 'inline' => 'boolean',
                 'async' => 'boolean',
                 'email' => 'email|nullable'
             ]);
 
-            // Si se solicita generación asíncrona
             if ($request->boolean('async')) {
                 return $this->generateAsync($workReportId, $request);
             }
 
-            // Generación síncrona
             return $this->generateSync($workReportId, $request);
         } catch (\Exception $e) {
             Log::error('Error generando Informe de Evidencias', [

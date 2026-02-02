@@ -64,30 +64,17 @@ class WorkReportPdfService
     }
 
     /**
-     * Obtiene el reporte con relaciones optimizadas
-     *
-     * @param int $workReportId
-     * @return WorkReport
+     * Obtiene el WorkReport con todas sus relaciones necesarias
      */
     public function getWorkReportWithRelations(int $workReportId): WorkReport
     {
         return WorkReport::with([
-            'employee:id,first_name,last_name',
-            'project:id,name,end_date,sub_client_id,quote_id',
-            'project.subClient:id,name,client_id',
-            'project.subClient.client:id,business_name,document_number,logo',
-            //'project.quote:id,TDR',
-            'photos' => function ($query) {
-                $query->select([
-                    'id',
-                    'work_report_id',
-                    'photo_path',
-                    'before_work_photo_path',
-                    'descripcion',
-                    'before_work_descripcion',
-                    'created_at'
-                ])->orderBy('created_at', 'asc');
-            }
+            'employee',
+            'project',  // Sin select específico - trae todas las columnas disponibles
+            'project.subClient',
+            'project.subClient.client',
+            'photos',
+            'compliance'
         ])->findOrFail($workReportId);
     }
 

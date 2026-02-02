@@ -66,27 +66,15 @@ class WorkreportsRelationManager extends RelationManager
                                     ->required()
                                     ->label('Supervisor / Técnico'),
 
-                                Select::make('project_id')
-                                    ->hidden()
-                                    ->dehydrated() // También añadir aquí
+                                // project_id - único campo, con dehydrated para que se guarde
+                                Hidden::make('project_id')
                                     ->default(fn() => $this->ownerRecord->project_id)
-                                    ->helperText('Proyecto asociado a este reporte.'), // FIN DE SELECT DE EMPLEADO
-                                //ACA EL ID DE ACTA : COMPLIANCE_ID
-                                Hidden::make('compliance_id')
-                                    ->default(function () {
-                                        // Intenta ownerRecord, si no, usa la URL
-                                        return $this->ownerRecord->id ?? request()->route('record');
-                                    })
                                     ->dehydrated(),
-                                // INICIO DE SELECT DE PROYECTO
-                                Select::make('project_id')
-                                    ->hidden()
-                                    // 1. Preselecciona el ID del registro padre (Compliance/Proyecto)
-                                    ->default(fn() => $this->ownerRecord->project_id)
 
-                                    ->helperText('Proyecto asociado a este reporte.'),
-
-                                // FIN DE SELECT DE PROYECTO
+                                // compliance_id
+                                Hidden::make('compliance_id')
+                                    ->default(fn() => $this->ownerRecord->id ?? request()->route('record'))
+                                    ->dehydrated(),
 
                                 // INICIO DE INPUT DE NOMBRE DEL REPORTE
                                 TextInput::make('name')
@@ -533,6 +521,7 @@ class WorkreportsRelationManager extends RelationManager
                                             ->downloadable()
                                             ->directory('work-reports/photos')
                                             ->visibility('public')
+                                            ->disk('public')
                                             ->acceptedFileTypes(types: ['image/jpeg', 'image/png', 'image/webp'])
                                             ->maxSize(25600) // 25MB
                                             ->extraInputAttributes(['capture' => 'user'])
@@ -558,6 +547,7 @@ class WorkreportsRelationManager extends RelationManager
                                             ->downloadable()
                                             ->directory('work-reports/photos')
                                             ->visibility('public')
+                                            ->disk('public')
                                             ->acceptedFileTypes(types: ['image/jpeg', 'image/png', 'image/webp'])
                                             ->maxSize(25600) // 25MB
                                             ->extraInputAttributes(['capture' => 'user'])
@@ -632,7 +622,7 @@ class WorkreportsRelationManager extends RelationManager
             ])
             ->headerActions([
                 CreateAction::make()
-                    ->modalWidth('xl'),
+                    ->modalWidth('7xl'),
                 //AssociateAction::make(),
             ])
             ->recordActions([
@@ -669,7 +659,7 @@ class WorkreportsRelationManager extends RelationManager
                     EditAction::make()
                         ->icon('heroicon-o-pencil-square')
                         ->color('primary')
-                        ->modalWidth('screen'),
+                        ->modalWidth('7xl'),
                     DeleteAction::make()
                         ->icon('heroicon-o-trash')
                         ->color('danger'),
