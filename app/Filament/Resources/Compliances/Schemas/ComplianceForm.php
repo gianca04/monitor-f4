@@ -45,38 +45,34 @@ class ComplianceForm
                             ->live()
                             // 1. LÓGICA DE BÚSQUEDA PERSONALIZADA
                             ->getSearchResultsUsing(function (string $search) {
-                                // Detectamos si lo que escribe el usuario es puramente numérico
                                 $isNumeric = is_numeric($search);
 
                                 return Project::query()
                                     ->allowedForUser(Auth::user())
                                     ->where('status', 'Aprobado')
+                                    ->whereDoesntHave('compliance')
                                     ->where(function ($query) use ($search, $isNumeric) {
-                                        // Busca por nombre
                                         $query->where('name', 'like', "%{$search}%")
-                                            // Busca por código tal cual escribe el usuario
                                             ->orWhere('service_code', 'like', "%{$search}%");
 
-                                        // Si es numérico (ej: 138), busca también como "COT-138"
                                         if ($isNumeric) {
                                             $query->orWhere('service_code', 'like', "%COT-{$search}%");
                                         }
                                     })
                                     ->limit(50)
                                     ->get()
-                                    // Formato visual en la lista: "COT-138 - Nombre del Proyecto"
                                     ->mapWithKeys(fn($project) => [
                                         $project->id => "{$project->service_code} - {$project->name}"
                                     ]);
                             })
-                            // 2. LÓGICA PARA MOSTRAR LA OPCIÓN SELECCIONADA
+                            // 2. LÓGICA PARA MOSTRAR LA OPCIÓN SELECCIONADA (incluye proyecto actual al editar)
                             ->getOptionLabelUsing(function ($value): ?string {
-                                $project = Project::allowedForUser(Auth::user())->find($value);
+                                $project = Project::find($value);
                                 return $project
                                     ? "{$project->service_code} - {$project->name}"
                                     : null;
                             })
-                            // 3. EVENTOS (Tus eventos originales)
+                            // 3. EVENTOS - Hidratar datos del proyecto
                             ->afterStateHydrated(function ($state, $set) {
                                 if ($state) {
                                     $project = Project::find($state);
@@ -85,18 +81,16 @@ class ComplianceForm
                                     }
                                 }
                             })
-                            // ACCIÓN DEL SUFIJO
-
                             ->columnSpanFull(),
                         // ACA EL ESTADO DEL PROYECTO
                         Select::make('state')
                             ->label('Estado')
-                            ->required()
                             ->default('En Ejecución')
                             ->options([
                                 'En Ejecución' => 'En Ejecución',
                                 'Completado'   => 'Completado',
                             ])
+                            ->rules(['in:En Ejecución,Completado'])
                             ->native(false)
                             ->columnSpanFull(),
                     ]),
@@ -276,7 +270,6 @@ class ComplianceForm
                             ->label('Nombre Completo')
                             ->prefixIcon('heroicon-o-user-circle')
                             ->placeholder('Ingrese nombre completo')
-                            // Se eliminó ->required()
                             ->maxLength(255),
 
                         Grid::make(2)
@@ -289,12 +282,14 @@ class ComplianceForm
                                         'PASAPORTE' => 'Pasaporte',
                                     ])
                                     ->default('DNI')
+                                    ->nullable()
                                     ->native(false)
                                     ->live(),
 
                                 TextInput::make('document_number')
                                     ->label('N° de documento')
                                     ->numeric()
+                                    ->nullable()
                                     ->minLength(fn(Get $get) => $get('document_type') === 'DNI' ? 8 : 9)
                                     ->maxLength(fn(Get $get) => $get('document_type') === 'DNI' ? 8 : 12)
                                     ->hint(fn(Get $get) => match ($get('document_type')) {
@@ -314,7 +309,8 @@ class ComplianceForm
                             ->lineMinWidth(1.5)
                             ->lineMaxWidth(4.0)
                             ->dotSize(2.5)
-                            ->confirmable(),
+                            ->dehydrated(true)
+                            ->default(null),
                     ]),
 
                 Section::make('Datos del Empleado')
@@ -342,7 +338,8 @@ class ComplianceForm
                             ->lineMinWidth(1.5)
                             ->lineMaxWidth(4.0)
                             ->dotSize(2.5)
-                            ->confirmable(),
+                            ->dehydrated(true)
+                            ->default(null),
                     ]),
 
             ]);
