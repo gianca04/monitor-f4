@@ -24,7 +24,7 @@ class QuoteController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
-        $query = Quote::with(['employee', 'subClient.client', 'quoteCategory', 'quoteDetails', 'project']);
+        $query = Quote::with(['employee', 'subClient.client', 'quoteCategory', 'quoteDetails', 'project.visit.quotedBy']);
 
         // Filtrar cotizaciones para rol "Cotizador" - solo ve las que creó
         $user = Auth::user();
@@ -93,14 +93,20 @@ class QuoteController extends Controller
                 // Aseguramos que el status sea 'POR HACER' si no se envía
                 $validated['status'] = $validated['status'] ?? 'Pendiente';
 
-                // Asignar el employee_id del usuario autenticado
-                if (Auth::check() && Auth::user()->employee) {
-                    $validated['employee_id'] = Auth::user()->employee->id;
-                }
-
                 // Guardar project_id si viene en el request
                 if ($request->has('project_id')) {
                     $validated['project_id'] = $request->input('project_id');
+
+                    // Si el proyecto ya existe, buscamos el quoted_by_id de su visita
+                    $project = \App\Models\Project::with('visit')->find($validated['project_id']);
+                    if ($project && $project->visit && $project->visit->quoted_by_id) {
+                        $validated['employee_id'] = $project->visit->quoted_by_id;
+                    }
+                }
+
+                // Asignar el employee_id del usuario autenticado SI NO SE HA ASIGNADO AÚN
+                if (!isset($validated['employee_id']) && Auth::check() && Auth::user()->employee) {
+                    $validated['employee_id'] = Auth::user()->employee->id;
                 }
 
                 // Crear la cotización (y el proyecto si es necesario)
@@ -204,13 +210,9 @@ class QuoteController extends Controller
 
         try {
             return \Illuminate\Support\Facades\DB::transaction(function () use ($validated, $request, $quote) {
-                // Si no se envía employee_id, mantener el original o asignar el del usuario autenticado
-                if (!isset($validated['employee_id']) || $validated['employee_id'] === null) {
-                    if ($quote->employee_id) {
-                        $validated['employee_id'] = $quote->employee_id;
-                    } elseif (Auth::check() && Auth::user()->employee) {
-                        $validated['employee_id'] = Auth::user()->employee->id;
-                    }
+                // Asignar SIEMPRE el employee_id del usuario que está editando
+                if (Auth::check() && Auth::user()->employee) {
+                    $validated['employee_id'] = Auth::user()->employee->id;
                 }
 
                 // Mantener project_id si no se envía

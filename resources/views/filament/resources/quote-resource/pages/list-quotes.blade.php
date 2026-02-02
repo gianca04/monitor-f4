@@ -178,11 +178,11 @@
                         {{-- Cotizador --}}
                         <div class="flex items-center gap-2 mt-1">
                             <span class="text-xs text-purple-500 material-symbols-outlined">person</span>
-                            <span class="text-[10px] font-medium text-gray-500 italic"
-                                x-text="quote.employee
-                                        ? ((quote.employee.first_name ? quote.employee.first_name : '') +
-                                           (quote.employee.last_name ? ' ' + quote.employee.last_name : '') || 'Sin nombre')
-                                        : 'No asignado'"></span>
+                            <span class="text-[10px] font-medium text-gray-500 italic" x-text="quote.employee
+                                        ? ((quote.employee.first_name || '') + ' ' + (quote.employee.last_name || ''))
+                                        : (quote.project?.visit?.quoted_by
+                                            ? ((quote.project.visit.quoted_by.first_name || '') + ' ' + (quote.project.visit.quoted_by.last_name || ''))
+                                            : 'No asignado')"></span>
                         </div>
                     </div>
 

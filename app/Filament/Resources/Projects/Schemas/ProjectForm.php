@@ -278,6 +278,7 @@ class ProjectForm
                                 // ACA COLOCAREMOS SOLAMENTE  A Supervisor de seguimiento.
                                 // ACA COLOCAREMOS SOLAMENTE  A Supervisor de seguimiento.
                                 Select::make('supervisor_id')
+                                    ->placeholder('Seleccionar un supervisor') // Placeholder
                                     ->label('Supervisor de seguimiento')
                                     ->relationship('supervisor', 'first_name') // Opcional: Para cargar la relación automáticamente si Filament lo soporta así, o usar options como estaba
                                     ->options(
