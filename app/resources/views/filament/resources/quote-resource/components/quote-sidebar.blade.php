@@ -38,7 +38,12 @@
             </div>
         </div>
         <div class="flex items-center gap-2">
-            @if(isset($projectUrl) && $projectUrl)
+            @php
+                $user = auth()->user();
+                $userRoles = $user->roles->pluck('name')->toArray();
+                $isOnlyQuoter = count($userRoles) === 1 && in_array('Cotizador', $userRoles);
+            @endphp
+            @if(isset($projectUrl) && $projectUrl && !$isOnlyQuoter)
                 <a href="{{ $projectUrl }}"
                     class="hidden sm:inline-flex items-center gap-1 px-2 py-1 text-xs font-bold text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors border border-blue-200">
                     <span class="text-sm material-symbols-outlined">arrow_forward</span>
