@@ -47,8 +47,6 @@ class WorkreportsRelationManager extends RelationManager
     protected static string $relationship = 'workreports';
     protected static ?string $pluralModelLabel = 'Reportes de trabajo';
     protected static ?string $modelLabel = 'Reportes de trabajo';
-    protected static ?string $recordTitleAttribute = 'Reportes de trabajo';
-
     public function form(Schema $schema): Schema
     {
         return $schema
