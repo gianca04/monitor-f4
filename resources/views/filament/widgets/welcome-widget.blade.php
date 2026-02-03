@@ -12,25 +12,44 @@
                 </h1>
             </div>
             <p class="mb-2 text-sm text-gray-600 dark:text-gray-300">
-                Tu rol actual es: <span
-                    class="font-semibold text-primary-700 dark:text-primary-400">{{ auth()->user()->getRoleNames()->first() }}</span>
+                {{ auth()->user()->getRoleNames()->count() > 1 ? 'Tus roles actuales son:' : 'Tu rol actual es:' }}
+                <span class="font-semibold text-primary-700 dark:text-primary-400">
+                    {{ auth()->user()->getRoleNames()->implode(', ') }}
+                </span>
             </p>
             <div class="flex items-start mt-4 space-x-2">
                 <x-heroicon-o-information-circle class="w-5 h-5 text-gray-500 mt-0.5" />
-                <p class="text-sm leading-relaxed text-gray-700 dark:text-gray-300">
-                    @switch(auth()->user()->getRoleNames()->first())
-                        @case('Almacen')
-                            Te encargarás de la logística de las cotizaciones aprobadas.
-                        @break
-
-                        @case('Supervisor')
-                            Te encargarás de supervisar y gestionar las órdenes de trabajo.
-                        @break
-
-                        @default
-                            Descripción no disponible para este rol.
-                    @endswitch
-                </p>
+                <div class="text-sm leading-relaxed text-gray-700 dark:text-gray-300">
+                    @php
+                        $roles = auth()->user()->getRoleNames();
+                        $descriptions = [];
+                        foreach ($roles as $role) {
+                            switch ($role) {
+                                case 'Almacen':
+                                    $descriptions[] = 'Te encargarás de la logística de las cotizaciones aprobadas.';
+                                    break;
+                                case 'Supervisor':
+                                    $descriptions[] = 'Te encargarás de supervisar y gestionar las órdenes de trabajo.';
+                                    break;
+                                case 'Cotizador':
+                                    $descriptions[] = 'Te encargarás de administrar cotizaciones.';
+                                    break;
+                                default:
+                                    $descriptions[] = "Descripción no disponible para el rol: {$role}.";
+                                    break;
+                            }
+                        }
+                    @endphp
+                    @if (count($descriptions) === 1)
+                        <p>{{ $descriptions[0] }}</p>
+                    @else
+                        <ul class="list-disc list-inside">
+                            @foreach ($descriptions as $description)
+                                <li>{{ $description }}</li>
+                            @endforeach
+                        </ul>
+                    @endif
+                </div>
             </div>
         </div>
     </x-filament::section>

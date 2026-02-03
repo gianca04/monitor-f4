@@ -25,7 +25,8 @@ use Filament\Tables\Table;
 class QuotesRelationManager extends RelationManager
 {
     protected static string $relationship = 'quotes';
-
+    protected static ?string $pluralModelLabel = 'Cotizaciones';
+    protected static ?string $modelLabel = 'Cotización';
     public function form(Schema $schema): Schema
     {
         return $schema
