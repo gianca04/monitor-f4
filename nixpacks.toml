@@ -1,6 +1,5 @@
-# Configuración de Nixpacks para Laravel con límites de subida aumentados
-[phases.setup]
-nixPkgs = ["...", "php84Extensions.fileinfo"]
+# Configuración de Nixpacks para Laravel
+# Definir variables tanto con prefijo como sin prefijo para máxima compatibilidad
 
 [phases.build]
 cmds = [
@@ -9,16 +8,23 @@ cmds = [
     "npm run build",
     "php artisan config:cache",
     "php artisan route:cache",
-    "php artisan view:cache"
+    "php artisan view:cache",
+    "mkdir -p /etc/php84/conf.d",
+    "cp php.ini /etc/php84/conf.d/99-custom.ini || true"
 ]
 
 [start]
 cmd = "php artisan migrate --force && php-fpm"
 
-# Variables de entorno para PHP - Esto es lo importante para el upload
 [variables]
+# Variables estándar para Docker/Nixpacks images
 PHP_UPLOAD_MAX_FILESIZE = "100M"
 PHP_POST_MAX_SIZE = "100M"
 PHP_MEMORY_LIMIT = "256M"
-NIXPACKS_PHP_FALLBACK_PATH = "/app/public"
 NGINX_CLIENT_MAX_BODY_SIZE = "100M"
+
+# Variables específicas de Nixpacks (por si acaso)
+NIXPACKS_PHP_UPLOAD_MAX_FILESIZE = "100M"
+NIXPACKS_PHP_POST_MAX_SIZE = "100M"
+NIXPACKS_PHP_MEMORY_LIMIT = "256M"
+NIXPACKS_NGINX_CLIENT_MAX_BODY_SIZE = "100M"
