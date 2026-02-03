@@ -5,7 +5,6 @@ namespace App\Filament\Resources\Compliances;
 use App\Filament\Resources\Compliances\Pages\CreateCompliance;
 use App\Filament\Resources\Compliances\Pages\EditCompliance;
 use App\Filament\Resources\Compliances\Pages\ListCompliances;
-use App\Filament\Resources\Compliances\RelationManagers\WorkreportRelationManager;
 use App\Filament\Resources\Compliances\RelationManagers\WorkreportsRelationManager;
 use App\Filament\Resources\Compliances\Schemas\ComplianceForm;
 use App\Filament\Resources\Compliances\Tables\CompliancesTable;
