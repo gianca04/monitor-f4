@@ -144,7 +144,7 @@ class QuoteController extends Controller
                 // Crear registro en quote_warehouse si el status es 'Aprobado' o 'APROBADO'
                 if (
                     isset($validated['status']) &&
-                    (strtolower($validated['status']) === 'Aprobado')
+                    ($validated['status'] === 'Aprobado')
                 ) {
                     $exists = QuoteWarehouse::where('quote_id', $quote->id)->exists();
                     if (!$exists) {
@@ -263,7 +263,7 @@ class QuoteController extends Controller
                 // Crear registro en quote_warehouse si el status es 'Aprobado' o 'APROBADO'
                 if (
                     isset($validated['status']) &&
-                    (strtolower($validated['status']) === 'Aprobado')
+                    ($validated['status'] === 'Aprobado')
                 ) {
                     $exists = QuoteWarehouse::where('quote_id', $quote->id)->exists();
                     if (!$exists) {

@@ -286,7 +286,7 @@ class ProjectsTable
                         ->label('Marcar como Aprobado')
                         ->icon('heroicon-m-check-badge')
                         ->color('success')
-                        ->visible(fn($record) => !in_array(strtolower($record->status), ['aprobado', 'completado']))->requiresConfirmation()
+                        ->visible(fn($record) => !in_array(strtolower($record->status), ['Aprobado', 'Completado']))->requiresConfirmation()
                         ->modalHeading('¿Aprobar proyecto?')
                         ->modalDescription('¿Estás seguro de que deseas marcar este proyecto como Aprobado?')
                         ->action(function ($record) {
