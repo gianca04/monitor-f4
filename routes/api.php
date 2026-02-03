@@ -35,10 +35,8 @@ Route::prefix('pricelists')->middleware(['web', 'auth'])->group(function () {
     Route::get('/price-types', [PricelistSearchController::class, 'priceTypes']);
     Route::get('/initial-items', [PricelistSearchController::class, 'initialItems']);
     Route::get('/by-price-type', [PricelistSearchController::class, 'byPriceType']);
+    Route::apiResource('quotes', QuoteController::class); // Middleware temporalmente deshabilitado para pruebas manuales
 });
-
-// Quotes API (para gestión de cotizaciones)
-Route::apiResource('quotes', QuoteController::class); // Middleware temporalmente deshabilitado para pruebas manuales
 
 
 // SubClients API (para búsqueda de subclientes)

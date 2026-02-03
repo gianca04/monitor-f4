@@ -27,12 +27,7 @@ class QuoteWarehouseResource extends Resource
     protected static ?string $modelLabel = 'Atención de cotizaciones';
     protected static ?string $pluralModelLabel = 'Atención de cotizaciones';
     protected static ?string $singularModelLabel = 'Atención de cotizaciones';
-    public static function canAccess(): bool
-    {
-        /** @var \App\Models\User $user */
-        $user = Auth::user();
-        return $user->roles()->whereIn('id', [1, 2, 6])->exists();
-    }
+
 
     public static function form(Schema $schema): Schema
     {
