@@ -22,10 +22,15 @@ RUN apt-get clean && rm -rf /var/lib/apt/lists/*
 # Install PHP extensions
 RUN docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd intl zip
 
-# Configure PHP Limits
-RUN echo "upload_max_filesize=100M" > /usr/local/etc/php/conf.d/uploads.ini \
-    && echo "post_max_size=100M" >> /usr/local/etc/php/conf.d/uploads.ini \
-    && echo "memory_limit=256M" >> /usr/local/etc/php/conf.d/uploads.ini
+# --- FIX: Ensure PHP.ini is created and limits are applied ---
+# 1. Base default config
+RUN cp /usr/local/etc/php/php.ini-production /usr/local/etc/php/php.ini
+
+# 2. Append our limits explicitly to the main php.ini
+RUN echo "upload_max_filesize = 100M" >> /usr/local/etc/php/php.ini \
+    && echo "post_max_size = 100M" >> /usr/local/etc/php/php.ini \
+    && echo "memory_limit = 512M" >> /usr/local/etc/php/php.ini \
+    && echo "max_execution_time = 300" >> /usr/local/etc/php/php.ini
 
 # Get latest Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
@@ -49,7 +54,7 @@ RUN mkdir -p storage/framework/sessions \
     config/custom-php \
     && chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
 
-# Copy Nginx config (we will verify this file exists next)
+# Copy Nginx config
 COPY nginx.conf /etc/nginx/nginx.conf
 
 # Copy Supervisor config
