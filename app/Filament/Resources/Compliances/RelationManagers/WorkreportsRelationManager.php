@@ -45,8 +45,11 @@ use Illuminate\Support\Facades\Auth;
 class WorkreportsRelationManager extends RelationManager
 {
     protected static string $relationship = 'workreports';
+    protected static ?string $title = 'Reportes de Trabajo';
     protected static ?string $pluralModelLabel = 'Reportes de trabajo';
-    protected static ?string $modelLabel = 'Reportes de trabajo';
+    protected static ?string $modelLabel = 'Reporte de trabajo';
+    protected static ?string $recordTitleAttribute = 'name';
+
     public function form(Schema $schema): Schema
     {
         return $schema

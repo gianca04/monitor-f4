@@ -2,13 +2,11 @@
 
 namespace App\Filament\Resources\WorkReports\Tables;
 
-use App\Filament\Resources\WorkReports\RelationManagers\PhotosRelationManager;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
-use Guava\FilamentModalRelationManagers\Actions\RelationManagerAction;
 
 class WorkReportsTable
 {
@@ -50,12 +48,6 @@ class WorkReportsTable
             ])
             ->recordActions([
                 EditAction::make(),
-                // Relación de Fotos
-                RelationManagerAction::make('photos-relation-manager')
-                    ->label('Ver fotografías')
-                    ->icon('heroicon-o-photo') // Icono más descriptivo
-                    ->slideOver(true)
-                    ->relationManager(PhotosRelationManager::make()),
             ])
             ->toolbarActions([
                 BulkActionGroup::make([
