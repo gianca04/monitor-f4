@@ -449,6 +449,7 @@ class ProjectForm
                                                         ->toArray();
                                                 }
                                             )
+                                            ->getOptionLabelUsing(fn($value): ?string => Employee::find($value)?->full_name)
                                             ->searchable() // Activa la búsqueda asincrónica
                                             ->placeholder('Seleccionar un empleado') // Placeholder
                                             ->helperText('Selecciona el empleado responsable de la cotización.') // Ayuda para el campo de empleado
