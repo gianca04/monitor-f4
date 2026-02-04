@@ -280,17 +280,29 @@ class ProjectForm
                                 Select::make('supervisor_id')
                                     ->placeholder('Seleccionar un supervisor') // Placeholder
                                     ->label('Supervisor de seguimiento')
-                                    ->relationship('supervisor', 'first_name') // Opcional: Para cargar la relación automáticamente si Filament lo soporta así, o usar options como estaba
+                                    ->prefixIcon('heroicon-m-user')
                                     ->options(
-                                        Employee::whereIn('id', [40, 50, 55])
-                                            ->with('user')
-                                            ->get()
-                                            ->mapWithKeys(function ($employee) {
-                                                return [$employee->id => $employee->fullname];
-                                            })
-                                            ->toArray()
+                                        function (callable $get) {
+                                            return Employee::query()
+                                                ->select('id', 'first_name', 'last_name', 'document_number')
+                                                // Filtrar solo empleados con rol 'supervisor'
+                                                ->whereHas('user.roles', function ($query) {
+                                                    $query->where('name', 'Supervisor');
+                                                })
+                                                ->when($get('search'), function ($query, $search) {
+                                                    $query->where('first_name', 'like', "%{$search}%")
+                                                        ->orWhere('last_name', 'like', "%{$search}%")
+                                                        ->orWhere('document_number', 'like', "%{$search}%");
+                                                })
+                                                ->get()
+                                                ->mapWithKeys(function ($employee) {
+                                                    return [$employee->id => $employee->full_name];
+                                                })
+                                                ->toArray();
+                                        }
                                     )
-                                    ->searchable(),
+                                    ->searchable()
+                                    ->helperText('Selecciona el supervisor responsable del seguimiento.'),
                                 Repeater::make('inspectors')
                                     ->relationship()
                                     ->label('Inspectores asignados')
