@@ -7,3 +7,37 @@
 @source '../**/*.js';
 @source '../../../../vendor/saade/filament-autograph/resources/views/**/*.blade.php';
 @source '../../../../vendor/guava/filament-modal-relation-managers/resources/**/*';
+
+/* Admin Dashboard Widget Styles */
+.admin-dashboard-widget {
+    @apply font-sans;
+}
+
+.admin-dashboard-widget table th {
+    @apply sticky top-0 z-10;
+}
+
+/* Animación suave para las barras de progreso */
+.admin-dashboard-widget .transition-all {
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Hover effects para las tarjetas */
+.admin-dashboard-widget .group:hover {
+    transform: translateY(-2px);
+}
+
+/* Scroll suave en la tabla */
+.admin-dashboard-widget .overflow-x-auto {
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
+}
+
+/* Mejora visual para los badges */
+.admin-dashboard-widget span[class*="rounded-full"] {
+    @apply transition-transform duration-200;
+}
+
+.admin-dashboard-widget span[class*="rounded-full"]:hover {
+    @apply scale-105;
+}

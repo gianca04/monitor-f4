@@ -1,0 +1,609 @@
+<?php
+
+namespace App\Filament\Widgets;
+
+use App\Models\Client;
+use App\Models\Compliance;
+use App\Models\Employee;
+use App\Models\Pricelist;
+use App\Models\Project;
+use App\Models\ProjectConsumption;
+use App\Models\Quote;
+use App\Models\QuoteWarehouse;
+use App\Models\WorkReport;
+use Filament\Widgets\Widget;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+
+class AdminDashboardWidget extends Widget
+{
+    protected static ?int $sort = 0;
+    protected int | string | array $columnSpan = 12;
+    protected string $view = 'filament.widgets.admin-dashboard-widget';
+
+    public string $activeTab = 'overview';
+    public string $statusFilter = 'all';
+    public string $monthFilter = '';
+
+    // Definir las propiedades que deben ser reactivas
+    protected $queryString = ['activeTab', 'statusFilter', 'monthFilter'];
+
+    public function mount(): void
+    {
+        $this->monthFilter = now()->format('Y-m');
+    }
+
+    public function setTab(string $tab): void
+    {
+        $this->activeTab = $tab;
+    }
+
+    // Método helper para obtener año y mes del filtro
+    protected function getFilterYear(): int
+    {
+        return (int) substr($this->monthFilter ?: now()->format('Y-m'), 0, 4);
+    }
+
+    protected function getFilterMonth(): int
+    {
+        return (int) substr($this->monthFilter ?: now()->format('Y-m'), 5, 2);
+    }
+
+    /**
+     * Estadísticas globales del sistema (como UnifiedStatsWidget)
+     */
+    public function getGlobalStats(): array
+    {
+        // Calcular total S/. de cotizaciones aprobadas
+        $totalApprovedQuotesAmount = Quote::where('status', 'Aprobado')
+            ->join('quote_details', 'quotes.id', '=', 'quote_details.quote_id')
+            ->sum(DB::raw('quote_details.quantity * quote_details.unit_price'));
+
+        // Calcular proyectos con consumo hoy
+        $projectsWithConsumptionToday = ProjectConsumption::whereDate('consumed_at', today())
+            ->distinct('project_id')
+            ->count('project_id');
+
+        return [
+            'clients' => Client::count(),
+            'active_employees' => Employee::where('active', true)->count(),
+            'total_projects' => Project::count(),
+            'total_quotes' => Quote::count(),
+            'compliances' => Compliance::count(),
+            'approved_quotes' => Quote::where('status', 'Aprobado')->count(),
+            'total_approved_amount' => $totalApprovedQuotesAmount,
+            'pricelist_items' => Pricelist::count(),
+            'dispatches_attended' => QuoteWarehouse::where('status', 'Atendido')->count(),
+            'dispatches_pending' => QuoteWarehouse::whereIn('status', ['Parcial', 'Pendiente'])->count(),
+            'projects_with_consumption_today' => $projectsWithConsumptionToday,
+        ];
+    }
+
+    public function getOverviewStats(): array
+    {
+        $year = $this->getFilterYear();
+        $month = $this->getFilterMonth();
+
+        // Query base para proyectos del mes filtrado
+        $projectsQuery = Project::whereYear('created_at', $year)
+            ->whereMonth('created_at', $month);
+
+        if ($this->statusFilter !== 'all') {
+            $projectsQuery->where('status', $this->statusFilter);
+        }
+
+        // Query base para cotizaciones del mes filtrado
+        $quotesQuery = Quote::whereYear('created_at', $year)
+            ->whereMonth('created_at', $month);
+
+        return [
+            'projects_total' => (clone $projectsQuery)->count(),
+            'projects_approved' => (clone $projectsQuery)->where('status', 'Aprobado')->count(),
+            'projects_in_execution' => (clone $projectsQuery)->where('status', 'En Ejecución')->count(),
+            'projects_completed' => (clone $projectsQuery)->where('status', 'Completado')->count(),
+            'quotes_approved' => (clone $quotesQuery)->where('status', 'Aprobado')->count(),
+            'quotes_pending' => (clone $quotesQuery)->whereIn('status', ['Pendiente', 'pending'])->count(),
+            'compliance_count' => Compliance::whereYear('created_at', $year)
+                ->whereMonth('created_at', $month)->count(),
+            'work_reports_count' => WorkReport::whereYear('created_at', $year)
+                ->whereMonth('created_at', $month)->count(),
+            'warehouse_attended' => QuoteWarehouse::where('status', 'Atendido')
+                ->whereYear('created_at', $year)
+                ->whereMonth('created_at', $month)->count(),
+            'warehouse_pending' => QuoteWarehouse::whereIn('status', ['Pendiente', 'pending', 'Parcial'])
+                ->whereYear('created_at', $year)
+                ->whereMonth('created_at', $month)->count(),
+        ];
+    }
+
+    public function getQuickStats(): array
+    {
+        $year = $this->getFilterYear();
+        $month = $this->getFilterMonth();
+
+        $currentDate = \Carbon\Carbon::createFromDate($year, $month, 1);
+        $lastMonthDate = $currentDate->copy()->subMonth();
+
+        $projectsQuery = Project::query();
+        if ($this->statusFilter !== 'all') {
+            $projectsQuery->where('status', $this->statusFilter);
+        }
+
+        $projectsThisMonth = (clone $projectsQuery)
+            ->whereYear('created_at', $year)
+            ->whereMonth('created_at', $month)
+            ->count();
+
+        $projectsLastMonth = (clone $projectsQuery)
+            ->whereYear('created_at', $lastMonthDate->year)
+            ->whereMonth('created_at', $lastMonthDate->month)
+            ->count();
+
+        $quotesQuery = Quote::query();
+        if ($this->statusFilter !== 'all') {
+            $quotesQuery->where('status', $this->statusFilter);
+        }
+
+        $quotesThisMonth = (clone $quotesQuery)
+            ->whereYear('created_at', $year)
+            ->whereMonth('created_at', $month)
+            ->count();
+
+        $approvedThisMonth = Quote::where('status', 'Aprobado')
+            ->whereYear('updated_at', $year)
+            ->whereMonth('updated_at', $month)
+            ->count();
+
+        $projectsTrend = $projectsLastMonth > 0
+            ? round((($projectsThisMonth - $projectsLastMonth) / $projectsLastMonth) * 100)
+            : ($projectsThisMonth > 0 ? 100 : 0);
+
+        $pendingQuotes = Quote::where('status', 'Pendiente')
+            ->whereYear('created_at', $year)
+            ->whereMonth('created_at', $month)
+            ->count();
+
+        $pendingWarehouse = QuoteWarehouse::whereIn('status', ['Pendiente', 'Parcial'])
+            ->whereYear('created_at', $year)
+            ->whereMonth('created_at', $month)
+            ->count();
+
+        return [
+            'projects_this_month' => $projectsThisMonth,
+            'projects_trend' => $projectsTrend,
+            'quotes_this_month' => $quotesThisMonth,
+            'approved_this_month' => $approvedThisMonth,
+            'pending_actions' => $pendingQuotes + $pendingWarehouse,
+        ];
+    }
+
+    public function getAdvancedChartData(): array
+    {
+        // Tendencia de proyectos últimos 12 meses desde el mes filtrado
+        $baseDate = \Carbon\Carbon::createFromDate($this->getFilterYear(), $this->getFilterMonth(), 1);
+
+        $projectsTrend = collect();
+        for ($i = 11; $i >= 0; $i--) {
+            $date = $baseDate->copy()->subMonths($i);
+
+            $query = Project::whereYear('created_at', $date->year)
+                ->whereMonth('created_at', $date->month);
+
+            if ($this->statusFilter !== 'all') {
+                $query->where('status', $this->statusFilter);
+            }
+
+            $count = $query->count();
+            $projectsTrend->push([
+                'month' => $date->format('M'),
+                'year' => $date->format('Y'),
+                'count' => $count,
+            ]);
+        }
+
+        // Cotizaciones por categoría del mes filtrado
+        $quotesByCategory = Quote::select('quote_category_id')
+            ->selectRaw('COUNT(*) as total')
+            ->with('quoteCategory')
+            ->whereNotNull('quote_category_id')
+            ->whereYear('created_at', $this->getFilterYear())
+            ->whereMonth('created_at', $this->getFilterMonth())
+            ->groupBy('quote_category_id')
+            ->get()
+            ->map(function ($item) {
+                return [
+                    'name' => $item->quoteCategory?->name ?? 'Sin categoría',
+                    'count' => $item->total,
+                ];
+            });
+
+        // Eficiencia: tiempo promedio de aprobación
+        $avgApprovalDays = Quote::where('status', 'Aprobado')
+            ->whereNotNull('updated_at')
+            ->whereYear('created_at', $this->getFilterYear())
+            ->whereMonth('created_at', $this->getFilterMonth())
+            ->selectRaw('AVG(DATEDIFF(updated_at, created_at)) as avg_days')
+            ->value('avg_days') ?? 0;
+
+        // Tasa de conversión del mes filtrado
+        $totalQuotes = Quote::whereYear('created_at', $this->getFilterYear())
+            ->whereMonth('created_at', $this->getFilterMonth())
+            ->count();
+        $approvedQuotes = Quote::where('status', 'Aprobado')
+            ->whereYear('created_at', $this->getFilterYear())
+            ->whereMonth('created_at', $this->getFilterMonth())
+            ->count();
+        $conversionRate = $totalQuotes > 0 ? round(($approvedQuotes / $totalQuotes) * 100, 1) : 0;
+
+        return [
+            'projects_trend' => $projectsTrend,
+            'quotes_by_category' => $quotesByCategory,
+            'avg_approval_days' => round($avgApprovalDays, 1),
+            'conversion_rate' => $conversionRate,
+        ];
+    }
+
+    public function getAlerts(): array
+    {
+        $alerts = [];
+        $year = $this->getFilterYear();
+        $month = $this->getFilterMonth();
+
+        // Cotizaciones pendientes del mes filtrado por más de 7 días
+        $oldpendingQuotes = Quote::where('status', 'Pendiente')
+            ->whereYear('created_at', $year)
+            ->whereMonth('created_at', $month)
+            ->where('created_at', '<', now()->subDays(7))
+            ->count();
+        if ($oldpendingQuotes > 0) {
+            $alerts[] = [
+                'type' => 'warning',
+                'icon' => 'exclamation-triangle',
+                'message' => "{$oldpendingQuotes} cotizaciones pendientes hace más de 7 días",
+                'count' => $oldpendingQuotes,
+            ];
+        }
+
+        // Despachos parciales del mes
+        $partialDispatches = QuoteWarehouse::where('status', 'Parcial')
+            ->whereYear('created_at', $year)
+            ->whereMonth('created_at', $month)
+            ->count();
+        if ($partialDispatches > 0) {
+            $alerts[] = [
+                'type' => 'info',
+                'icon' => 'truck',
+                'message' => "{$partialDispatches} despachos pendientes de completar",
+                'count' => $partialDispatches,
+            ];
+        }
+
+        // Proyectos sin supervisor del mes
+        $projectsWithoutSupervisor = Project::whereNull('supervisor_id')
+            ->whereNotIn('status', ['Completado', 'Facturado', 'Anulado'])
+            ->whereYear('created_at', $year)
+            ->whereMonth('created_at', $month)
+            ->count();
+        if ($projectsWithoutSupervisor > 0) {
+            $alerts[] = [
+                'type' => 'danger',
+                'icon' => 'user-minus',
+                'message' => "{$projectsWithoutSupervisor} proyectos sin supervisor asignado",
+                'count' => $projectsWithoutSupervisor,
+            ];
+        }
+
+        return $alerts;
+    }
+
+    public function getProjectsWithFullFlow(): \Illuminate\Support\Collection
+    {
+        $query = Project::with([
+            'quotes' => function ($q) {
+                $q->with(['quoteWarehouse', 'details']);
+            },
+            'compliance',
+            'workReports',
+            'subClient.client',
+            'supervisor',
+        ]);
+
+        // Aplicar filtro de estado
+        if ($this->statusFilter !== 'all') {
+            $query->where('status', $this->statusFilter);
+        }
+
+        // Aplicar filtro de mes
+        if ($this->monthFilter) {
+            $query->whereYear('created_at', $this->getFilterYear())
+                ->whereMonth('created_at', $this->getFilterMonth());
+        }
+
+        return $query->latest()->limit(20)->get()->map(function ($project) {
+            $latestQuote = $project->quotes->first();
+            $warehouse = $latestQuote?->quoteWarehouse;
+
+            // Normalizar status de proyecto
+            $projectStatus = $project->status ?? 'Pendiente';
+            if (strtolower($projectStatus) === 'pending') {
+                $projectStatus = 'Pendiente';
+            }
+
+            // Normalizar status de cotización
+            $quoteStatus = $latestQuote?->status ?? 'Sin cotización';
+            if (strtolower($quoteStatus) === 'pending') {
+                $quoteStatus = 'Pendiente';
+            }
+
+            // Normalizar status de almacén
+            $warehouseStatus = $warehouse?->status ?? 'Sin despacho';
+            if (strtolower($warehouseStatus) === 'pending') {
+                $warehouseStatus = 'Pendiente';
+            }
+
+            return [
+                'id' => $project->id,
+                'name' => $project->name ?? 'Sin nombre',
+                'service_code' => $project->service_code ?? '-',
+                'status' => $projectStatus,
+                'sub_client' => $project->subClient?->name ?? '-',
+                'client' => $project->subClient?->client?->business_name ?? '-',
+                'supervisor' => $project->supervisor?->short_name ?? '-',
+                'quote_status' => $quoteStatus,
+                'quote_total' => $latestQuote ? 'S/. ' . number_format($latestQuote->total_amount, 2) : '-',
+                'has_compliance' => $project->compliance !== null,
+                'compliance_state' => $project->compliance?->state ?? '-',
+                'work_reports_count' => $project->workReports->count(),
+                'warehouse_status' => $warehouseStatus,
+                'warehouse_progress' => $warehouse?->calculateProgress() ?? 0,
+                'is_complete' => $this->isProjectComplete($project),
+                'created_at' => $project->created_at?->format('d/m/Y') ?? '-',
+            ];
+        });
+    }
+
+    protected function isProjectComplete($project): bool
+    {
+        $latestQuote = $project->quotes->first();
+
+        return $project->status === 'Completado'
+            && $latestQuote?->status === 'Aprobado'
+            && $project->compliance !== null
+            && $project->workReports->count() > 0
+            && $latestQuote?->quoteWarehouse?->status === 'Atendido';
+    }
+
+    public function getCompletedProjectsCount(): int
+    {
+        $query = Project::where('status', 'Completado')
+            ->whereHas('quotes', function ($q) {
+                $q->where('status', 'Aprobado')
+                    ->whereHas('quoteWarehouse', function ($w) {
+                        $w->where('status', 'Atendido');
+                    });
+            })
+            ->whereHas('compliance')
+            ->whereHas('workReports');
+
+        // Aplicar filtro de mes
+        if ($this->monthFilter) {
+            $query->whereYear('created_at', $this->getFilterYear())
+                ->whereMonth('created_at', $this->getFilterMonth());
+        }
+
+        return $query->count();
+    }
+
+    public function getChartData(): array
+    {
+        $year = $this->getFilterYear();
+        $month = $this->getFilterMonth();
+
+        // Proyectos por estado del mes filtrado
+        $projectsQuery = Project::whereYear('created_at', $year)
+            ->whereMonth('created_at', $month);
+
+        if ($this->statusFilter !== 'all') {
+            $projectsQuery->where('status', $this->statusFilter);
+        }
+
+        $projectsByStatus = $projectsQuery
+            ->select('status', DB::raw('count(*) as total'))
+            ->groupBy('status')
+            ->pluck('total', 'status')
+            ->toArray();
+
+        // Unificar pending y Pendiente
+        if (isset($projectsByStatus['pending'])) {
+            $projectsByStatus['Pendiente'] = ($projectsByStatus['Pendiente'] ?? 0) + $projectsByStatus['pending'];
+            unset($projectsByStatus['pending']);
+        }
+
+        // Cotizaciones por mes (últimos 6 meses desde el mes filtrado)
+        $baseDate = \Carbon\Carbon::createFromDate($year, $month, 1);
+        $quotesByMonth = collect();
+
+        for ($i = 5; $i >= 0; $i--) {
+            $date = $baseDate->copy()->subMonths($i);
+            $monthKey = $date->format('Y-m');
+
+            $total = Quote::whereYear('created_at', $date->year)
+                ->whereMonth('created_at', $date->month)
+                ->count();
+
+            $approved = Quote::where('status', 'Aprobado')
+                ->whereYear('created_at', $date->year)
+                ->whereMonth('created_at', $date->month)
+                ->count();
+
+            $quotesByMonth->push((object)[
+                'month' => $monthKey,
+                'total' => $total,
+                'approved' => $approved,
+            ]);
+        }
+
+        // Estado de almacén del mes filtrado
+        $warehouseStats = QuoteWarehouse::whereYear('created_at', $year)
+            ->whereMonth('created_at', $month)
+            ->select(
+                DB::raw("CASE WHEN status IN ('pending', 'Pendiente') THEN 'Pendiente' ELSE status END as status_normalized"),
+                DB::raw('count(*) as total')
+            )
+            ->groupBy('status_normalized')
+            ->pluck('total', 'status_normalized')
+            ->toArray();
+
+        return [
+            'projects_by_status' => $projectsByStatus,
+            'quotes_by_month' => $quotesByMonth,
+            'warehouse_stats' => $warehouseStats,
+        ];
+    }
+
+    public function getRecentActivity(): \Illuminate\Support\Collection
+    {
+        $year = $this->getFilterYear();
+        $month = $this->getFilterMonth();
+        $activities = collect();
+
+        Quote::where('status', 'Aprobado')
+            ->whereNotNull('updated_at')
+            ->whereYear('updated_at', $year)
+            ->whereMonth('updated_at', $month)
+            ->with('employee')
+            ->latest('updated_at')
+            ->limit(5)
+            ->get()
+            ->each(function ($quote) use ($activities) {
+                $activities->push([
+                    'type' => 'quote_approved',
+                    'icon' => 'check-circle',
+                    'color' => 'green',
+                    'message' => "Cotización {$quote->request_number} aprobada",
+                    'employee' => $quote->employee?->short_name ?? 'Sistema',
+                    'date' => $quote->updated_at,
+                ]);
+            });
+
+        Compliance::whereNotNull('created_at')
+            ->whereYear('created_at', $year)
+            ->whereMonth('created_at', $month)
+            ->with('project.supervisor')
+            ->latest()
+            ->limit(5)
+            ->get()
+            ->each(function ($compliance) use ($activities) {
+                $activities->push([
+                    'type' => 'compliance_created',
+                    'icon' => 'clipboard-document-check',
+                    'color' => 'blue',
+                    'message' => "Acta generada para proyecto #{$compliance->project_id}",
+                    'employee' => $compliance->project?->supervisor?->short_name ?? 'Sistema',
+                    'date' => $compliance->created_at,
+                ]);
+            });
+
+        QuoteWarehouse::where('status', 'Atendido')
+            ->whereNotNull('attended_at')
+            ->whereYear('attended_at', $year)
+            ->whereMonth('attended_at', $month)
+            ->with('employee')
+            ->latest('attended_at')
+            ->limit(5)
+            ->get()
+            ->each(function ($warehouse) use ($activities) {
+                $activities->push([
+                    'type' => 'warehouse_attended',
+                    'icon' => 'truck',
+                    'color' => 'purple',
+                    'message' => "Despacho atendido para cotización #{$warehouse->quote_id}",
+                    'employee' => $warehouse->employee?->name ?? 'Almacén',
+                    'date' => $warehouse->attended_at,
+                ]);
+            });
+
+        WorkReport::whereNotNull('created_at')
+            ->whereYear('created_at', $year)
+            ->whereMonth('created_at', $month)
+            ->with('employee')
+            ->latest()
+            ->limit(5)
+            ->get()
+            ->each(function ($report) use ($activities) {
+                $activities->push([
+                    'type' => 'work_report',
+                    'icon' => 'document-text',
+                    'color' => 'yellow',
+                    'message' => "Reporte de trabajo: {$report->name}",
+                    'employee' => $report->employee?->short_name ?? 'Sistema',
+                    'date' => $report->created_at,
+                ]);
+            });
+
+        return $activities
+            ->filter(fn($a) => $a['date'] !== null)
+            ->sortByDesc('date')
+            ->take(15)
+            ->values();
+    }
+
+    public function getApprovedQuotesTimeline(): \Illuminate\Support\Collection
+    {
+        $year = $this->getFilterYear();
+        $month = $this->getFilterMonth();
+
+        return Quote::where('status', 'Aprobado')
+            ->whereNotNull('quote_date')
+            ->whereYear('quote_date', $year)
+            ->whereMonth('quote_date', $month)
+            ->with(['project', 'subClient', 'employee', 'details'])
+            ->orderBy('quote_date', 'asc')
+            ->limit(30)
+            ->get()
+            ->map(function ($quote) {
+                return [
+                    'id' => $quote->id,
+                    'request_number' => $quote->request_number ?? 'S/N',
+                    'project_name' => $quote->project?->name ?? 'Sin proyecto',
+                    'sub_client' => $quote->subClient?->name ?? '-',
+                    'employee' => $quote->employee?->short_name ?? '-',
+                    'quote_date' => $quote->quote_date,
+                    'total_amount' => $quote->total_amount ?? 0,
+                    'formatted_date' => $quote->quote_date?->format('d/m/Y') ?? '-',
+                    'month_year' => $quote->quote_date?->format('M Y') ?? '-',
+                ];
+            });
+    }
+
+    public function getApprovedQuotesByMonth(): array
+    {
+        $baseDate = \Carbon\Carbon::createFromDate($this->getFilterYear(), $this->getFilterMonth(), 1);
+        $data = [];
+
+        for ($i = 11; $i >= 0; $i--) {
+            $date = $baseDate->copy()->subMonths($i);
+
+            $quotes = Quote::where('status', 'Aprobado')
+                ->whereYear('quote_date', $date->year)
+                ->whereMonth('quote_date', $date->month)
+                ->get();
+
+            $data[] = [
+                'month' => $date->format('M'),
+                'month_year' => $date->format('M Y'),
+                'full_month' => $date->format('F Y'),
+                'count' => $quotes->count(),
+                'total_amount' => $quotes->sum('total_amount'),
+            ];
+        }
+
+        return $data;
+    }
+
+    public static function canView(): bool
+    {
+        $user = Auth::user();
+        return $user && $user->hasAnyRole(['Administrador', 'Gerencial']);
+    }
+}

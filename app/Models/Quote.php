@@ -201,6 +201,33 @@ class Quote extends Model
 
     public static function createWithProject(array $data)
     {
+        // Si ya viene un ID de cotización, NO crear una nueva, retornar la existente
+        if (!empty($data['id'])) {
+            $existingQuote = self::find($data['id']);
+            if ($existingQuote) {
+                // Actualizar en lugar de crear
+                unset($data['id']);
+                unset($data['request_number']); // No cambiar el request_number
+                $existingQuote->update($data);
+                return $existingQuote;
+            }
+        }
+
+        // Si ya existe project_id, verificar si ya hay cotización para este proyecto
+        if (!empty($data['project_id'])) {
+            // Buscar cotización existente para este proyecto creada recientemente
+            $existingQuote = self::where('project_id', $data['project_id'])
+                ->orderBy('created_at', 'desc')
+                ->first();
+
+            // Si existe y fue creada en los últimos 30 segundos, actualizar en lugar de crear
+            if ($existingQuote && $existingQuote->created_at->diffInSeconds(now()) < 30) {
+                unset($data['request_number']);
+                $existingQuote->update($data);
+                return $existingQuote;
+            }
+        }
+
         // Si no hay project_id, creamos un nuevo proyecto
         if (empty($data['project_id'])) {
             // Creamos el proyecto con los datos mínimos requeridos
@@ -210,7 +237,7 @@ class Quote extends Model
             $project->service_code = null; // Se asigna después
             $project->save();
 
-            // Asignamos el service_code tipo COT-$ID
+            // Asignamos el service_code tipo COT-$ID (sin padding)
             $project->service_code = 'COT-' . $project->id;
             $project->save();
 
@@ -226,8 +253,18 @@ class Quote extends Model
             }
         }
 
-        // Generamos el request_number para la cotización
-        $data['request_number'] = self::generateNextRequestNumber($data['project_id']);
+        // Generamos el request_number para la cotización SOLO si no existe
+        if (empty($data['request_number'])) {
+            $data['request_number'] = self::generateNextRequestNumber($data['project_id']);
+        }
+
+        // Verificar una última vez que no exista ya con este request_number
+        $existingByRequestNumber = self::where('request_number', $data['request_number'])->first();
+        if ($existingByRequestNumber) {
+            unset($data['request_number']);
+            $existingByRequestNumber->update($data);
+            return $existingByRequestNumber;
+        }
 
         // Creamos la cotización
         return self::create($data);
@@ -253,7 +290,8 @@ class Quote extends Model
         $project = \App\Models\Project::find($projectId);
         if (!$project) return 'COT-00000-A';
 
-        $baseNumber = $project->service_code ?? $project->request_number ?? sprintf('%05d', $project->id);
+        // Usar el ID del proyecto sin padding de ceros
+        $baseNumber = $project->service_code ?? $project->request_number ?? (string) $project->id;
 
         // Si ya empieza con 'COT-', no lo agregamos de nuevo
         if (stripos($baseNumber, 'COT-') === 0) {

@@ -10,6 +10,7 @@ use App\Models\QuoteWarehouse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 
 /**
  * Controlador para manejar las operaciones CRUD de cotizaciones (Quotes).
@@ -87,77 +88,91 @@ class QuoteController extends Controller
         // 1. Obtener datos validados
         $validated = $request->validated();
 
+        // PROTECCIÓN CONTRA DUPLICADOS: Crear una llave única basada en los datos
+        $userId = Auth::id() ?? 0;
+        $projectId = $request->input('project_id') ?? 'new';
+        $subClientId = $validated['sub_client_id'] ?? 0;
+        $lockKey = "quote_create_{$userId}_{$projectId}_{$subClientId}";
+
+        // Verificar si ya hay una operación en curso (5 segundos de bloqueo)
+        if (Cache::has($lockKey)) {
+            return response()->json([
+                'message' => 'Ya existe una operación en curso. Por favor espere.',
+                'duplicate' => true
+            ], 429);
+        }
+
+        // Establecer bloqueo por 5 segundos
+        Cache::put($lockKey, true, 5);
+
         try {
-            return \Illuminate\Support\Facades\DB::transaction(function () use ($validated, $request) {
+            return \Illuminate\Support\Facades\DB::transaction(function () use ($validated, $request, $lockKey) {
+                // VERIFICAR SI ES UNA ACTUALIZACIÓN (viene con ID)
+                if ($request->has('id') && $request->input('id')) {
+                    $existingQuote = Quote::find($request->input('id'));
+                    if ($existingQuote) {
+                        Cache::forget($lockKey);
+                        return $this->performUpdate($existingQuote, $validated, $request);
+                    }
+                }
+
+                // VERIFICAR SI YA EXISTE UNA COTIZACIÓN CON EL MISMO request_number
+                if ($request->has('request_number') && $request->input('request_number')) {
+                    $existingQuote = Quote::where('request_number', $request->input('request_number'))->first();
+                    if ($existingQuote) {
+                        Cache::forget($lockKey);
+                        return $this->performUpdate($existingQuote, $validated, $request);
+                    }
+                }
+
+                // VERIFICAR SI YA EXISTE UNA COTIZACIÓN PARA ESTE PROYECTO (creada en los últimos 10 segundos)
+                if ($request->has('project_id') && $request->input('project_id')) {
+                    $recentQuote = Quote::where('project_id', $request->input('project_id'))
+                        ->where('created_at', '>=', now()->subSeconds(10))
+                        ->first();
+
+                    if ($recentQuote) {
+                        Cache::forget($lockKey);
+                        // Ya existe una cotización reciente, actualizar en lugar de crear
+                        return $this->performUpdate($recentQuote, $validated, $request);
+                    }
+                }
+
                 // 2. Crear la Cotización
-                // Aseguramos que el status sea 'POR HACER' si no se envía
                 $validated['status'] = $validated['status'] ?? 'Pendiente';
 
                 // Guardar project_id si viene en el request
-                if ($request->has('project_id')) {
+                if ($request->has('project_id') && $request->input('project_id')) {
                     $validated['project_id'] = $request->input('project_id');
 
-                    // Si el proyecto ya existe, buscamos el quoted_by_id de su visita
                     $project = \App\Models\Project::with('visit')->find($validated['project_id']);
                     if ($project && $project->visit && $project->visit->quoted_by_id) {
                         $validated['employee_id'] = $project->visit->quoted_by_id;
                     }
                 }
 
-                // Asignar el employee_id del usuario autenticado SI NO SE HA ASIGNADO AÚN
                 if (!isset($validated['employee_id']) && Auth::check() && Auth::user()->employee) {
                     $validated['employee_id'] = Auth::user()->employee->id;
+                }
+
+                if (empty($validated['request_number'])) {
+                    unset($validated['request_number']);
                 }
 
                 // Crear la cotización (y el proyecto si es necesario)
                 $quote = Quote::createWithProject($validated);
 
                 // 3. Procesar los detalles (items)
-                $items = $request->input('items', []);
-                $line = 1; // Inicializar contador de línea
-                foreach ($items as $item) {
-                    // Cálculo backend del subtotal
-                    $quantity = (float) $item['quantity'];
-                    $unitPrice = (float) $item['unit_price'];
-                    $subtotal = round($quantity * $unitPrice, 2);
+                $this->processQuoteItems($quote, $request->input('items', []));
 
-                    $quote->details()->create([
-                        'pricelist_id' => $item['pricelist_id'],
-                        'item_type' => $item['item_type'],
-                        'quantity' => $quantity,
-                        'unit_price' => $unitPrice,
-                        'subtotal' => $subtotal,
-                        'comment' => $item['comment'] ?? null,
-                        'line' => $line++, // Asignar línea incremental
-                    ]);
-                }
-
-
-
-                // Actualizar service_start_date del proyecto con execution_date de la cotización
                 if ($quote->project && $quote->execution_date) {
                     $quote->project->update([
                         'service_start_date' => $quote->execution_date
                     ]);
                 }
 
-                // Crear registro en quote_warehouse si el status es 'Aprobado' o 'APROBADO'
-                if (
-                    isset($validated['status']) &&
-                    ($validated['status'] === 'Aprobado')
-                ) {
-                    $exists = QuoteWarehouse::where('quote_id', $quote->id)->exists();
-                    if (!$exists) {
-                        QuoteWarehouse::create([
-                            'quote_id'    => $quote->id,
-                            'employee_id' => Auth::user()->employee->id,
-                            'status'      => 'Pendiente',
-                            'observations' => null,
-                        ]);
-                    }
-                }
+                $this->createWarehouseIfApproved($quote, $validated['status'] ?? null);
 
-                // Notificación SweetAlert para creación exitosa
                 session()->flash('swal', [
                     'title' => '¡Cotización creada!',
                     'text' => 'La cotización se ha guardado correctamente.',
@@ -166,9 +181,11 @@ class QuoteController extends Controller
                     'showConfirmButton' => false,
                 ]);
 
+                Cache::forget($lockKey);
                 return response()->json($quote->load(['employee', 'subClient', 'quoteCategory', 'details', 'project']), 201);
             });
         } catch (\Exception $e) {
+            Cache::forget($lockKey);
             session()->flash('swal', [
                 'title' => 'Error',
                 'text' => 'Error al guardar la cotización: ' . $e->getMessage(),
@@ -180,10 +197,101 @@ class QuoteController extends Controller
             ], 500);
         }
     }
-    public function categories()
+
+    /**
+     * Método auxiliar para procesar items de cotización
+     */
+    private function processQuoteItems(Quote $quote, array $items): void
     {
-        $categories = QuoteCategory::orderBy('name')->get(['id', 'name']);
-        return response()->json($categories);
+        // Eliminar items existentes primero
+        $quote->details()->delete();
+
+        $line = 1;
+        foreach ($items as $item) {
+            $quantity = (float) $item['quantity'];
+            $unitPrice = (float) $item['unit_price'];
+            $subtotal = round($quantity * $unitPrice, 2);
+
+            $quote->details()->create([
+                'pricelist_id' => $item['pricelist_id'],
+                'item_type' => $item['item_type'],
+                'quantity' => $quantity,
+                'unit_price' => $unitPrice,
+                'subtotal' => $subtotal,
+                'comment' => $item['comment'] ?? null,
+                'line' => $line++,
+            ]);
+        }
+    }
+
+    /**
+     * Método auxiliar para crear warehouse si está aprobado
+     */
+    private function createWarehouseIfApproved(Quote $quote, ?string $status): void
+    {
+        if ($status === 'Aprobado') {
+            $exists = QuoteWarehouse::where('quote_id', $quote->id)->exists();
+            if (!$exists) {
+                QuoteWarehouse::create([
+                    'quote_id'    => $quote->id,
+                    'employee_id' => Auth::user()->employee->id ?? null,
+                    'status'      => 'Pendiente',
+                    'observations' => null,
+                ]);
+            }
+        }
+    }
+
+    /**
+     * Método auxiliar para realizar la actualización
+     */
+    private function performUpdate(Quote $quote, array $validated, Request $request): JsonResponse
+    {
+        // Asignar employee_id del usuario que está editando
+        if (Auth::check() && Auth::user()->employee) {
+            $validated['employee_id'] = Auth::user()->employee->id;
+        }
+
+        // Mantener project_id si no se envía
+        if (!isset($validated['project_id']) || $validated['project_id'] === null) {
+            $validated['project_id'] = $quote->project_id;
+        }
+
+        // IMPORTANTE: Mantener el request_number original, NO regenerarlo
+        unset($validated['request_number']);
+
+        // Actualizar la cotización
+        $quote->update($validated);
+
+        // Actualizar nombre del proyecto si se envía
+        if (isset($validated['project_name']) && $quote->project) {
+            $quote->project->update(['name' => $validated['project_name']]);
+        }
+
+        // Actualizar service_start_date del proyecto
+        if ($quote->project && $quote->execution_date) {
+            $quote->project->update([
+                'service_start_date' => $quote->execution_date
+            ]);
+        }
+
+        // Si se envían items, actualizar los detalles
+        if ($request->has('items')) {
+            $this->processQuoteItems($quote, $request->input('items', []));
+        }
+
+        // Crear warehouse si está aprobado
+        $this->createWarehouseIfApproved($quote, $validated['status'] ?? null);
+
+        session()->flash('swal', [
+            'title' => '¡Cotización actualizada!',
+            'text' => 'La cotización se ha actualizado correctamente.',
+            'icon' => 'success',
+            'timer' => 2000,
+            'showConfirmButton' => false,
+        ]);
+
+        return response()->json($quote->load(['employee', 'subClient', 'quoteCategory', 'details', 'project']));
     }
 
     /**
@@ -210,80 +318,7 @@ class QuoteController extends Controller
 
         try {
             return \Illuminate\Support\Facades\DB::transaction(function () use ($validated, $request, $quote) {
-                // Asignar SIEMPRE el employee_id del usuario que está editando
-                if (Auth::check() && Auth::user()->employee) {
-                    $validated['employee_id'] = Auth::user()->employee->id;
-                }
-
-                // Mantener project_id si no se envía
-                if (!isset($validated['project_id']) || $validated['project_id'] === null) {
-                    $validated['project_id'] = $quote->project_id;
-                }
-
-                // Actualizar la cotización
-                $quote->update($validated);
-
-                // Actualizar nombre del proyecto si se envía
-                if (isset($validated['project_name']) && $quote->project) {
-                    $quote->project->update(['name' => $validated['project_name']]);
-                }
-
-                // Actualizar service_start_date del proyecto con execution_date de la cotización
-                if ($quote->project && $quote->execution_date) {
-                    $quote->project->update([
-                        'service_start_date' => $quote->execution_date
-                    ]);
-                }
-
-                // Si se envían items, actualizar los detalles
-                if ($request->has('items')) {
-                    // Eliminar detalles existentes
-                    $quote->details()->delete();
-
-                    // Crear nuevos detalles
-                    $items = $request->input('items', []);
-                    $line = 1; // Inicializar contador de línea
-                    foreach ($items as $item) {
-                        $quantity = (float) $item['quantity'];
-                        $unitPrice = (float) $item['unit_price'];
-                        $subtotal = round($quantity * $unitPrice, 2);
-
-                        $quote->details()->create([
-                            'pricelist_id' => $item['pricelist_id'],
-                            'item_type' => $item['item_type'],
-                            'quantity' => $quantity,
-                            'unit_price' => $unitPrice,
-                            'subtotal' => $subtotal,
-                            'comment' => $item['comment'] ?? null,
-                            'line' => $line++, // Asignar línea incremental
-                        ]);
-                    }
-                }
-
-                // Crear registro en quote_warehouse si el status es 'Aprobado' o 'APROBADO'
-                if (
-                    isset($validated['status']) &&
-                    ($validated['status'] === 'Aprobado')
-                ) {
-                    $exists = QuoteWarehouse::where('quote_id', $quote->id)->exists();
-                    if (!$exists) {
-                        QuoteWarehouse::create([
-                            'quote_id'    => $quote->id,
-                            'employee_id' => Auth::user()->employee->id ?? null,
-                            'status'      => 'Pendiente',
-                            'observations' => null,
-                        ]);
-                    }
-                }
-
-                session()->flash('swal', [
-                    'title' => '¡Cotización actualizada!',
-                    'text' => 'La cotización se ha actualizado correctamente.',
-                    'icon' => 'success',
-                    'timer' => 2000,
-                    'showConfirmButton' => false,
-                ]);
-                return response()->json($quote->load(['employee', 'subClient', 'quoteCategory', 'details', 'project']));
+                return $this->performUpdate($quote, $validated, $request);
             });
         } catch (\Exception $e) {
             session()->flash('swal', [
