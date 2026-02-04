@@ -1,30 +1,10 @@
-# Configuración de Nixpacks para Laravel
-# Definir variables tanto con prefijo como sin prefijo para máxima compatibilidad
-
-[phases.build]
-cmds = [
-    "composer install --no-dev --optimize-autoloader",
-    "npm ci",
-    "npm run build",
-    "php artisan config:cache",
-    "php artisan route:cache",
-    "php artisan view:cache",
-    "mkdir -p /etc/php84/conf.d",
-    "cp php.ini /etc/php84/conf.d/99-custom.ini || true"
-]
-
-[start]
-cmd = "php artisan migrate --force && php-fpm"
-
 [variables]
-# Variables estándar para Docker/Nixpacks images
-PHP_UPLOAD_MAX_FILESIZE = "100M"
-PHP_POST_MAX_SIZE = "100M"
-PHP_MEMORY_LIMIT = "256M"
-NGINX_CLIENT_MAX_BODY_SIZE = "100M"
+UPLOAD_MAX_FILESIZE = '100M'
+POST_MAX_SIZE = '100M'
 
-# Variables específicas de Nixpacks (por si acaso)
-NIXPACKS_PHP_UPLOAD_MAX_FILESIZE = "100M"
-NIXPACKS_PHP_POST_MAX_SIZE = "100M"
-NIXPACKS_PHP_MEMORY_LIMIT = "256M"
-NIXPACKS_NGINX_CLIENT_MAX_BODY_SIZE = "100M"
+[phases.setup]
+cmds = [
+  'UPLOAD_INI_PATH=$(find /nix/store/*-php-*/lib -name php.ini -print0 | head -z -n 1 | rev | cut -c 9- | rev)/upload.ini;
+   echo "upload_max_filesize=${UPLOAD_MAX_FILESIZE};" >> $UPLOAD_INI_PATH;
+   echo "post_max_size=${POST_MAX_SIZE};" >> $UPLOAD_INI_PATH'
+]
