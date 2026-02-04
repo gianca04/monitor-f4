@@ -319,7 +319,8 @@ class AdminDashboardWidget extends Widget
                 ->whereMonth('created_at', $this->getFilterMonth());
         }
 
-        return $query->latest()->limit(20)->get()->map(function ($project) {
+        // Limitar a 10 proyectos más recientes
+        return $query->latest()->limit(10)->get()->map(function ($project) {
             $latestQuote = $project->quotes->first();
             $warehouse = $latestQuote?->quoteWarehouse;
 
@@ -467,13 +468,14 @@ class AdminDashboardWidget extends Widget
         $month = $this->getFilterMonth();
         $activities = collect();
 
+        // Limitar a 3 por tipo para un total máximo de ~10-12
         Quote::where('status', 'Aprobado')
             ->whereNotNull('updated_at')
             ->whereYear('updated_at', $year)
             ->whereMonth('updated_at', $month)
             ->with('employee')
             ->latest('updated_at')
-            ->limit(5)
+            ->limit(3)
             ->get()
             ->each(function ($quote) use ($activities) {
                 $activities->push([
@@ -491,7 +493,7 @@ class AdminDashboardWidget extends Widget
             ->whereMonth('created_at', $month)
             ->with('project.supervisor')
             ->latest()
-            ->limit(5)
+            ->limit(3)
             ->get()
             ->each(function ($compliance) use ($activities) {
                 $activities->push([
@@ -510,7 +512,7 @@ class AdminDashboardWidget extends Widget
             ->whereMonth('attended_at', $month)
             ->with('employee')
             ->latest('attended_at')
-            ->limit(5)
+            ->limit(2)
             ->get()
             ->each(function ($warehouse) use ($activities) {
                 $activities->push([
@@ -528,7 +530,7 @@ class AdminDashboardWidget extends Widget
             ->whereMonth('created_at', $month)
             ->with('employee')
             ->latest()
-            ->limit(5)
+            ->limit(2)
             ->get()
             ->each(function ($report) use ($activities) {
                 $activities->push([
@@ -541,10 +543,11 @@ class AdminDashboardWidget extends Widget
                 ]);
             });
 
+        // Ordenar por fecha y limitar a 10 registros máximo
         return $activities
             ->filter(fn($a) => $a['date'] !== null)
             ->sortByDesc('date')
-            ->take(15)
+            ->take(10)
             ->values();
     }
 
@@ -599,6 +602,211 @@ class AdminDashboardWidget extends Widget
         }
 
         return $data;
+    }
+
+    /**
+     * Obtiene datos para el gráfico circular de proyectos por estado
+     */
+    public function getProjectsByStatusPieChart(): array
+    {
+        $year = $this->getFilterYear();
+        $month = $this->getFilterMonth();
+
+        $statuses = [
+            'Pendiente' => ['color' => '#F59E0B', 'label' => 'Pendiente'],
+            'Enviada' => ['color' => '#3B82F6', 'label' => 'Enviada'],
+            'Aprobado' => ['color' => '#10B981', 'label' => 'Aprobado'],
+            'En Ejecución' => ['color' => '#6366F1', 'label' => 'En Ejecución'],
+            'Completado' => ['color' => '#047857', 'label' => 'Completado'],
+            'Facturado' => ['color' => '#1E3A8A', 'label' => 'Facturado'],
+            'Anulado' => ['color' => '#9CA3AF', 'label' => 'Anulado'],
+        ];
+
+        $data = [];
+        $total = 0;
+
+        foreach ($statuses as $status => $config) {
+            $query = Project::whereYear('created_at', $year)
+                ->whereMonth('created_at', $month);
+
+            if ($status === 'Pendiente') {
+                $count = (clone $query)->whereIn('status', ['Pendiente', 'pending'])->count();
+            } else {
+                $count = (clone $query)->where('status', $status)->count();
+            }
+
+            if ($count > 0) {
+                $data[] = [
+                    'status' => $config['label'],
+                    'count' => $count,
+                    'color' => $config['color'],
+                ];
+                $total += $count;
+            }
+        }
+
+        // Calcular porcentajes
+        foreach ($data as &$item) {
+            $item['percentage'] = $total > 0 ? round(($item['count'] / $total) * 100, 1) : 0;
+        }
+
+        return [
+            'data' => $data,
+            'total' => $total,
+        ];
+    }
+
+    /**
+     * Obtiene el proyecto más costoso del mes
+     */
+    public function getMostExpensiveProject(): ?array
+    {
+        $year = $this->getFilterYear();
+        $month = $this->getFilterMonth();
+
+        $project = Project::with(['quotes.details', 'subClient.client'])
+            ->whereYear('created_at', $year)
+            ->whereMonth('created_at', $month)
+            ->get()
+            ->map(function ($project) {
+                $totalAmount = $project->quotes->sum(function ($quote) {
+                    return $quote->details->sum(function ($detail) {
+                        return $detail->subtotal ?? ($detail->quantity * $detail->unit_price);
+                    });
+                });
+
+                return [
+                    'id' => $project->id,
+                    'name' => $project->name ?? 'Sin nombre',
+                    'service_code' => $project->service_code ?? '-',
+                    'client' => $project->subClient?->client?->business_name ?? '-',
+                    'sub_client' => $project->subClient?->name ?? '-',
+                    'total_amount' => $totalAmount,
+                    'status' => $project->status,
+                    'created_at' => $project->created_at?->format('d/m/Y'),
+                ];
+            })
+            ->sortByDesc('total_amount')
+            ->first();
+
+        return $project;
+    }
+
+    /**
+     * Obtiene gastos mensuales (últimos 12 meses)
+     */
+    public function getMonthlyExpenses(): array
+    {
+        $baseDate = \Carbon\Carbon::createFromDate($this->getFilterYear(), $this->getFilterMonth(), 1);
+        $data = [];
+
+        for ($i = 11; $i >= 0; $i--) {
+            $date = $baseDate->copy()->subMonths($i);
+
+            // Obtener todas las cotizaciones aprobadas del mes
+            $monthlyTotal = Quote::where('status', 'Aprobado')
+                ->whereYear('created_at', $date->year)
+                ->whereMonth('created_at', $date->month)
+                ->with('details')
+                ->get()
+                ->sum(function ($quote) {
+                    return $quote->details->sum(function ($detail) {
+                        return $detail->subtotal ?? ($detail->quantity * $detail->unit_price);
+                    });
+                });
+
+            // Contar proyectos del mes - CORREGIDO: usar $date->year y $date->month
+            $projectsCount = Project::whereYear('created_at', $date->year)
+                ->whereMonth('created_at', $date->month)
+                ->count();
+
+            $data[] = [
+                'month' => $date->format('M'),
+                'month_year' => $date->format('M Y'),
+                'full_date' => $date->format('Y-m'),
+                'total' => $monthlyTotal,
+                'projects_count' => $projectsCount,
+                'is_current' => $i === 0,
+            ];
+        }
+
+        return $data;
+    }
+
+    /**
+     * Calcula estadísticas de gastos mensuales
+     */
+    public function getMonthlyExpensesStats(array $monthlyExpenses): array
+    {
+        $collection = collect($monthlyExpenses);
+
+        // Total acumulado (suma de todos los meses)
+        $totalExpenses = $collection->sum('total');
+
+        // Meses con datos (meses que tienen al menos algún gasto)
+        $monthsWithData = $collection->filter(fn($m) => $m['total'] > 0);
+        $monthsWithDataCount = $monthsWithData->count();
+
+        // Promedio mensual (solo de meses con datos, no de los 12)
+        $averageMonthly = $monthsWithDataCount > 0
+            ? $totalExpenses / $monthsWithDataCount
+            : 0;
+
+        // Mes más alto
+        $maxExpense = $collection->max('total') ?: 0;
+
+        // Mes con mayor gasto (nombre)
+        $maxMonth = $collection->sortByDesc('total')->first();
+        $maxMonthName = $maxMonth ? $maxMonth['month_year'] : '-';
+
+        // Mes más bajo (excluyendo ceros)
+        $minExpense = $monthsWithData->min('total') ?: 0;
+
+        return [
+            'total_accumulated' => $totalExpenses,
+            'average_monthly' => $averageMonthly,
+            'max_expense' => $maxExpense,
+            'max_month_name' => $maxMonthName,
+            'min_expense' => $minExpense,
+            'months_with_data' => $monthsWithDataCount,
+            'total_months' => 12,
+        ];
+    }
+
+    /**
+     * Obtiene el top 5 de proyectos más costosos del mes
+     */
+    public function getTopExpensiveProjects(): \Illuminate\Support\Collection
+    {
+        $year = $this->getFilterYear();
+        $month = $this->getFilterMonth();
+
+        return Project::with(['quotes.details', 'subClient.client', 'supervisor'])
+            ->whereYear('created_at', $year)
+            ->whereMonth('created_at', $month)
+            ->get()
+            ->map(function ($project) {
+                $totalAmount = $project->quotes->sum(function ($quote) {
+                    return $quote->details->sum(function ($detail) {
+                        return $detail->subtotal ?? ($detail->quantity * $detail->unit_price);
+                    });
+                });
+
+                return [
+                    'id' => $project->id,
+                    'name' => $project->name ?? 'Sin nombre',
+                    'service_code' => $project->service_code ?? '-',
+                    'client' => $project->subClient?->client?->business_name ?? '-',
+                    'sub_client' => $project->subClient?->name ?? '-',
+                    'supervisor' => $project->supervisor?->short_name ?? '-',
+                    'total_amount' => $totalAmount,
+                    'status' => $project->status,
+                ];
+            })
+            ->filter(fn($p) => $p['total_amount'] > 0)
+            ->sortByDesc('total_amount')
+            ->take(5)
+            ->values();
     }
 
     public static function canView(): bool

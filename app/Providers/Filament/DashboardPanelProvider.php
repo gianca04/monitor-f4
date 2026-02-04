@@ -2,9 +2,6 @@
 
 namespace App\Providers\Filament;
 
-use App\Filament\Widgets\ApprovedQuotesBarChartWidget;
-use App\Filament\Widgets\ProjectStatusPieChartWidget;
-use App\Filament\Widgets\UnifiedStatsWidget;
 use App\Filament\Widgets\WelcomeWidget;
 use BezhanSalleh\FilamentShield\FilamentShieldPlugin;
 use Filament\Http\Middleware\Authenticate;
@@ -44,9 +41,6 @@ class DashboardPanelProvider extends PanelProvider
             ])
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\Filament\Widgets')
             ->widgets([
-                UnifiedStatsWidget::class,
-                ProjectStatusPieChartWidget::class,
-                ApprovedQuotesBarChartWidget::class,
                 WelcomeWidget::class,
             ])
             ->authMiddleware([

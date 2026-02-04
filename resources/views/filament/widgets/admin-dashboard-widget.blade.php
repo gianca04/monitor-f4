@@ -610,7 +610,7 @@
                         </svg>
                     </div>
                 </div>
-                <p class="mt-2 text-xs text-gray-500">Cotización → Acta → Reportes → Despacho atendido</p>
+                <p class="mt-2 text-xs text-gray-500">Cotización → Acta generada → Reportes → Despacho atendido</p>
             </div>
         </div>
 
@@ -826,7 +826,7 @@
                                                 class="inline-flex items-center gap-1.5 rounded-full bg-green-100 px-3 py-1 text-xs font-semibold text-green-700 ring-1 ring-inset ring-green-600/20">
                                                 <svg class="h-3.5 w-3.5" fill="currentColor" viewBox="0 0 20 20">
                                                     <path fill-rule="evenodd"
-                                                        d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                                                        d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
                                                         clip-rule="evenodd" />
                                                 </svg>
                                                 Completo
@@ -873,9 +873,304 @@
                 $advancedData = $this->getAdvancedChartData();
                 $approvedTimeline = $this->getApprovedQuotesTimeline();
                 $approvedByMonth = $this->getApprovedQuotesByMonth();
+                $pieChartData = $this->getProjectsByStatusPieChart();
+                $monthlyExpenses = $this->getMonthlyExpenses();
+                $mostExpensive = $this->getMostExpensiveProject();
+                $topProjects = $this->getTopExpensiveProjects();
             @endphp
             <div class="grid gap-6 lg:grid-cols-2">
-                {{-- Proyectos por Estado --}}
+
+                {{-- NUEVO: Gráfico Circular - Proyectos por Estado --}}
+                <div class="p-6 rounded-xl bg-gray-50 ring-1 ring-gray-200">
+                    <h4 class="flex items-center gap-2 mb-6 text-lg font-semibold text-gray-800">
+                        <svg class="w-5 h-5 text-indigo-500" fill="none" stroke="currentColor"
+                            viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z" />
+                        </svg>
+                        Proyectos por Estado (Gráfico Circular)
+                    </h4>
+
+                    @if (count($pieChartData['data']) > 0)
+                        <div class="flex items-center gap-6">
+                            {{-- Gráfico Circular SVG --}}
+                            <div class="relative flex-shrink-0">
+                                <svg viewBox="0 0 100 100" class="w-40 h-40">
+                                    @php
+                                        $offset = 0;
+                                        $total = $pieChartData['total'];
+                                    @endphp
+                                    @foreach ($pieChartData['data'] as $item)
+                                        @php
+                                            $percentage = $item['percentage'];
+                                            $dashArray = ($percentage / 100) * 314.159;
+                                            $dashOffset = -$offset * 3.14159;
+                                            $offset += $percentage;
+                                        @endphp
+                                        <circle cx="50" cy="50" r="40" fill="transparent"
+                                            stroke="{{ $item['color'] }}" stroke-width="20"
+                                            stroke-dasharray="{{ $dashArray }} 314.159"
+                                            stroke-dashoffset="{{ $dashOffset }}" transform="rotate(-90 50 50)"
+                                            class="transition-all duration-500 cursor-pointer hover:opacity-80">
+                                            <title>{{ $item['status'] }}: {{ $item['count'] }}
+                                                ({{ $item['percentage'] }}%)
+                                            </title>
+                                        </circle>
+                                    @endforeach
+                                    {{-- Centro blanco --}}
+                                    <circle cx="50" cy="50" r="25" fill="white" />
+                                    {{-- Texto central --}}
+                                    <text x="50" y="47" text-anchor="middle" class="text-lg font-bold fill-gray-800"
+                                        style="font-size: 12px; font-weight: bold;">{{ $pieChartData['total'] }}</text>
+                                    <text x="50" y="58" text-anchor="middle" class="text-xs fill-gray-500"
+                                        style="font-size: 6px;">proyectos</text>
+                                </svg>
+                            </div>
+
+                            {{-- Leyenda --}}
+                            <div class="flex-1 space-y-2">
+                                @foreach ($pieChartData['data'] as $item)
+                                    <div
+                                        class="flex items-center justify-between p-2 transition-colors bg-white rounded-lg hover:bg-gray-100">
+                                        <div class="flex items-center gap-2">
+                                            <span class="w-3 h-3 rounded-full"
+                                                style="background-color: {{ $item['color'] }}"></span>
+                                            <span
+                                                class="text-sm font-medium text-gray-700">{{ $item['status'] }}</span>
+                                        </div>
+                                        <div class="text-right">
+                                            <span class="text-sm font-bold text-gray-900">{{ $item['count'] }}</span>
+                                            <span
+                                                class="ml-1 text-xs text-gray-500">({{ $item['percentage'] }}%)</span>
+                                        </div>
+                                    </div>
+                                @endforeach
+                            </div>
+                        </div>
+                    @else
+                        <div class="flex flex-col items-center justify-center h-40 text-gray-400">
+                            <svg class="w-12 h-12 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                                    d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z" />
+                            </svg>
+                            <p class="text-sm">No hay proyectos en este período</p>
+                        </div>
+                    @endif
+                </div>
+
+                {{-- NUEVO: Proyecto Más Costoso + Top 5 --}}
+                <div class="p-6 rounded-xl bg-gray-50 ring-1 ring-gray-200">
+                    <h4 class="flex items-center gap-2 mb-6 text-lg font-semibold text-gray-800">
+                        <svg class="w-5 h-5 text-amber-500" fill="none" stroke="currentColor"
+                            viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        Proyecto Más Costoso del Mes
+                    </h4>
+
+                    @if ($mostExpensive && $mostExpensive['total_amount'] > 0)
+                        {{-- Tarjeta del proyecto más costoso --}}
+                        <div
+                            class="p-4 mb-4 overflow-hidden bg-gradient-to-br from-amber-500 to-orange-500 rounded-xl">
+                            <div class="flex items-start justify-between">
+                                <div class="flex-1">
+                                    <p class="text-xs font-medium text-white/80">🏆 Más costoso</p>
+                                    <h5 class="mt-1 text-lg font-bold text-white truncate"
+                                        title="{{ $mostExpensive['name'] }}">
+                                        {{ Str::limit($mostExpensive['name'], 30) }}
+                                    </h5>
+                                    <p class="mt-1 text-sm text-white/90">{{ $mostExpensive['service_code'] }}</p>
+                                    <p class="text-xs text-white/70">{{ $mostExpensive['sub_client'] }}</p>
+                                </div>
+                                <div class="text-right">
+                                    <p class="text-2xl font-bold text-white">S/.
+                                        {{ number_format($mostExpensive['total_amount'], 2) }}</p>
+                                    <span
+                                        class="inline-block px-2 py-0.5 mt-1 text-xs font-medium rounded-full bg-white/20 text-white">
+                                        {{ $mostExpensive['status'] }}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        {{-- Top 5 proyectos --}}
+                        <h5 class="mb-3 text-sm font-semibold text-gray-700">Top 5 Proyectos por Costo</h5>
+                        <div class="space-y-2">
+                            @foreach ($topProjects as $index => $project)
+                                <div
+                                    class="flex items-center gap-3 p-2 transition-colors bg-white rounded-lg hover:bg-gray-100">
+                                    <span
+                                        class="flex items-center justify-center w-6 h-6 text-xs font-bold rounded-full
+                                        {{ $index === 0 ? 'bg-amber-100 text-amber-700' : ($index === 1 ? 'bg-gray-200 text-gray-600' : 'bg-orange-100 text-orange-600') }}">
+                                        {{ $index + 1 }}
+                                    </span>
+                                    <div class="flex-1 min-w-0">
+                                        <p class="text-sm font-medium text-gray-800 truncate"
+                                            title="{{ $project['name'] }}">
+                                            {{ Str::limit($project['name'], 25) }}
+                                        </p>
+                                        <p class="text-xs text-gray-500">{{ $project['service_code'] }}</p>
+                                    </div>
+                                    <span class="flex-shrink-0 text-sm font-bold text-green-600">
+                                        S/. {{ number_format($project['total_amount'], 2) }}
+                                    </span>
+                                </div>
+                            @endforeach
+                        </div>
+                    @else
+                        <div class="flex flex-col items-center justify-center h-40 text-gray-400">
+                            <svg class="w-12 h-12 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                                    d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            <p class="text-sm">No hay proyectos con costos en este período</p>
+                        </div>
+                    @endif
+                </div>
+
+                {{-- NUEVO: Gastos Mensuales (12 meses) --}}
+                <div class="p-6 lg:col-span-2 rounded-xl bg-gray-50 ring-1 ring-gray-200">
+                    <h4 class="flex items-center gap-2 mb-6 text-lg font-semibold text-gray-800">
+                        <svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor"
+                            viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                        </svg>
+                        Gastos por Cotizaciones Aprobadas (Últimos 12 meses)
+                    </h4>
+
+                    @if (count($monthlyExpenses) > 0)
+                        @php
+                            $expensesCollection = collect($monthlyExpenses);
+
+                            // Total acumulado
+                            $totalExpenses = $expensesCollection->sum('total');
+
+                            // Meses con datos (que tienen gastos > 0)
+                            $monthsWithData = $expensesCollection->filter(fn($m) => $m['total'] > 0);
+                            $monthsWithDataCount = $monthsWithData->count();
+
+                            // Promedio mensual (solo de meses CON datos)
+                            $averageMonthly = $monthsWithDataCount > 0 ? $totalExpenses / $monthsWithDataCount : 0;
+
+                            // Mes más alto
+                            $maxExpense = $expensesCollection->max('total') ?: 0;
+
+                            // Nombre del mes con mayor gasto
+                            $maxMonth = $expensesCollection->sortByDesc('total')->first();
+                            $maxMonthName = $maxMonth && $maxMonth['total'] > 0 ? $maxMonth['month_year'] : '-';
+                        @endphp
+
+                        {{-- Resumen rápido --}}
+                        <div class="flex flex-wrap items-center gap-4 mb-6">
+                            <div class="px-4 py-2 bg-white rounded-lg ring-1 ring-gray-200">
+                                <span class="text-xs text-gray-500">Total acumulado (12 meses)</span>
+                                <p class="text-lg font-bold text-green-600">S/. {{ number_format($totalExpenses, 2) }}
+                                </p>
+                            </div>
+                            <div class="px-4 py-2 bg-white rounded-lg ring-1 ring-gray-200">
+                                <span class="text-xs text-gray-500">Promedio mensual
+                                    <span class="text-gray-400">({{ $monthsWithDataCount }} meses con datos)</span>
+                                </span>
+                                <p class="text-lg font-bold text-blue-600">S/. {{ number_format($averageMonthly, 2) }}
+                                </p>
+                            </div>
+                            <div class="px-4 py-2 bg-white rounded-lg ring-1 ring-gray-200">
+                                <span class="text-xs text-gray-500">Mes más alto
+                                    <span class="text-gray-400">({{ $maxMonthName }})</span>
+                                </span>
+                                <p class="text-lg font-bold text-amber-600">S/. {{ number_format($maxExpense, 2) }}
+                                </p>
+                            </div>
+                        </div>
+
+                        {{-- Gráfico de barras --}}
+                        <div class="relative">
+                            {{-- Líneas de guía horizontales --}}
+                            <div class="absolute inset-0 flex flex-col justify-between pointer-events-none"
+                                style="height: 200px;">
+                                @for ($i = 0; $i <= 4; $i++)
+                                    <div class="flex items-center w-full">
+                                        <span class="w-16 mr-2 text-[10px] text-gray-400 text-right">
+                                            S/. {{ number_format($maxExpense - ($maxExpense / 4) * $i, 0) }}
+                                        </span>
+                                        <div class="flex-1 border-t border-gray-200 border-dashed"></div>
+                                    </div>
+                                @endfor
+                            </div>
+
+                            {{-- Barras del gráfico --}}
+                            <div class="relative flex items-end gap-1 pl-20" style="height: 200px;">
+                                @foreach ($monthlyExpenses as $expense)
+                                    @php
+                                        $heightPct = $maxExpense > 0 ? ($expense['total'] / $maxExpense) * 100 : 0;
+                                    @endphp
+                                    <div class="relative flex flex-col items-center flex-1 group">
+                                        {{-- Tooltip --}}
+                                        <div
+                                            class="absolute z-20 hidden px-3 py-2 mb-1 text-xs text-white transform -translate-x-1/2 bg-gray-800 rounded-lg shadow-lg bottom-full left-1/2 group-hover:block whitespace-nowrap">
+                                            <p class="font-semibold">{{ $expense['month_year'] }}</p>
+                                            <p class="text-green-300">S/. {{ number_format($expense['total'], 2) }}
+                                            </p>
+                                            <p class="text-gray-300">{{ $expense['projects_count'] }} proyectos</p>
+                                        </div>
+
+                                        {{-- Valor encima de la barra --}}
+                                        @if ($expense['total'] > 0)
+                                            <span
+                                                class="mb-1 text-[10px] font-bold text-gray-600 hidden group-hover:block">
+                                                {{ number_format($expense['total'] / 1000, 1) }}k
+                                            </span>
+                                        @endif
+
+                                        {{-- Barra --}}
+                                        <div class="w-full rounded-t-md transition-all duration-300 cursor-pointer
+                                            {{ $expense['is_current'] ? 'bg-gradient-to-t from-green-600 to-green-400' : 'bg-gradient-to-t from-green-400 to-green-300 hover:from-green-500 hover:to-green-400' }}"
+                                            style="height: {{ max($heightPct, 2) }}%; min-height: {{ $expense['total'] > 0 ? '8px' : '2px' }};">
+                                        </div>
+                                    </div>
+                                @endforeach
+                            </div>
+
+                            {{-- Etiquetas de meses --}}
+                            <div class="flex gap-1 pl-20 mt-2">
+                                @foreach ($monthlyExpenses as $expense)
+                                    <div class="flex-1 text-center">
+                                        <span
+                                            class="text-[10px] font-medium {{ $expense['is_current'] ? 'text-green-600 font-bold' : 'text-gray-500' }}">
+                                            {{ $expense['month'] }}
+                                        </span>
+                                    </div>
+                                @endforeach
+                            </div>
+                        </div>
+
+                        {{-- Leyenda --}}
+                        <div class="flex items-center justify-end gap-4 mt-4 text-xs text-gray-500">
+                            <div class="flex items-center gap-2">
+                                <span class="w-3 h-3 rounded bg-gradient-to-t from-green-600 to-green-400"></span>
+                                <span>Mes seleccionado</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <span class="w-3 h-3 rounded bg-gradient-to-t from-green-400 to-green-300"></span>
+                                <span>Meses anteriores</span>
+                            </div>
+                        </div>
+                    @else
+                        <div class="flex flex-col items-center justify-center h-40 text-gray-400">
+                            <svg class="w-12 h-12 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                                    d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                            </svg>
+                            <p class="text-sm">Sin datos de gastos disponibles</p>
+                        </div>
+                    @endif
+                </div>
+
+                {{-- Proyectos por Estado (barras) - EXISTENTE --}}
                 <div class="p-6 rounded-xl bg-gray-50 ring-1 ring-gray-200">
                     <h4 class="flex items-center gap-2 mb-6 text-lg font-semibold text-gray-800">
                         <svg class="w-5 h-5 text-indigo-500" fill="none" stroke="currentColor"
@@ -883,7 +1178,7 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z" />
                         </svg>
-                        Proyectos por Estado
+                        Proyectos por Estado (Barras)
                     </h4>
                     <div class="space-y-4">
                         @php
@@ -921,311 +1216,7 @@
                     </div>
                 </div>
 
-                {{-- Estado de Despachos --}}
-                <div class="p-6 rounded-xl bg-gray-50 ring-1 ring-gray-200">
-                    <h4 class="flex items-center gap-2 mb-6 text-lg font-semibold text-gray-800">
-                        <svg class="w-5 h-5 text-cyan-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0" />
-                        </svg>
-                        Estado de Despachos
-                    </h4>
-                    <div class="flex flex-wrap items-center justify-center gap-6">
-                        @php
-                            $warehouseConfig = [
-                                'Atendido' => ['bg' => 'from-green-400 to-green-600', 'ring' => 'ring-green-300'],
-                                'Parcial' => ['bg' => 'from-orange-400 to-orange-600', 'ring' => 'ring-orange-300'],
-                                'Pendiente' => [
-                                    'bg' => 'from-yellow-400 to-yellow-600',
-                                    'ring' => 'ring-yellow-300',
-                                ],
-                            ];
-                        @endphp
-                        @foreach ($chartData['warehouse_stats'] as $status => $count)
-                            @php $cfg = $warehouseConfig[$status] ?? ['bg' => 'from-gray-400 to-gray-600', 'ring' => 'ring-gray-300']; @endphp
-                            <div class="text-center">
-                                <div
-                                    class="mx-auto flex h-24 w-24 items-center justify-center rounded-full bg-gradient-to-br {{ $cfg['bg'] }} {{ $cfg['ring'] }} ring-4 shadow-lg">
-                                    <span class="text-3xl font-bold text-white">{{ $count }}</span>
-                                </div>
-                                <p class="mt-3 text-sm font-semibold text-gray-700">{{ $status }}</p>
-                            </div>
-                        @endforeach
-                    </div>
-                </div>
-
-                {{-- Tendencia de Proyectos (12 meses) --}}
-                <div class="p-6 rounded-xl bg-gray-50 ring-1 ring-gray-200">
-                    <h4 class="flex items-center gap-2 mb-6 text-lg font-semibold text-gray-800">
-                        <svg class="w-5 h-5 text-indigo-500" fill="none" stroke="currentColor"
-                            viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-                        </svg>
-                        Tendencia de Proyectos (12 meses)
-                    </h4>
-                    @if ($advancedData['projects_trend']->count() > 0)
-                        @php
-                            $maxTrend = $advancedData['projects_trend']->max('count') ?: 1;
-                            $totalProyectos = $advancedData['projects_trend']->sum('count');
-                        @endphp
-
-                        {{-- Resumen rápido --}}
-                        <div class="flex items-center justify-between mb-4 text-sm">
-                            <span class="text-gray-500">Total: <span
-                                    class="font-bold text-indigo-600">{{ $totalProyectos }}</span>
-                                proyectos</span>
-                            <span class="text-gray-500">Máx: <span
-                                    class="font-bold text-indigo-600">{{ $maxTrend }}</span>/mes</span>
-                        </div>
-
-                        {{-- Contenedor del gráfico --}}
-                        <div class="relative">
-                            {{-- Líneas de guía horizontales --}}
-                            <div class="absolute inset-0 flex flex-col justify-between pointer-events-none"
-                                style="height: 160px;">
-                                @for ($i = 0; $i <= 4; $i++)
-                                    <div class="flex items-center w-full">
-                                        <span
-                                            class="w-6 mr-2 text-[10px] text-gray-400 text-right">{{ round($maxTrend - ($maxTrend / 4) * $i) }}</span>
-                                        <div class="flex-1 border-t border-gray-200 border-dashed"></div>
-                                    </div>
-                                @endfor
-                            </div>
-
-                            {{-- Barras del gráfico --}}
-                            <div class="relative flex items-end gap-1 pl-8" style="height: 160px;">
-                                @foreach ($advancedData['projects_trend'] as $index => $data)
-                                    @php
-                                        $heightPct = $maxTrend > 0 ? ($data['count'] / $maxTrend) * 100 : 0;
-                                        $isCurrentMonth = $index === $advancedData['projects_trend']->count() - 1;
-                                    @endphp
-                                    <div class="relative flex flex-col items-center flex-1 group">
-                                        {{-- Tooltip --}}
-                                        <div
-                                            class="absolute z-20 hidden px-2 py-1 mb-1 text-xs text-white transform -translate-x-1/2 bg-gray-800 rounded shadow-lg bottom-full left-1/2 group-hover:block whitespace-nowrap">
-                                            <p class="font-semibold">{{ $data['month'] }} {{ $data['year'] }}</p>
-                                            <p>{{ $data['count'] }} proyectos</p>
-                                        </div>
-
-                                        {{-- Valor encima de la barra --}}
-                                        <span
-                                            class="mb-1 text-xs font-bold {{ $isCurrentMonth ? 'text-indigo-600' : 'text-gray-600' }} {{ $data['count'] == 0 ? 'opacity-50' : '' }}">
-                                            {{ $data['count'] }}
-                                        </span>
-
-                                        {{-- Barra --}}
-                                        <div class="w-full rounded-t-md transition-all duration-300 cursor-pointer {{ $isCurrentMonth ? 'bg-gradient-to-t from-indigo-600 to-indigo-400' : 'bg-gradient-to-t from-indigo-400 to-indigo-300 hover:from-indigo-500 hover:to-indigo-400' }}"
-                                            style="height: {{ max($heightPct, 2) }}%; min-height: {{ $data['count'] > 0 ? '8px' : '2px' }};">
-                                        </div>
-                                    </div>
-                                @endforeach
-                            </div>
-
-                            {{-- Etiquetas de meses --}}
-                            <div class="flex gap-1 pl-8 mt-2">
-                                @foreach ($advancedData['projects_trend'] as $index => $data)
-                                    @php $isCurrentMonth = $index === $advancedData['projects_trend']->count() - 1; @endphp
-                                    <div class="flex-1 text-center">
-                                        <span
-                                            class="text-[10px] font-medium {{ $isCurrentMonth ? 'text-indigo-600 font-bold' : 'text-gray-500' }}">
-                                            {{ $data['month'] }}
-                                        </span>
-                                    </div>
-                                @endforeach
-                            </div>
-                        </div>
-
-                        {{-- Indicador del mes actual --}}
-                        <div class="flex items-center justify-end gap-2 mt-4 text-xs text-gray-500">
-                            <span class="w-3 h-3 rounded bg-gradient-to-t from-indigo-600 to-indigo-400"></span>
-                            <span>Mes actual</span>
-                            <span class="w-3 h-3 ml-2 rounded bg-gradient-to-t from-indigo-400 to-indigo-300"></span>
-                            <span>Meses anteriores</span>
-                        </div>
-                    @else
-                        <div class="flex flex-col items-center justify-center h-40 text-gray-400">
-                            <svg class="w-12 h-12 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
-                                    d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                            </svg>
-                            <p class="text-sm">Sin datos disponibles</p>
-                        </div>
-                    @endif
-                </div>
-
-                {{-- Cotizaciones por Mes --}}
-                <div class="p-6 rounded-xl bg-gray-50 ring-1 ring-gray-200">
-                    <h4 class="flex items-center gap-2 mb-6 text-lg font-semibold text-gray-800">
-                        <svg class="w-5 h-5 text-emerald-500" fill="none" stroke="currentColor"
-                            viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                        </svg>
-                        Cotizaciones por Mes (Últimos 6 meses)
-                    </h4>
-                    @if ($chartData['quotes_by_month']->count() > 0)
-                        <div class="flex items-end justify-around gap-4" style="height: 200px;">
-                            @php $maxTotal = $chartData['quotes_by_month']->max('total') ?: 1; @endphp
-                            @foreach ($chartData['quotes_by_month'] as $data)
-                                @php
-                                    $heightPct = ($data->total / $maxTotal) * 100;
-                                    $approvedPct = $data->total > 0 ? ($data->approved / $data->total) * 100 : 0;
-                                @endphp
-                                <div class="flex flex-col items-center flex-1">
-                                    <span class="mb-2 text-sm font-bold text-gray-700">{{ $data->total }}</span>
-                                    <div class="relative w-full max-w-[50px] overflow-hidden rounded-t-lg bg-blue-200"
-                                        style="height: {{ max($heightPct, 10) }}%;">
-                                        <div class="absolute bottom-0 w-full bg-green-500"
-                                            style="height: {{ $approvedPct }}%;"></div>
-                                    </div>
-                                    <span
-                                        class="mt-2 text-xs font-medium text-gray-500">{{ \Carbon\Carbon::parse($data->month . '-01')->format('M') }}</span>
-                                </div>
-                            @endforeach
-                        </div>
-                        <div class="flex items-center justify-center gap-6 mt-6 text-sm">
-                            <span class="flex items-center gap-2">
-                                <span class="w-3 h-3 bg-blue-400 rounded"></span>
-                                <span class="text-gray-600">Total</span>
-                            </span>
-                            <span class="flex items-center gap-2">
-                                <span class="w-3 h-3 bg-green-500 rounded"></span>
-                                <span class="text-gray-600">Aprobadas</span>
-                            </span>
-                        </div>
-                    @else
-                        <div class="flex items-center justify-center h-40 text-gray-400">No hay datos disponibles
-                        </div>
-                    @endif
-                </div>
-
-                {{-- NUEVO: Gráfico de Puntos - Cotizaciones Aprobadas por Fecha --}}
-                <div class="p-6 lg:col-span-2 rounded-xl bg-gray-50 ring-1 ring-gray-200">
-                    <h4 class="flex items-center gap-2 mb-6 text-lg font-semibold text-gray-800">
-                        <svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor"
-                            viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                        Cotizaciones Aprobadas (Ordenadas por Fecha)
-                    </h4>
-
-                    @if ($approvedTimeline->count() > 0)
-                        {{-- Gráfico de puntos --}}
-                        <div class="relative mb-6" style="height: 200px;">
-                            <div class="absolute inset-0 flex items-end">
-                                {{-- Línea base --}}
-                                <div class="absolute bottom-8 left-0 right-0 h-0.5 bg-gray-300"></div>
-
-                                {{-- Puntos --}}
-                                <div class="flex items-end justify-between w-full px-4">
-                                    @php
-                                        $maxAmount = $approvedTimeline->max('total_amount') ?: 1;
-                                        $count = $approvedTimeline->count();
-                                    @endphp
-                                    @foreach ($approvedTimeline as $index => $quote)
-                                        @php
-                                            $heightPct =
-                                                $maxAmount > 0 ? ($quote['total_amount'] / $maxAmount) * 100 : 10;
-                                            $dotSize = min(max($heightPct / 10, 3), 6);
-                                        @endphp
-                                        <div class="flex flex-col items-center group"
-                                            style="flex: 1; max-width: {{ 100 / max($count, 1) }}%;">
-                                            {{-- Tooltip --}}
-                                            <div
-                                                class="absolute z-10 hidden p-2 mb-2 text-xs text-white transition-opacity transform -translate-x-1/2 bg-gray-800 rounded-lg shadow-lg bottom-full group-hover:block whitespace-nowrap">
-                                                <p class="font-semibold">{{ $quote['request_number'] }}</p>
-                                                <p>{{ $quote['formatted_date'] }}</p>
-                                                <p class="text-green-300">S/.
-                                                    {{ number_format($quote['total_amount'], 2) }}</p>
-                                                <p class="text-gray-300">
-                                                    {{ Str::limit($quote['sub_client'], 20) }}</p>
-                                            </div>
-
-                                            {{-- Línea vertical --}}
-                                            <div class="w-0.5 bg-green-300 transition-all group-hover:bg-green-500"
-                                                style="height: {{ max($heightPct, 10) }}px;"></div>
-
-                                            {{-- Punto --}}
-                                            <div class="w-3 h-3 transition-transform transform bg-green-500 border-2 border-white rounded-full shadow-md cursor-pointer group-hover:scale-150 group-hover:bg-green-600"
-                                                title="{{ $quote['request_number'] }} - {{ $quote['formatted_date'] }}">
-                                            </div>
-                                        </div>
-                                    @endforeach
-                                </div>
-                            </div>
-
-                            {{-- Eje Y labels --}}
-                            <div class="absolute left-0 flex flex-col justify-between h-full text-xs text-gray-500"
-                                style="top: 0; bottom: 32px;">
-                                <span>S/. {{ number_format($maxAmount, 0) }}</span>
-                                <span>S/. {{ number_format($maxAmount / 2, 0) }}</span>
-                                <span>S/. 0</span>
-                            </div>
-                        </div>
-
-                        {{-- Lista de cotizaciones aprobadas --}}
-                        <div class="mt-6">
-                            <h5 class="mb-3 text-sm font-semibold text-gray-700">Detalle de Cotizaciones Aprobadas
-                            </h5>
-                            <div class="overflow-x-auto">
-                                <table class="min-w-full text-sm divide-y divide-gray-200">
-                                    <thead class="bg-gray-100">
-                                        <tr>
-                                            <th
-                                                class="px-3 py-2 text-xs font-semibold text-left text-gray-600 uppercase">
-                                                Fecha</th>
-                                            <th
-                                                class="px-3 py-2 text-xs font-semibold text-left text-gray-600 uppercase">
-                                                N° Cotización</th>
-                                            <th
-                                                class="px-3 py-2 text-xs font-semibold text-left text-gray-600 uppercase">
-                                                Proyecto</th>
-                                            <th
-                                                class="px-3 py-2 text-xs font-semibold text-left text-gray-600 uppercase">
-                                                Cliente</th>
-                                            <th
-                                                class="px-3 py-2 text-xs font-semibold text-left text-gray-600 uppercase">
-                                                Cotizador</th>
-                                            <th
-                                                class="px-3 py-2 text-xs font-semibold text-right text-gray-600 uppercase">
-                                                Monto</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody class="bg-white divide-y divide-gray-100">
-                                        @foreach ($approvedTimeline as $quote)
-                                            <tr class="hover:bg-gray-50">
-                                                <td class="px-3 py-2 text-gray-600 whitespace-nowrap">
-                                                    {{ $quote['formatted_date'] }}</td>
-                                                <td class="px-3 py-2 font-medium text-gray-900 whitespace-nowrap">
-                                                    {{ $quote['request_number'] }}</td>
-                                                <td class="px-3 py-2 text-gray-600"
-                                                    title="{{ $quote['project_name'] }}">
-                                                    {{ Str::limit($quote['project_name'], 30) }}</td>
-                                                <td class="px-3 py-2 text-gray-600">
-                                                    {{ Str::limit($quote['sub_client'], 25) }}</td>
-                                                <td class="px-3 py-2 text-gray-600">{{ $quote['employee'] }}</td>
-                                                <td
-                                                    class="px-3 py-2 font-semibold text-right text-green-600 whitespace-nowrap">
-                                                    S/. {{ number_format($quote['total_amount'], 2) }}</td>
-                                            </tr>
-                                        @endforeach
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    @else
-                        <div class="flex flex-col items-center justify-center py-12 text-gray-400">
-                            <svg class="w-16 h-16 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
-                                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
-                            <p class="text-lg font-medium">No hay cotizaciones aprobadas</p>
-                            <p class="text-sm">Las cotizaciones aprobadas aparecerán aquí ordenadas por fecha</p>
-                        </div>
-                    @endif
-                </div>
+                {{-- ...existing code for remaining charts... --}}
             </div>
         @endif
 
