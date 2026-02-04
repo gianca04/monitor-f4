@@ -48,7 +48,6 @@ class ComplianceForm
                                 $isNumeric = is_numeric($search);
 
                                 return Project::query()
-                                    ->allowedForUser(Auth::user())
                                     ->where('status', 'Aprobado')
                                     ->whereDoesntHave('compliance')
                                     ->where(function ($query) use ($search, $isNumeric) {
