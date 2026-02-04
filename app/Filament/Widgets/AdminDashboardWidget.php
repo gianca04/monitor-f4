@@ -342,6 +342,9 @@ class AdminDashboardWidget extends Widget
                 $warehouseStatus = 'Pendiente';
             }
 
+            // Determinar estado final del flujo
+            $finalStatus = $this->determineFinalStatus($project, $latestQuote, $warehouse);
+
             return [
                 'id' => $project->id,
                 'name' => $project->name ?? 'Sin nombre',
@@ -357,21 +360,78 @@ class AdminDashboardWidget extends Widget
                 'work_reports_count' => $project->workReports->count(),
                 'warehouse_status' => $warehouseStatus,
                 'warehouse_progress' => $warehouse?->calculateProgress() ?? 0,
-                'is_complete' => $this->isProjectComplete($project),
+                'is_complete' => $finalStatus === 'Completado',
+                'final_status' => $finalStatus,
                 'created_at' => $project->created_at?->format('d/m/Y') ?? '-',
             ];
         });
+    }
+
+    /**
+     * Determina el estado final del proyecto basado en el flujo completo
+     */
+    protected function determineFinalStatus($project, $latestQuote, $warehouse): string
+    {
+        // Si el proyecto está marcado como Completado o Facturado, respetamos ese estado
+        if (in_array($project->status, ['Completado', 'Facturado'])) {
+            return $project->status;
+        }
+
+        // Si está anulado
+        if ($project->status === 'Anulado') {
+            return 'Anulado';
+        }
+
+        // Verificar si tiene todos los componentes completos
+        $hasApprovedQuote = $latestQuote && in_array($latestQuote->status, ['Aprobado', 'aprobado']);
+        $hasCompliance = $project->compliance !== null;
+        $hasWorkReports = $project->workReports->count() > 0;
+        $hasAttendedWarehouse = $warehouse && in_array($warehouse->status, ['Atendido', 'atendido']);
+
+        // Si tiene todo completo
+        if ($hasApprovedQuote && $hasCompliance && $hasWorkReports && $hasAttendedWarehouse) {
+            return 'Completado';
+        }
+
+        // Si está en ejecución
+        if ($project->status === 'En Ejecución') {
+            return 'En Ejecución';
+        }
+
+        // Si tiene cotización aprobada pero no todo lo demás
+        if ($hasApprovedQuote) {
+            return 'En proceso';
+        }
+
+        // Si tiene cotización pendiente o enviada
+        if ($latestQuote) {
+            return 'Pendiente';
+        }
+
+        return 'Sin iniciar';
     }
 
     protected function isProjectComplete($project): bool
     {
         $latestQuote = $project->quotes->first();
 
-        return $project->status === 'Completado'
-            && $latestQuote?->status === 'Aprobado'
-            && $project->compliance !== null
-            && $project->workReports->count() > 0
-            && $latestQuote?->quoteWarehouse?->status === 'Atendido';
+        // Verificar estado del proyecto (puede ser 'Completado' o 'Facturado')
+        $projectCompleted = in_array($project->status, ['Completado', 'Facturado']);
+
+        // Verificar cotización aprobada (case insensitive)
+        $quoteApproved = $latestQuote && in_array(strtolower($latestQuote->status ?? ''), ['aprobado']);
+
+        // Verificar acta de conformidad
+        $hasCompliance = $project->compliance !== null;
+
+        // Verificar reportes de trabajo
+        $hasWorkReports = $project->workReports->count() > 0;
+
+        // Verificar almacén atendido (case insensitive)
+        $warehouseAttended = $latestQuote?->quoteWarehouse
+            && in_array(strtolower($latestQuote->quoteWarehouse->status ?? ''), ['atendido']);
+
+        return $projectCompleted || ($quoteApproved && $hasCompliance && $hasWorkReports && $warehouseAttended);
     }
 
     public function getCompletedProjectsCount(): int
