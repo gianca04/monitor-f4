@@ -44,7 +44,7 @@ class QuoteWarehouseController extends Controller
         $groupedDetails = $quote->quoteDetails->groupBy('item_type');
 
         $details = [];
-        foreach (['VIATICOS', 'SUMINISTRO', 'MANO DE OBRA'] as $type) {
+        foreach (['SUMINISTRO'] as $type) {
             if ($groupedDetails->has($type)) {
                 foreach ($groupedDetails[$type] as $detail) {
                     $attended = $warehouseDetails[$detail->id]->attended_quantity ?? 0;
@@ -214,7 +214,7 @@ class QuoteWarehouseController extends Controller
         $groupedDetails = $quote->quoteDetails->groupBy('item_type');
 
         $details = [];
-        foreach (['VIATICOS', 'SUMINISTRO', 'MANO DE OBRA'] as $type) {
+        foreach (['SUMINISTRO'] as $type) {
             if ($groupedDetails->has($type)) {
                 foreach ($groupedDetails[$type] as $detail) {
                     $attended = $warehouseDetails[$detail->id]->attended_quantity ?? 0;

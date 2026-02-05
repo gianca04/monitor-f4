@@ -294,4 +294,22 @@ class Project extends Model
     {
         return $this->hasMany(ProjectConsumption::class);
     }
+
+    /**
+     * Relación: Un proyecto tiene muchas asignaciones de herramientas.
+     */
+    public function projectTools()
+    {
+        return $this->hasMany(ProjectTool::class);
+    }
+
+    /**
+     * Relación: Un proyecto tiene muchas herramientas asignadas.
+     */
+    public function tools()
+    {
+        return $this->belongsToMany(Tool::class, 'project_tools')
+            ->withPivot(['assigned_at', 'returned_at', 'notes'])
+            ->withTimestamps();
+    }
 }
