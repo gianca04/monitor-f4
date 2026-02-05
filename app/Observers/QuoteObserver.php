@@ -26,16 +26,22 @@ class QuoteObserver
                 ->where('status', 'Aprobado')
                 ->update(['status' => 'Anulado']);
 
-            // Actualizar fecha de aprobación en el proyecto
+            // Actualizar fecha de aprobación y estado en el proyecto
             if ($quote->project) {
-                $quote->project->update(['quote_approved_at' => now()]);
+                $quote->project->update([
+                    'quote_approved_at' => now(),
+                    'status' => 'Aprobado',
+                ]);
             }
         }
 
         if ($quote->isDirty('status') && $quote->status === 'Enviado') {
-            // Actualizar fecha de envío en el proyecto
+            // Actualizar fecha de envío y estado en el proyecto
             if ($quote->project) {
-                $quote->project->update(['quote_sent_at' => now()]);
+                $quote->project->update([
+                    'quote_sent_at' => now(),
+                    'status' => 'Enviado',
+                ]);
             }
         }
     }
