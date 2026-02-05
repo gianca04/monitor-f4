@@ -318,6 +318,10 @@ class ProjectForm
                                                 function (callable $get) {
                                                     return Employee::query()
                                                         ->select('id', 'first_name', 'last_name', 'document_number')
+                                                        // Filtrar solo empleados con rol 'supervisor'
+                                                        ->whereHas('user.roles', function ($query) {
+                                                            $query->where('name', 'Inspector');
+                                                        })
                                                         ->when($get('search'), function ($query, $search) {
                                                             $query->where('first_name', 'like', "%{$search}%")
                                                                 ->orWhere('last_name', 'like', "%{$search}%")

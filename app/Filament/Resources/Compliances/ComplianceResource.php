@@ -30,10 +30,26 @@ class ComplianceResource extends Resource
     protected static ?string $modelLabel = 'Orden de trabajo';
     public static function getEloquentQuery(): Builder
     {
-        return parent::getEloquentQuery()
-            ->whereHas('project', function (Builder $query) {
-                $query->allowedForUser(Auth::user());
-            });
+        $query = parent::getEloquentQuery();
+        $user = Auth::user();
+
+        // Si el usuario tiene rol Inspector, filtrar solo los compliances
+        // de proyectos donde está asignado como inspector
+        if ($user && $user->hasRole('Inspector')) {
+            $employeeId = $user->employee_id;
+
+            if ($employeeId) {
+                return $query->forInspector($employeeId);
+            }
+
+            // Si no tiene employee_id, no mostrar nada
+            return $query->whereRaw('1 = 0');
+        }
+
+        // Para otros roles, usar la lógica existente de allowedForUser
+        return $query->whereHas('project', function (Builder $q) use ($user) {
+            $q->allowedForUser($user);
+        });
     }
 
     public static function form(Schema $schema): Schema
