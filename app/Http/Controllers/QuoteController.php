@@ -6,7 +6,6 @@ use App\Models\Quote;
 use App\Http\Requests\StoreQuoteRequest;
 use App\Http\Requests\UpdateQuoteRequest;
 use App\Models\QuoteCategory;
-use App\Models\QuoteWarehouse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -171,7 +170,7 @@ class QuoteController extends Controller
                     ]);
                 }
 
-                $this->createWarehouseIfApproved($quote, $validated['status'] ?? null);
+
 
                 session()->flash('swal', [
                     'title' => '¡Cotización creada!',
@@ -224,23 +223,7 @@ class QuoteController extends Controller
         }
     }
 
-    /**
-     * Método auxiliar para crear warehouse si está aprobado
-     */
-    private function createWarehouseIfApproved(Quote $quote, ?string $status): void
-    {
-        if ($status === 'Aprobado') {
-            $exists = QuoteWarehouse::where('quote_id', $quote->id)->exists();
-            if (!$exists) {
-                QuoteWarehouse::create([
-                    'quote_id'    => $quote->id,
-                    'employee_id' => Auth::user()->id ?? null,
-                    'status'      => 'Pendiente',
-                    'observations' => null,
-                ]);
-            }
-        }
-    }
+
 
     /**
      * Método auxiliar para realizar la actualización
@@ -280,8 +263,7 @@ class QuoteController extends Controller
             $this->processQuoteItems($quote, $request->input('items', []));
         }
 
-        // Crear warehouse si está aprobado
-        $this->createWarehouseIfApproved($quote, $validated['status'] ?? null);
+
 
         session()->flash('swal', [
             'title' => '¡Cotización actualizada!',
