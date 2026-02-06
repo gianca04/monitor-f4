@@ -25,7 +25,7 @@ class QuoteController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
-        $query = Quote::with(['employee', 'subClient.client', 'quoteCategory', 'quoteDetails', 'project.visit.quotedBy']);
+        $query = Quote::with(['employee', 'subClient.client', 'quoteCategory', 'quoteDetails', 'project.visit.quotedBy', 'project.subClient.client']);
 
         // Filtrar cotizaciones para rol "Cotizador" - solo ve las que creó
         $user = Auth::user();
@@ -69,9 +69,9 @@ class QuoteController extends Controller
         $quotes = $query->latest()->paginate(15);
 
         $quotes->getCollection()->transform(function ($quote) {
-            $quote->total_amount = (float) $quote->quoteDetails->sum(function ($detail) {
+            $quote->total_amount = (float) round($quote->quoteDetails->sum(function ($detail) {
                 return $detail->subtotal ?? ($detail->quantity * $detail->unit_price);
-            });
+            }), 1);
             return $quote;
         });
 

@@ -28,7 +28,7 @@ use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Schema;
 use Illuminate\Support\Facades\Auth;
 use Mpdf\Tag\A;
-use Ramsey\Collection\Set;
+use Filament\Schemas\Components\Utilities\Set;
 
 class ProjectForm
 {
@@ -302,7 +302,7 @@ class ProjectForm
                                         }
                                     )
                                     ->searchable()
-                                    ->helperText('Selecciona el supervisor responsable del seguimiento.'),
+                                    ->helperText('Solo el personal con el rol de "Supervisor" podra ser seleccionado.'),
                                 Repeater::make('inspectors')
                                     ->relationship()
                                     ->label('Inspectores asignados')
@@ -379,7 +379,7 @@ class ProjectForm
                                             })
                                             ->searchable() // Activa la búsqueda asincrónica
                                             ->placeholder('Seleccionar un empleado') // Placeholder
-                                            ->helperText('Selecciona el empleado responsable de la cotización.') // Ayuda para el campo de empleado
+                                            ->helperText('Solo el personal con el rol de "Inspector" podra ser seleccionado.') // Ayuda para el campo de empleado
 
                                             // Botón para ver información del empleado
                                             ->suffixAction(
@@ -468,7 +468,7 @@ class ProjectForm
                                             ->getOptionLabelUsing(fn($value): ?string => Employee::find($value)?->full_name)
                                             ->searchable() // Activa la búsqueda asincrónica
                                             ->placeholder('Seleccionar un empleado') // Placeholder
-                                            ->helperText('Selecciona el empleado responsable de la cotización.') // Ayuda para el campo de empleado
+                                            ->helperText('Solo el personal con el rol de "Cotizador" podra ser seleccionado.') // Ayuda para el campo de empleado
 
                                             ->createOptionForm([
                                                 Section::make('Nuevo Empleado')
@@ -565,7 +565,7 @@ class ProjectForm
                                                 }
                                             }),
 
-                                        // FIN DE SELECT DE EMPLEADO
+                                        // FIN DE SELECT DE EMPLEADO COTIZADOR
 
                                         DatePicker::make('visit_date')
                                             ->label('Fecha de la visita'),

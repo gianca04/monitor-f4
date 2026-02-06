@@ -716,7 +716,8 @@
                 },
 
                 getTotal() {
-                    return this.getSubtotal();
+                    // Redondear a 1 decimal para coincidir con el backend
+                    return Math.round(this.getSubtotal() * 10) / 10;
                 },
 
                 // Save

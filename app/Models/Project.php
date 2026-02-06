@@ -42,7 +42,7 @@ class Project extends Model
                 if (!$project->compliance()->exists()) {
                     Compliance::create([
                         'project_id' => $project->id,
-                        'status' => 'En Ejecución',
+                        'state' => 'Aprobado',
                     ]);
                 }
             }

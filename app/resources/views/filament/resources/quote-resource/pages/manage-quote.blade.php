@@ -73,29 +73,29 @@
 
                 // Sections
                 sections: [{
-                        key: 'viaticos',
-                        title: 'Viáticos',
-                        icon: 'flight_takeoff',
-                        priceTypeId: 3,
-                        bgClass: 'bg-blue-100 dark:bg-blue-900/30',
-                        iconClass: 'text-blue-600 dark:text-blue-400'
-                    },
-                    {
-                        key: 'suministros',
-                        title: 'Suministros',
-                        icon: 'inventory_2',
-                        priceTypeId: 2,
-                        bgClass: 'bg-amber-100 dark:bg-amber-900/30',
-                        iconClass: 'text-amber-600 dark:text-amber-400'
-                    },
-                    {
-                        key: 'mano_obra',
-                        title: 'Mano de Obra',
-                        icon: 'engineering',
-                        priceTypeId: 2,
-                        bgClass: 'bg-purple-100 dark:bg-purple-900/30',
-                        iconClass: 'text-purple-600 dark:text-purple-400'
-                    },
+                    key: 'viaticos',
+                    title: 'Viáticos',
+                    icon: 'flight_takeoff',
+                    priceTypeId: 3,
+                    bgClass: 'bg-blue-100 dark:bg-blue-900/30',
+                    iconClass: 'text-blue-600 dark:text-blue-400'
+                },
+                {
+                    key: 'suministros',
+                    title: 'Suministros',
+                    icon: 'inventory_2',
+                    priceTypeId: 2,
+                    bgClass: 'bg-amber-100 dark:bg-amber-900/30',
+                    iconClass: 'text-amber-600 dark:text-amber-400'
+                },
+                {
+                    key: 'mano_obra',
+                    title: 'Mano de Obra',
+                    icon: 'engineering',
+                    priceTypeId: 2,
+                    bgClass: 'bg-purple-100 dark:bg-purple-900/30',
+                    iconClass: 'text-purple-600 dark:text-purple-400'
+                },
                 ],
 
                 // Column Resizing
@@ -148,7 +148,7 @@
                     this.draggingItem = this.items[sectionKey][index];
                     this.draggingSection = sectionKey;
                     this.draggingIndex = index;
-                    console.log('Drag start:', sectionKey, index);
+
                 },
 
                 dragOver(event) {
@@ -231,11 +231,10 @@
                 init() {
                     this.filteredClients = [...this.allClients];
 
-                    console.log('[INIT] projectFromPHP:', projectFromPHP);
-                    console.log('[INIT] existingQuote:', existingQuote);
+
 
                     if (existingQuote) {
-                        console.log('✏️ Editando cotización:', existingQuote);
+
 
                         // Cargar datos básicos
                         this.quote.id = existingQuote.id;
@@ -266,7 +265,7 @@
 
                                 // [FIX] Usar datos del subcliente precargados si existen
                                 if (existingQuote.sub_client) {
-                                    console.log('✅ Subcliente precargado:', existingQuote.sub_client.name);
+
                                     this.subClientSearch = existingQuote.sub_client.name;
                                     // Asegurar que CECO esté seteado
                                     if (!this.quote.ceco) {
@@ -334,11 +333,11 @@
 
                     // Nueva lógica: inicializar búsqueda visual si hay sub_client_id en el proyecto
                     if (!existingQuote && projectFromPHP && projectFromPHP.sub_client_id) {
-                        console.log('[INIT] Buscando subcliente por ID:', projectFromPHP.sub_client_id);
+
                         fetch(`/api/sub-clients/${projectFromPHP.sub_client_id}`)
                             .then(res => res.json())
                             .then(subClient => {
-                                console.log('[FETCH] subClient:', subClient);
+
                                 this.quote.sub_client_id = subClient.id;
                                 this.subClientSearch = subClient.name;
                                 this.quote.ceco = subClient.ceco || '';
@@ -347,7 +346,7 @@
                                 const client = this.allClients.find(c => c.id === subClient.client_id);
                                 if (client) {
                                     this.clientSearch = client.business_name;
-                                    console.log('[FETCH] client.business_name:', client.business_name);
+
                                 }
                                 // Cargar subclientes del cliente para el select
                                 this.loadSubClients(subClient.client_id);
@@ -399,9 +398,9 @@
                             ...group,
                             page: 1, // Página actual para paginación
                         }));
-                        console.log('📦 Items iniciales cargados:', this.searchModal.priceTypeGroups.length, 'tipos');
+
                     } catch (error) {
-                        console.error('Error cargando items iniciales:', error);
+
                         this.searchModal.priceTypeGroups = [];
                     } finally {
                         this.searchModal.loadingInitial = false;
@@ -484,7 +483,7 @@
                         this.searchModal.priceTypeGroups[groupIndex].page = nextPage;
                         this.searchModal.priceTypeGroups[groupIndex].has_more = data.meta.has_more;
 
-                        console.log(`📥 Cargados ${data.data.length} items más para ${group.price_type.name}`);
+
                     } catch (error) {
                         console.error('Error cargando más items:', error);
                     } finally {
@@ -520,7 +519,7 @@
                             pricelist_id: result.id, // ID del pricelist para backend
                         });
                     });
-                    console.log(`✅ Agregados ${this.searchModal.selectedItems.length} items a ${this.searchModal.section}`);
+
                     this.searchModal.selectedItems = []; // Limpiar selección después de agregar
                     // NO cerramos el drawer para permitir seguir agregando
                 },
@@ -544,7 +543,6 @@
                         //     url += `&price_type_id=${this.searchModal.filter}`;
                         // }
 
-                        console.log('🔍 Searching URL:', url);
 
                         const response = await fetch(url);
 
@@ -554,11 +552,11 @@
                         }
 
                         const text = await response.text();
-                        console.log('📄 Raw response:', text);
+
 
                         try {
                             this.searchModal.results = JSON.parse(text);
-                            console.log('✅ Parsed results:', this.searchModal.results);
+
                         } catch (e) {
                             console.error('❌ JSON Parse error:', e);
                             this.searchModal.results = [];
@@ -588,7 +586,7 @@
 
                 // Seleccionar cliente desde el dropdown
                 selectClientFromDropdown(client) {
-                    console.log('🎯 Cliente seleccionado:', client);
+
                     this.quote.client_id = client.id;
                     this.clientSearch = client.business_name;
                     this.clientDropdownOpen = false;
@@ -617,13 +615,13 @@
                     this.subClients = [];
                     this.filteredSubClients = [];
                     this.subClientSearch = '';
-                    console.log('🗑️ Cliente y SubCliente limpiados');
+
                 },
 
                 // Cargar todos los subclientes de un cliente desde API (con búsqueda)
                 async loadSubClients(clientId, search = '') {
                     this.loadingSubClients = true;
-                    console.log('📦 Cargando subclientes para client_id:', clientId, 'con búsqueda:', search);
+
 
                     try {
                         let url = `/api/sub-clients?client_id=${clientId}`;
@@ -634,7 +632,7 @@
                         const data = await response.json();
                         this.subClients = data.data || data;
                         this.filteredSubClients = [...this.subClients];
-                        console.log('✅ Subclientes cargados:', this.subClients.length);
+
                     } catch (error) {
                         console.error('❌ Error cargando subclientes:', error);
                         this.subClients = [];
@@ -665,12 +663,12 @@
 
                 // Seleccionar subcliente desde el dropdown
                 selectSubClientFromDropdown(subClient) {
-                    console.log('🎯 SubCliente seleccionado:', subClient);
+
                     this.quote.sub_client_id = subClient.id;
                     this.subClientSearch = subClient.name;
                     this.quote.ceco = subClient.ceco || 'No definido';
                     this.subClientDropdownOpen = false;
-                    console.log('📝 CECO actualizado a:', this.quote.ceco);
+
                 },
 
                 // Limpiar selección de subcliente
@@ -679,7 +677,7 @@
                     this.subClientSearch = '';
                     this.quote.ceco = '';
                     this.filteredSubClients = [...this.subClients];
-                    console.log('🗑️ SubCliente limpiado');
+
                 },
 
                 // Items
@@ -701,7 +699,7 @@
                     this.items[sectionKey].splice(index, 1);
                 },
 
-                recalculate() {},
+                recalculate() { },
 
                 // Calculations
                 getSectionSubtotal(sectionKey) {
@@ -718,7 +716,8 @@
                 },
 
                 getTotal() {
-                    return this.getSubtotal();
+                    // Redondear a 1 decimal para coincidir con el backend
+                    return Math.round(this.getSubtotal() * 10) / 10;
                 },
 
                 // Save
@@ -726,7 +725,6 @@
                     this.saving = true;
 
                     try {
-                        console.log('🚀 Iniciando guardado de cotización...');
 
                         // Preparar datos de la cotización
                         const quoteData = {
@@ -763,7 +761,7 @@
                             ]
                         };
 
-                        console.log('📋 Datos de cotización preparados:', quoteData);
+
 
                         // Determinar URL y Método (POST para crear, PUT para actualizar)
                         const url = this.quote.id ? `/quotes/${this.quote.id}` : '/quotes';
@@ -836,7 +834,7 @@
 
                 // Reset form after successful save
                 resetForm() {
-                    console.log('🔄 Reseteando formulario...');
+
                     this.quote = {
                         id: null,
                         service_name: '',

@@ -1,221 +1,365 @@
 <x-filament-panels::page>
-    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200"
+        rel="stylesheet" />
 
     @vite(['resources/css/quote-cards.css', 'resources/js/app.js', 'resources/css/app.css'])
 
-    <div x-data="quoteIndex()" x-init="fetchQuotes(), initPagination()" class="quote-cards-container">
-        {{-- Header con estadísticas --}}
-        <div class="mb-8">
-            <div class="grid grid-cols-1 gap-4 sm:grid-cols-4">
+    <style>
+        .font-outfit {
+            font-family: 'Outfit', sans-serif;
+        }
+
+        .glass-effect {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+        }
+
+        .dark .glass-effect {
+            background: rgba(17, 24, 39, 0.95);
+        }
+
+        .card-hoverable {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .card-hoverable:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 24px -10px rgba(0, 0, 0, 0.1);
+        }
+
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+
+        .hide-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+        /* Mobile touch improvements for hover group */
+        @media (hover: none) {
+            .group-actions {
+                transform: translateY(0) !important;
+                opacity: 1 !important;
+            }
+        }
+
+        /* Sidebar Input Style Match */
+        .sidebar-input {
+            width: 100%;
+            font-size: 0.875rem;
+            border-radius: 0.75rem;
+            border: 1px solid rgb(229 231 235);
+            background-color: rgb(249 250 251);
+            padding: 0.6rem 2rem 0.6rem 0.85rem;
+            /* Extra padding right for arrow */
+            transition: all 0.15s ease;
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+            background-position: right 0.5rem center;
+            background-repeat: no-repeat;
+            background-size: 1.5em 1.5em;
+        }
+
+        .dark .sidebar-input {
+            border-color: rgb(55 65 81);
+            background-color: rgb(30 41 59);
+            color: white;
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%239ca3af' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+        }
+
+        .sidebar-input:focus {
+            border-color: rgb(16 185 129);
+            box-shadow: 0 0 0 2px rgb(16 185 129 / 0.2);
+            outline: none;
+        }
+    </style>
+
+    <div x-data="quoteIndex()" x-init="fetchQuotes(), initPagination()" class="space-y-8 font-outfit">
+
+        {{-- Header Stats --}}
+        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <!-- Total Cotizaciones -->
+            <div
+                class="relative overflow-hidden bg-white border border-gray-100 shadow-sm rounded-2xl dark:bg-gray-900 dark:border-gray-800 card-hoverable group">
                 <div
-                    class="flex items-center gap-4 p-4 bg-white border border-gray-200 rounded-lg quote-stat-card dark:bg-gray-800 dark:border-gray-700">
-                    <span
-                        class="flex items-center justify-center w-10 h-10 bg-blue-100 rounded-full dark:bg-blue-900/40">
-                        <span
-                            class="text-2xl text-blue-600 material-symbols-outlined dark:text-blue-300">assignment</span>
-                    </span>
-                    <div>
-                        <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Total de Cotizaciones</p>
-                        <p class="text-2xl font-bold text-gray-900 dark:text-white" x-text="stats.total_quotes">0</p>
-                    </div>
+                    class="absolute top-0 right-0 w-32 h-32 -mr-8 -mt-8 transition-transform bg-primary-50 rounded-full dark:bg-primary-900/10 group-hover:scale-110">
                 </div>
-                <div
-                    class="flex items-center gap-4 p-4 bg-white border border-gray-200 rounded-lg quote-stat-card dark:bg-gray-800 dark:border-gray-700">
-                    <span
-                        class="flex items-center justify-center w-10 h-10 bg-blue-100 rounded-full dark:bg-blue-900/40">
-                        <span
-                            class="text-2xl text-blue-600 material-symbols-outlined dark:text-blue-300">attach_money</span>
-                    </span>
-                    <div>
-                        <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Monto Total</p>
-                        <p class="text-2xl font-bold text-blue-600 dark:text-blue-400"
-                            x-text="'S/ ' + formatNumber(stats.total_amount)">S/ 0.00</p>
-                    </div>
-                </div>
-                <div
-                    class="flex items-center gap-4 p-4 border border-green-200 rounded-lg quote-stat-card bg-green-50 dark:bg-green-900/30 dark:border-green-800">
-                    <span
-                        class="flex items-center justify-center w-10 h-10 bg-green-100 rounded-full dark:bg-green-900/40">
-                        <span
-                            class="text-2xl text-green-600 material-symbols-outlined dark:text-green-300">check_circle</span>
-                    </span>
-                    <div>
-                        <p class="text-sm font-medium text-green-700 dark:text-green-400">Aprobadas</p>
-                        <p class="text-2xl font-bold text-green-600 dark:text-green-300" x-text="stats.approved">0</p>
-                    </div>
-                </div>
-                <div
-                    class="flex items-center gap-4 p-4 border border-blue-200 rounded-lg quote-stat-card bg-blue-50 dark:bg-blue-900/30 dark:border-blue-800">
-                    <span
-                        class="flex items-center justify-center w-10 h-10 bg-blue-100 rounded-full dark:bg-blue-900/40">
-                        <span
-                            class="text-2xl text-blue-600 material-symbols-outlined dark:text-blue-300">pending_actions</span>
-                    </span>
-                    <div>
-                        <p class="text-sm font-medium text-blue-700 dark:text-blue-400">Por Hacer</p>
-                        <p class="text-2xl font-bold text-blue-600 dark:text-blue-300" x-text="stats.pending">0</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        {{-- Buscador y Filtros --}}
-        <div class="flex flex-col gap-4 mb-6 quote-search-filter sm:flex-row sm:items-center sm:justify-between">
-            <div class="relative flex-1 min-w-[300px]">
-                <span class="absolute inset-y-0 left-0 flex items-center pl-3">
-                    <span class="text-gray-400 material-symbols-outlined">search</span>
-                </span>
-                <input type="text" x-model="search" @input.debounce.500ms="fetchQuotes()"
-                    class="block w-full py-2 pl-10 pr-4 border border-gray-300 rounded-lg quote-search-input dark:bg-gray-800 dark:border-gray-700"
-                    placeholder="Buscar por número, cliente, cotizador o servicio...">
-            </div>
-
-            <select x-model="filterStatus" @change="fetchQuotes()"
-                class="px-4 py-2 border border-gray-300 rounded-lg quote-select-filter dark:bg-gray-800 dark:border-gray-700">
-                <option value="">Todos los estados</option>
-                <option value="Pendiente">Por Hacer</option>
-                <option value="Enviado">Enviado</option>
-                <option value="Aprobado">Aprobado</option>
-                <option value="Anulado">Anulado</option>
-            </select>
-
-            {{-- Select para filtrar por cotizador --}}
-            <select x-model="filterEmployeeId" @change="fetchQuotes()"
-                class="px-4 py-2 border border-gray-300 rounded-lg quote-select-filter dark:bg-gray-800 dark:border-gray-700">
-                <option value="">Todos los cotizadores</option>
-                <template x-for="emp in stats.employees" :key="emp.id">
-                    <option :value="emp.id" x-text="emp.fullname"></option>
-                </template>
-            </select>
-
-            <select x-model="filterCategoryId" @change="fetchQuotes()"
-                class="px-4 py-2 border border-gray-300 rounded-lg quote-select-filter dark:bg-gray-800 dark:border-gray-700">
-                <option value="">Todas las categorías</option>
-                <template x-for="cat in stats.categories" :key="cat.id">
-                    <option :value="cat.id" x-text="cat.name"></option>
-                </template>
-            </select>
-
-            {{-- Filtro por rango de precios --}}
-            <div class="flex items-center gap-2">
-                <input type="number" x-model.number="filterMinTotal" @input.debounce.500ms="fetchQuotes()"
-                    class="w-24 px-2 py-2 border border-gray-300 rounded-lg dark:bg-gray-800 dark:border-gray-700"
-                    placeholder="Mín S/" min="0">
-                <span class="text-gray-500">-</span>
-                <input type="number" x-model.number="filterMaxTotal" @input.debounce.500ms="fetchQuotes()"
-                    class="w-24 px-2 py-2 border border-gray-300 rounded-lg dark:bg-gray-800 dark:border-gray-700"
-                    placeholder="Máx S/" min="0">
-            </div>
-        </div>
-
-        {{-- Grid de Cards --}}
-        <div class="grid grid-cols-1 gap-6 quote-card-grid sm:grid-cols-3">
-            <template x-for="quote in paginatedQuotes" :key="quote.id">
-                <div class="quote-card">
-                    {{-- 1. Logo del Cliente (Expandido) --}}
-                    <div class="quote-card-logo-container">
-                        <template x-if="quote.sub_client?.client?.logo">
-                            <img :src="'/storage/' + quote.sub_client.client.logo" class="quote-card-logo"
-                                alt="Logo Cliente">
-                        </template>
-                        <template x-if="!quote.sub_client?.client?.logo">
-                            <div class="flex flex-col items-center opacity-40">
-                                <span class="text-4xl material-symbols-outlined">corporate_fare</span>
-                                <span class="text-[10px] font-bold">SAT INDUSTRIALES</span>
-                            </div>
-                        </template>
-                    </div>
-
-                    {{-- 2. Identificación y Estado --}}
-                    <div class="flex items-center justify-between px-4 py-3 border-b border-gray-100 bg-gray-50/50">
-                        <div>
-                            <p class="text-[9px] uppercase font-bold text-gray-400 tracking-tighter">Nº Solicitud</p>
-                            <p class="text-sm font-black text-blue-700" x-text="quote.request_number || 'S/N'"></p>
+                <div class="relative p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <div
+                            class="p-2 rounded-xl bg-primary-50 text-primary-600 dark:bg-primary-900/30 dark:text-primary-400">
+                            <span class="text-2xl material-symbols-rounded">description</span>
                         </div>
-                        <span :class="getStatusClass(quote.status)"
-                            class="px-3 py-1 text-[10px] font-black rounded-full shadow-sm uppercase tracking-wider"
-                            x-text="quote.status">
+                        <span
+                            class="flex items-center text-xs font-medium text-green-600 bg-green-50 px-2 py-1 rounded-full dark:bg-green-900/20 dark:text-green-400">
+                            <span class="material-symbols-rounded text-[14px] mr-1">trending_up</span>
+                            Actual
                         </span>
                     </div>
-
-                    {{-- 3. Monto Total (Diseño Impactante) --}}
-                    <div class="quote-card-amount-banner">
-                        <p class="text-[10px] uppercase font-bold text-blue-100/80"
-                            x-text="quote.service_name || quote.project?.name || 'Servicio General'"></p>
-                        <p class="text-2xl font-black text-white"
-                            x-text="'S/ ' + formatNumber(quote.total_amount || 0)"></p>
+                    <div>
+                        <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Total Cotizaciones</p>
+                        <h3 class="text-3xl font-bold text-gray-900 dark:text-white mt-1" x-text="stats.total_quotes">0
+                        </h3>
                     </div>
+                </div>
+            </div>
 
-                    {{-- 4. Información Detallada --}}
-                    <div class="p-4 space-y-3">
-                        {{-- Sede / Cliente --}}
-                        <div class="flex items-center gap-3">
-                            <div class="p-2 text-blue-600 rounded-lg bg-blue-50">
-                                <span class="text-sm material-symbols-outlined">location_on</span>
-                            </div>
-                            <div class="min-w-0">
-                                <p class="text-[9px] font-bold text-gray-400 uppercase">Unidad / Sede</p>
-                                <p class="text-xs font-bold text-gray-800 truncate"
-                                    x-text="quote.sub_client?.name || 'Sin sede'"></p>
-                            </div>
-                        </div>
-
-                        <div class="grid grid-cols-2 gap-2 pt-3 border-t border-gray-50">
-                            {{-- Fecha --}}
-                            <div class="flex items-center gap-2">
-                                <span class="text-xs text-amber-500 material-symbols-outlined">calendar_month</span>
-                                <span class="text-[10px] font-bold text-gray-600"
-                                    x-text="formatDate(quote.quote_date)"></span>
-                            </div>
-                            {{-- Categoría --}}
-                            <div class="flex items-center gap-2">
-                                <span class="text-xs text-green-600 material-symbols-outlined">label</span>
-                                <span class="text-[10px] font-bold text-gray-600 truncate"
-                                    x-text="quote.quote_category?.name || '-'"></span>
-                            </div>
-                        </div>
-
-                        {{-- Cotizador --}}
-                        <div class="flex items-center gap-2 mt-1">
-                            <span class="text-xs text-purple-500 material-symbols-outlined">person</span>
-                            <span class="text-[10px] font-medium text-gray-500 italic" x-text="quote.employee
-                                        ? ((quote.employee.first_name || '') + ' ' + (quote.employee.last_name || ''))
-                                        : (quote.project?.visit?.quoted_by
-                                            ? ((quote.project.visit.quoted_by.first_name || '') + ' ' + (quote.project.visit.quoted_by.last_name || ''))
-                                            : 'No asignado')"></span>
+            <!-- Monto Total -->
+            <div
+                class="relative overflow-hidden bg-white border border-gray-100 shadow-sm rounded-2xl dark:bg-gray-900 dark:border-gray-800 card-hoverable group">
+                <div
+                    class="absolute top-0 right-0 w-32 h-32 -mr-8 -mt-8 transition-transform bg-green-50 rounded-full dark:bg-green-900/10 group-hover:scale-110">
+                </div>
+                <div class="relative p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="p-2 rounded-xl bg-green-50 text-green-600 dark:bg-green-900/30 dark:text-green-400">
+                            <span class="text-2xl material-symbols-rounded">payments</span>
                         </div>
                     </div>
+                    <div>
+                        <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Monto Total</p>
+                        <h3 class="text-3xl font-bold text-gray-900 dark:text-white mt-1"
+                            x-text="'S/ ' + formatNumber(stats.total_amount)">S/ 0.00</h3>
+                    </div>
+                </div>
+            </div>
 
-                    {{-- 5. Botonera de Acciones (Compact Grid) --}}
-                    <div class="flex items-center justify-between gap-2 p-3 border-t border-gray-100 bg-gray-50">
-                        <div class="flex gap-2">
-                            <a :href="'/dashboard/quotes/' + quote.id + '/edit'"
-                                class="flex items-center justify-center w-8 h-8 text-gray-600 transition-all bg-white border border-gray-200 rounded-lg hover:text-blue-600 hover:border-blue-300 hover:shadow-sm"
-                                title="Editar">
-                                <span class="text-sm material-symbols-outlined">edit</span>
-                            </a>
-                            <a :href="'/quotes/' + quote.id + '/preview'" target="_blank"
-                                class="flex items-center justify-center w-8 h-8 text-gray-600 transition-all bg-white border border-gray-200 rounded-lg hover:text-gray-900 hover:border-gray-400 hover:shadow-sm"
-                                title="Ver">
-                                <span class="text-sm material-symbols-outlined">visibility</span>
-                            </a>
+            <!-- Aprobadas -->
+            <div
+                class="relative overflow-hidden bg-white border border-gray-100 shadow-sm rounded-2xl dark:bg-gray-900 dark:border-gray-800 card-hoverable group">
+                <div
+                    class="absolute top-0 right-0 w-32 h-32 -mr-8 -mt-8 transition-transform bg-emerald-50 rounded-full dark:bg-emerald-900/10 group-hover:scale-110">
+                </div>
+                <div class="relative p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <div
+                            class="p-2 rounded-xl bg-emerald-50 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400">
+                            <span class="text-2xl material-symbols-rounded">check_circle</span>
+                        </div>
+                    </div>
+                    <div>
+                        <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Aprobadas</p>
+                        <h3 class="text-3xl font-bold text-gray-900 dark:text-white mt-1" x-text="stats.approved">0</h3>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Pendientes -->
+            <div
+                class="relative overflow-hidden bg-white border border-gray-100 shadow-sm rounded-2xl dark:bg-gray-900 dark:border-gray-800 card-hoverable group">
+                <div
+                    class="absolute top-0 right-0 w-32 h-32 -mr-8 -mt-8 transition-transform bg-amber-50 rounded-full dark:bg-amber-900/10 group-hover:scale-110">
+                </div>
+                <div class="relative p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="p-2 rounded-xl bg-amber-50 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400">
+                            <span class="text-2xl material-symbols-rounded">pending</span>
+                        </div>
+                    </div>
+                    <div>
+                        <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Por Hacer</p>
+                        <h3 class="text-3xl font-bold text-gray-900 dark:text-white mt-1" x-text="stats.pending">0</h3>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {{-- Filters Section --}}
+        <div
+            class="p-2 bg-white border border-gray-200 shadow-sm rounded-2xl dark:bg-gray-900 dark:border-gray-800 sticky top-4 z-10 mx-1">
+            <div class="grid grid-cols-1 gap-3 lg:grid-cols-12">
+                {{-- Search --}}
+                <div class="lg:col-span-4">
+                    <div class="relative group">
+                        <div class="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none">
+                            <span
+                                class="text-gray-400 material-symbols-rounded group-focus-within:text-primary-500 transition-colors">search</span>
+                        </div>
+                        <input type="text" x-model="search" @input.debounce.500ms="fetchQuotes()"
+                            class="block w-full py-3 pl-11 pr-4 text-sm bg-gray-50/50 border-none rounded-xl focus:ring-2 focus:ring-primary-600/20 focus:bg-white transition-all dark:bg-white/5 dark:text-white dark:focus:bg-white/10 dark:placeholder-gray-500"
+                            placeholder="Buscar por cliente, cotización, proyecto...">
+                    </div>
+                </div>
+
+                {{-- Select Filters --}}
+                <div class="flex gap-3 overflow-x-auto lg:col-span-8 hide-scrollbar pb-1 lg:pb-0">
+                    <select x-model="filterStatus" @change="fetchQuotes()"
+                        class="min-w-[140px] sidebar-input appearance-none font-medium text-gray-700 cursor-pointer dark:text-gray-200">
+                        <option value="">Estado: Todos</option>
+                        <option value="Pendiente">Por Hacer</option>
+                        <option value="Enviado">Enviado</option>
+                        <option value="Aprobado">Aprobado</option>
+                        <option value="Anulado">Anulado</option>
+                    </select>
+
+                    <select x-model="filterEmployeeId" @change="fetchQuotes()"
+                        class="min-w-[160px] sidebar-input appearance-none font-medium text-gray-700 cursor-pointer dark:text-gray-200">
+                        <option value="">Cotizador: Todos</option>
+                        <template x-for="emp in stats.employees" :key="emp.id">
+                            <option :value="emp.id" x-text="emp.fullname"></option>
+                        </template>
+                    </select>
+
+                    <select x-model="filterCategoryId" @change="fetchQuotes()"
+                        class="min-w-[160px] sidebar-input appearance-none font-medium text-gray-700 cursor-pointer dark:text-gray-200">
+                        <option value="">Categoría: Todas</option>
+                        <template x-for="cat in stats.categories" :key="cat.id">
+                            <option :value="cat.id" x-text="cat.name"></option>
+                        </template>
+                    </select>
+
+                    <div class="flex items-center gap-2 min-w-[200px] ml-auto">
+                        <input type="number" x-model.number="filterMinTotal" @input.debounce.500ms="fetchQuotes()"
+                            class="w-full py-3 px-4 text-sm text-center bg-gray-50/50 border-none rounded-xl focus:ring-2 focus:ring-primary-600/20 focus:bg-white transition-all dark:bg-white/5 dark:text-white dark:focus:bg-white/10"
+                            placeholder="Min">
+                        <span class="text-gray-300 dark:text-gray-600">-</span>
+                        <input type="number" x-model.number="filterMaxTotal" @input.debounce.500ms="fetchQuotes()"
+                            class="w-full py-3 px-4 text-sm text-center bg-gray-50/50 border-none rounded-xl focus:ring-2 focus:ring-primary-600/20 focus:bg-white transition-all dark:bg-white/5 dark:text-white dark:focus:bg-white/10"
+                            placeholder="Max">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {{-- Skeleton Loading --}}
+        <div x-show="loading"
+            class="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 animate-pulse">
+            <template x-for="i in 8">
+                <div
+                    class="bg-white border border-gray-100 rounded-2xl h-64 dark:bg-gray-900 dark:border-gray-800 p-6 flex flex-col justify-between">
+                    <div class="flex justify-between items-start">
+                        <div class="w-14 h-14 bg-gray-200 rounded-xl dark:bg-gray-800"></div>
+                        <div class="w-20 h-6 bg-gray-200 rounded-lg dark:bg-gray-800"></div>
+                    </div>
+                    <div class="space-y-3">
+                        <div class="h-4 bg-gray-200 rounded w-1/3 dark:bg-gray-800"></div>
+                        <div class="h-6 bg-gray-200 rounded w-full dark:bg-gray-800"></div>
+                        <div class="h-4 bg-gray-200 rounded w-2/3 dark:bg-gray-800"></div>
+                    </div>
+                    <div class="flex justify-between items-center pt-4 border-t border-gray-100 dark:border-gray-800">
+                        <div class="w-24 h-8 bg-gray-200 rounded dark:bg-gray-800"></div>
+                        <div class="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-800"></div>
+                    </div>
+                </div>
+            </template>
+        </div>
+
+        {{-- Quotes Grid --}}
+        <div x-show="!loading" class="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+            <template x-for="quote in paginatedQuotes" :key="quote.id">
+                <div
+                    class="group relative flex flex-col h-full bg-white border border-gray-200/60 rounded-2xl shadow-[0_2px_8px_rgba(0,0,0,0.04)] dark:bg-gray-900 dark:border-gray-700/60 transition-all duration-300 hover:shadow-[0_12px_24px_rgba(0,0,0,0.08)] hover:-translate-y-1 overflow-hidden">
+
+                    {{-- Status Banner Line --}}
+                    <div class="h-1.5 w-full" :class="{
+                            'bg-emerald-500': quote.status === 'Aprobado',
+                            'bg-amber-500': quote.status === 'Enviado',
+                            'bg-blue-500': quote.status === 'Pendiente',
+                            'bg-red-500': quote.status === 'Anulado'
+                        }">
+                    </div>
+
+                    <div class="p-6 flex flex-col flex-grow relative">
+                        {{-- Top: Logo & Status --}}
+                        <div class="flex items-start justify-between mb-5">
+                            <div
+                                class="relative w-14 h-14 p-2 bg-white border border-gray-100 rounded-xl shadow-sm dark:bg-gray-800 dark:border-gray-700 flex items-center justify-center overflow-hidden group-hover:border-primary-100 transition-colors">
+                                <template x-if="getClientLogo(quote)">
+                                    <img :src="'/storage/' + getClientLogo(quote)" class="object-contain w-full h-full"
+                                        alt="Logo">
+                                </template>
+                                <template x-if="!getClientLogo(quote)">
+                                    <span class="text-gray-300 material-symbols-rounded text-2xl">business</span>
+                                </template>
+                            </div>
+
+                            <div class="flex flex-col items-end gap-1">
+                                <span
+                                    class="px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider rounded-lg border shadow-sm"
+                                    :class="{
+                                        'bg-emerald-50 text-emerald-600 border-emerald-100 dark:bg-emerald-900/20 dark:text-emerald-400 dark:border-emerald-800': quote.status === 'Aprobado',
+                                        'bg-amber-50 text-amber-600 border-amber-100 dark:bg-amber-900/20 dark:text-amber-400 dark:border-amber-800': quote.status === 'Enviado',
+                                        'bg-blue-50 text-blue-600 border-blue-100 dark:bg-blue-900/20 dark:text-blue-400 dark:border-blue-800': quote.status === 'Pendiente',
+                                        'bg-red-50 text-red-600 border-red-100 dark:bg-red-900/20 dark:text-red-400 dark:border-red-800': quote.status === 'Anulado'
+                                    }" x-text="quote.status">
+                                </span>
+                                <span class="text-[10px] text-gray-400" x-text="formatDate(quote.created_at)"></span>
+                            </div>
                         </div>
 
+                        {{-- Middle: Content --}}
+                        <div class="mb-4">
+                            <div class="flex items-center gap-2 mb-2">
+                                <span
+                                    class="text-[10px] font-bold text-gray-500 uppercase tracking-widest bg-gray-100 px-2 py-0.5 rounded dark:bg-gray-800 dark:text-gray-400"
+                                    x-text="quote.request_number || 'S/N'">
+                                </span>
+                            </div>
+                            <h3 class="text-lg font-bold text-gray-900 dark:text-white leading-tight mb-1 line-clamp-2 group-hover:text-primary-600 transition-colors"
+                                x-text="quote.service_name || quote.project?.name || 'Servicio Desconocido'"
+                                :title="quote.service_name || quote.project?.name">
+                            </h3>
+                            <p
+                                class="text-xs text-gray-500 dark:text-gray-400 font-medium truncate flex items-center gap-1">
+                                <span class="material-symbols-rounded text-[14px]">apartment</span>
+                                <span x-text="getClientName(quote)"></span>
+                            </p>
+                        </div>
+
+                        {{-- Bottom: Price --}}
+                        <div class="mt-auto pt-4 border-t border-gray-50 dark:border-gray-800">
+                            <div class="flex justify-between items-end">
+                                <div>
+                                    <p class="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-0.5">
+                                        Monto Total</p>
+                                    <p class="text-xl font-bold text-gray-900 dark:text-white font-mono tracking-tight"
+                                        x-text="'S/ ' + formatNumber(quote.total_amount || 0)">
+                                    </p>
+                                </div>
+
+                                {{-- Avatar User --}}
+                                <div class="flex items-center" :title="quote.employee?.first_name || 'Sin asignar'">
+                                    <div class="flex flex-col items-end mr-2">
+                                        <span class="text-[10px] text-gray-400 font-medium">Cotizador</span>
+                                        <span class="text-[10px] font-bold text-gray-700 dark:text-gray-300"
+                                            x-text="quote.employee?.first_name || 'N/A'"></span>
+                                    </div>
+                                    <div
+                                        class="w-9 h-9 rounded-full border-2 border-white dark:border-gray-900 bg-gray-100 flex items-center justify-center text-xs font-bold text-gray-600 dark:bg-gray-700 dark:text-gray-300 shadow-sm">
+                                        <template x-if="quote.employee?.avatar_url">
+                                            <img :src="quote.employee.avatar_url"
+                                                class="w-full h-full rounded-full object-cover">
+                                        </template>
+                                        <template x-if="!quote.employee?.avatar_url">
+                                            <span x-text="quote.employee ? quote.employee.first_name[0] : '?'"></span>
+                                        </template>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {{-- Overlay Actions (Hover + Touch) --}}
+                    <div
+                        class="group-actions absolute inset-x-0 bottom-0 p-4 bg-white/95 backdrop-blur-md dark:bg-gray-900/95 border-t border-gray-100 dark:border-gray-800 transform translate-y-full group-hover:translate-y-0 transition-all duration-300 ease-out flex justify-between gap-2 z-10">
+                        <button @click="window.location.href='/dashboard/quotes/' + quote.id + '/edit'"
+                            class="flex-1 flex items-center justify-center gap-2 py-2 text-xs font-bold text-white bg-primary-600 rounded-lg hover:bg-primary-700 transition-colors shadow-lg shadow-primary-500/20 active:scale-95">
+                            <span class="material-symbols-rounded text-base">edit</span>
+                            Editar
+                        </button>
+
                         <div class="flex gap-2">
-                            <a :href="'/quotes/' + quote.id + '/pdf'" target="_blank"
-                                class="flex items-center justify-center w-8 h-8 text-white transition-all bg-blue-600 rounded-lg hover:bg-blue-700 hover:shadow-md"
-                                title="Descargar PDF">
-                                <span class="text-sm material-symbols-outlined">picture_as_pdf</span>
-                            </a>
-                            <a :href="'/quotes/' + quote.id + '/excel'" target="_blank"
-                                class="flex items-center justify-center w-8 h-8 text-white transition-all rounded-lg bg-emerald-600 hover:bg-emerald-700 hover:shadow-md"
-                                title="Descargar Excel">
-                                <span class="text-sm material-symbols-outlined">grid_on</span>
-                            </a>
+                            <button @click="window.open('/quotes/' + quote.id + '/preview', '_blank')"
+                                class="w-9 h-9 flex items-center justify-center text-gray-500 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 hover:text-primary-600 hover:border-primary-100 transition-colors dark:bg-gray-800 dark:text-gray-400 dark:border-gray-700 dark:hover:bg-gray-700 active:scale-95"
+                                title="Vista Previa">
+                                <span class="material-symbols-rounded">visibility</span>
+                            </button>
                             <button @click="deleteQuote(quote.id)"
-                                class="flex items-center justify-center w-8 h-8 text-white transition-all bg-red-500 rounded-lg hover:bg-red-600 hover:shadow-md"
+                                class="w-9 h-9 flex items-center justify-center text-gray-500 bg-white border border-gray-200 rounded-lg hover:bg-red-50 hover:text-red-600 hover:border-red-100 transition-colors dark:bg-gray-800 dark:text-gray-400 dark:border-gray-700 dark:hover:bg-gray-700 active:scale-95"
                                 title="Eliminar">
-                                <span class="text-sm material-symbols-outlined">delete</span>
+                                <span class="material-symbols-rounded">delete</span>
                             </button>
                         </div>
                     </div>
@@ -224,25 +368,35 @@
         </div>
 
         {{-- Empty State --}}
-        <div x-show="!loading && quotes.length === 0" class="quote-empty-state">
-            <p class="text-lg font-semibold text-gray-600 dark:text-gray-400">No se encontraron cotizaciones</p>
-            <p class="text-sm text-gray-500 dark:text-gray-500">Intenta con otros términos de búsqueda</p>
+        <div x-show="!loading && quotes.length === 0"
+            class="flex flex-col items-center justify-center py-24 text-center bg-white border border-gray-100 border-dashed rounded-3xl dark:bg-gray-900 dark:border-gray-800">
+            <div class="flex items-center justify-center w-24 h-24 mb-6 rounded-3xl bg-gray-50 dark:bg-gray-800">
+                <span class="text-5xl text-gray-300 material-symbols-rounded dark:text-gray-600">search_off</span>
+            </div>
+            <h3 class="text-2xl font-bold text-gray-900 dark:text-white">No hay cotizaciones</h3>
+            <p class="mt-2 text-gray-500 dark:text-gray-400 max-w-sm mx-auto text-base">No hemos encontrado ninguna
+                cotización con los filtros actuales. Intenta limpiar la búsqueda.</p>
+            <button @click="resetFilters()"
+                class="mt-6 px-6 py-2.5 bg-gray-900 text-white rounded-xl font-medium text-sm hover:bg-gray-800 transition-colors dark:bg-white dark:text-gray-900 dark:hover:bg-gray-100">
+                Limpiar Filtros
+            </button>
         </div>
 
-        {{-- Loading State --}}
-        <div x-show="loading" class="flex justify-center py-12">
-            <x-filament::loading-indicator class="w-10 h-10" />
-        </div>
-
-        {{-- Paginación --}}
-        <div x-show="!loading && quotes.length > 0" class="quote-pagination">
-            <button @click="previousPage()" :disabled="currentPage === 1" class="px-4 py-2 border rounded-lg">
+        {{-- Pagination --}}
+        <div x-show="!loading && quotes.length > 0"
+            class="flex items-center justify-between px-6 py-4 bg-white border border-gray-100 rounded-2xl shadow-sm dark:bg-gray-900 dark:border-gray-800 sticky bottom-4 z-10 mx-1">
+            <button @click="previousPage()" :disabled="currentPage === 1"
+                class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 transition-all bg-white border border-gray-200 rounded-xl hover:bg-gray-50 hover:border-gray-300 disabled:opacity-50 disabled:cursor-not-allowed dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700">
+                <span class="material-symbols-rounded text-lg">arrow_back</span>
                 Anterior
             </button>
-            <span class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300"
+            <span
+                class="text-xs font-bold text-gray-500 dark:text-gray-400 font-outfit uppercase tracking-wider bg-gray-50 px-3 py-1.5 rounded-lg dark:bg-white/5"
                 x-text="'Página ' + currentPage + ' de ' + totalPages"></span>
-            <button @click="nextPage()" :disabled="currentPage === totalPages" class="px-4 py-2 border rounded-lg">
+            <button @click="nextPage()" :disabled="currentPage === totalPages"
+                class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 transition-all bg-white border border-gray-200 rounded-xl hover:bg-gray-50 hover:border-gray-300 disabled:opacity-50 disabled:cursor-not-allowed dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700">
                 Siguiente
+                <span class="material-symbols-rounded text-lg">arrow_forward</span>
             </button>
         </div>
     </div>
@@ -252,7 +406,7 @@
         function quoteIndex() {
             return {
                 quotes: [],
-                loading: false,
+                loading: true,
                 search: '',
                 filterStatus: '',
                 filterEmployeeId: '',
@@ -271,9 +425,33 @@
                 },
                 perPage: 12,
                 get paginatedQuotes() {
-                    // Solo muestra 12 por página
                     const start = (this.currentPage - 1) * this.perPage;
                     return this.quotes.slice(start, start + this.perPage);
+                },
+                getClientName(quote) {
+                    if (quote.sub_client?.name) return quote.sub_client.name;
+                    if (quote.project?.sub_client?.name) return quote.project.sub_client.name;
+                    return 'Cliente sin asignar';
+                },
+                getClientLogo(quote) {
+                    if (quote.sub_client?.client?.logo) return quote.sub_client.client.logo;
+                    if (quote.project?.sub_client?.client?.logo) return quote.project.sub_client.client.logo;
+                    return null;
+                },
+                formatDate(dateString) {
+                    if (!dateString) return '';
+                    const date = new Date(dateString);
+                    return date.toLocaleDateString('es-PE', { day: '2-digit', month: 'short', year: 'numeric' });
+                },
+                resetFilters() {
+                    this.search = '';
+                    this.filterStatus = '';
+                    this.filterEmployeeId = '';
+                    this.filterCategoryId = '';
+                    this.filterMinTotal = null;
+                    this.filterMaxTotal = null;
+                    this.currentPage = 1;
+                    this.fetchQuotes();
                 },
                 async fetchCategories() {
                     try {
@@ -292,26 +470,21 @@
                             status: this.filterStatus,
                             page: this.currentPage
                         });
-                        if (this.filterEmployeeId) {
-                            params.append('employee_id', this.filterEmployeeId);
-                        }
-                        if (this.filterCategoryId) {
-                            params.append('category', this.filterCategoryId);
-                        }
-                        if (this.filterMinTotal !== null && this.filterMinTotal !== '') {
-                            params.append('min_total', this.filterMinTotal);
-                        }
-                        if (this.filterMaxTotal !== null && this.filterMaxTotal !== '') {
-                            params.append('max_total', this.filterMaxTotal);
-                        }
+                        if (this.filterEmployeeId) params.append('employee_id', this.filterEmployeeId);
+                        if (this.filterCategoryId) params.append('category', this.filterCategoryId);
+                        if (this.filterMinTotal) params.append('min_total', this.filterMinTotal);
+                        if (this.filterMaxTotal) params.append('max_total', this.filterMaxTotal);
+
+                        // Small delay to prevent flickering on fast loads and show skeleton
+                        await new Promise(r => setTimeout(r, 300));
+
                         const response = await fetch(`/quotes?${params}`);
                         const data = await response.json();
 
                         this.quotes = data.data || [];
                         this.totalPages = data.last_page || 1;
 
-                        await this.fetchStatistics();
-                        // await this.fetchCategories();
+                        this.fetchStatistics();
                     } catch (e) {
                         console.error('Error fetching quotes:', e);
                         this.quotes = [];
@@ -319,26 +492,21 @@
                     this.loading = false;
                 },
 
-                async printQuote(quoteId) {
-                    // Al usar 'D' en el controlador mPDF, el navegador iniciará la descarga automáticamente
-                    window.open(`/quotes/${quoteId}/pdf`, '_blank');
-                },
-
                 async deleteQuote(quoteId) {
                     const result = await Swal.fire({
-                        title: '¿Estás seguro?',
-                        text: "No podrás revertir esto",
+                        title: '¿Eliminar cotización?',
+                        text: "Esta acción no se puede deshacer",
                         icon: 'warning',
                         showCancelButton: true,
                         confirmButtonText: 'Sí, eliminar',
                         cancelButtonText: 'Cancelar',
                         buttonsStyling: false,
                         customClass: {
-                            confirmButton: 'bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded shadow-lg transform transition-all hover:scale-105 active:scale-95 mx-2',
-                            cancelButton: 'bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded shadow-lg transform transition-all hover:scale-105 active:scale-95 mx-2',
-                            popup: 'rounded-xl shadow-2xl dark:bg-gray-800 dark:text-white',
-                            title: 'text-xl font-bold text-gray-800 dark:text-white',
-                            htmlContainer: 'text-gray-600 dark:text-gray-300'
+                            confirmButton: 'bg-red-600 hover:bg-red-700 text-white font-medium py-2.5 px-5 rounded-lg transition-colors mx-2',
+                            cancelButton: 'bg-white hover:bg-gray-50 text-gray-700 border border-gray-300 font-medium py-2.5 px-5 rounded-lg transition-colors mx-2',
+                            popup: 'rounded-2xl shadow-xl dark:bg-gray-900',
+                            title: 'text-xl font-bold text-gray-900 dark:text-white',
+                            htmlContainer: 'text-gray-500 dark:text-gray-400'
                         }
                     });
 
@@ -347,34 +515,37 @@
                             const response = await fetch(`/quotes/${quoteId}`, {
                                 method: 'DELETE',
                                 headers: {
-                                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')
-                                        ?.getAttribute('content') || '',
+                                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
                                     'Accept': 'application/json',
                                     'Content-Type': 'application/json'
                                 }
                             });
 
                             if (response.ok) {
-                                Swal.fire(
-                                    '¡Eliminado!',
-                                    'La cotización ha sido eliminada.',
-                                    'success'
-                                );
-                                this.fetchQuotes(); // Recargar la lista
+                                Swal.fire({
+                                    title: 'Eliminado',
+                                    text: 'La cotización ha sido eliminada correctamente',
+                                    icon: 'success',
+                                    timer: 2000,
+                                    showConfirmButton: false,
+                                    customClass: {
+                                        popup: 'rounded-2xl shadow-xl dark:bg-gray-900',
+                                        title: 'text-lg font-bold text-gray-900 dark:text-white'
+                                    }
+                                });
+                                this.fetchQuotes();
                             } else {
-                                Swal.fire(
-                                    'Error',
-                                    'Hubo un problema al eliminar la cotización.',
-                                    'error'
-                                );
+                                throw new Error('Error deleting');
                             }
                         } catch (error) {
-                            console.error('Error deleting quote:', error);
-                            Swal.fire(
-                                'Error',
-                                'Error de conexión.',
-                                'error'
-                            );
+                            Swal.fire({
+                                title: 'Error',
+                                text: 'No se pudo eliminar la cotización',
+                                icon: 'error',
+                                customClass: {
+                                    popup: 'rounded-2xl shadow-xl dark:bg-gray-900'
+                                }
+                            });
                         }
                     }
                 },
@@ -388,10 +559,7 @@
                     if (this.currentPage < this.totalPages) {
                         this.currentPage++;
                         this.fetchQuotes();
-                        window.scrollTo({
-                            top: 0,
-                            behavior: 'smooth'
-                        });
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
                     }
                 },
 
@@ -399,31 +567,8 @@
                     if (this.currentPage > 1) {
                         this.currentPage--;
                         this.fetchQuotes();
-                        window.scrollTo({
-                            top: 0,
-                            behavior: 'smooth'
-                        });
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
                     }
-                },
-
-                getStatusClass(status) {
-                    const classes = {
-                        'Aprobado': 'bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300',
-                        'Pendiente': 'bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300',
-                        'Enviado': 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300',
-                        'Anulado': 'bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300',
-                    };
-                    return classes[status] ||
-                        'bg-gray-100 text-gray-800 dark:bg-gray-900/40 dark:text-gray-300';
-                },
-
-                formatDate(date) {
-                    if (!date) return '-';
-                    return new Date(date).toLocaleDateString('es-PE', {
-                        year: 'numeric',
-                        month: 'short',
-                        day: 'numeric'
-                    });
                 },
 
                 formatNumber(num) {
@@ -433,15 +578,11 @@
                     });
                 },
 
-
                 async fetchStatistics() {
                     try {
                         const response = await fetch('/quotes/stats');
                         const data = await response.json();
-                        this.stats = {
-                            ...this.stats,
-                            ...data
-                        };
+                        this.stats = { ...this.stats, ...data };
                     } catch (e) {
                         console.error('Error fetching statistics:', e);
                     }

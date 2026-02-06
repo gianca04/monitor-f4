@@ -64,7 +64,7 @@ class EmployeeForm
                                 TextInput::make('address')
                                     ->label('Dirección')
                                     ->required()
-                                    ->maxLength(100)
+                                    ->maxLength(255)
                                     ->placeholder('Ingresar dirección'),
 
                                 DatePicker::make('date_contract')
