@@ -234,7 +234,7 @@ class QuoteController extends Controller
             if (!$exists) {
                 QuoteWarehouse::create([
                     'quote_id'    => $quote->id,
-                    'employee_id' => Auth::user()->employee->id ?? null,
+                    'employee_id' => Auth::user()->id ?? null,
                     'status'      => 'Pendiente',
                     'observations' => null,
                 ]);
