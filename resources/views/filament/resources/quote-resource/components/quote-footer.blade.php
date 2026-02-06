@@ -2,7 +2,7 @@
 {{-- Usage: @include('filament.resources.quote-resource.components.quote-footer') --}}
 
 <div
-    class="sticky bottom-6 z-40 mx-auto w-[98%] max-w-7xl px-6 py-4 border border-gray-200 bg-white/80 backdrop-blur-xl dark:bg-gray-800/80 dark:border-gray-700 rounded-[2.5rem] shadow-[0_20px_50px_rgba(0,0,0,0.1)] ring-1 ring-black/5">
+    class="sticky bottom-6 z-20 mx-auto w-[98%] max-w-7xl px-6 py-4 border border-gray-200 bg-white/80 backdrop-blur-xl dark:bg-gray-800/80 dark:border-gray-700 rounded-[2.5rem] shadow-[0_20px_50px_rgba(0,0,0,0.1)] ring-1 ring-black/5">
     <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         {{-- Status --}}
         <div class="flex items-center justify-between sm:justify-start gap-4">
