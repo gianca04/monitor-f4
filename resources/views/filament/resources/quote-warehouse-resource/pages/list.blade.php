@@ -107,24 +107,275 @@
     class="flex flex-col min-h-screen antialiased bg-background-light dark:bg-background-dark text-slate-900 dark:text-white font-display"
     x-data="{
         quoteWarehouseId: {{ $quoteWarehouse->id }},
-        status: '{{ $quoteWarehouse->status }}',
+        projectId: {{ $quoteWarehouse->quote->project_id ?? 'null' }},
+        status: '{{ $quoteWarehouse->estatus }}',
         items: [
             @foreach ($details as $i => $item)
-        {
-            quote_detail_id: {{ $item['quote_detail_id'] }},
-            solicitado: {{ $item['quantity'] }},
-            entregado: {{ $item['entregado'] ?? 0 }},
-            despachar: {{ $item['a_despachar'] ?? 0 }}
-        }, @endforeach
+                {
+                    quote_detail_id: {{ $item['quote_detail_id'] }},
+                    solicitado: {{ $item['quantity'] }},
+                    entregado: {{ $item['entregado'] ?? 0 }},
+                    despachar: {{ $item['a_despachar'] ?? 0 }}
+            }, @endforeach
         ],
         observaciones: '{{ $quoteWarehouse->observations ?? '' }}',
+
+        // Assigned Tools Data
+        assignedTools: [],
+        loadingTools: true,
+
+        // Tool Search Modal Data
+        toolSearchModal: {
+            open: false,
+            query: '',
+            loading: false,
+            initialLoad: false,
+            results: [],
+            selectedTools: [],
+            categories: [],
+            filters: {
+                status: '',
+                category_id: ''
+            }
+        },
+
         get progresoTotal() {
             let totalSolicitado = this.items.reduce((acc, item) => acc + item.solicitado, 0);
             let totalListo = this.items.reduce((acc, item) => acc + Math.min(item.entregado + item.despachar, item.solicitado), 0);
-            return totalSolicitado === 0 ? 0 : Math.round((totalListo / totalSolicitado) * 100); // Redondear al entero más cercano
+            return totalSolicitado === 0 ? 0 : Math.round((totalListo / totalSolicitado) * 100);
         },
+
+        // Tool Search Modal Methods
+        openToolSearchModal() {
+            this.toolSearchModal.open = true;
+            this.toolSearchModal.query = '';
+            this.toolSearchModal.results = [];
+            this.toolSearchModal.selectedTools = [];
+            this.toolSearchModal.filters = { status: '', category_id: '' };
+            this.$nextTick(() => {
+                this.$refs.toolSearchInput?.focus();
+                this.loadInitialTools();
+            });
+        },
+
+        closeToolSearchModal() {
+            this.toolSearchModal.open = false;
+        },
+
+        async loadToolCategories() {
+            try {
+                const response = await fetch('/tools/categories');
+                const data = await response.json();
+                if (data.success) {
+                    this.toolSearchModal.categories = data.data;
+                }
+            } catch (error) {
+                console.error('Error loading categories:', error);
+            }
+        },
+
+        async loadInitialTools() {
+            this.toolSearchModal.loading = true;
+            this.toolSearchModal.initialLoad = true;
+            try {
+                const params = new URLSearchParams({
+                    limit: 20,
+                    status: this.toolSearchModal.filters.status || '',
+                });
+                const response = await fetch(`/tools/quick-search?${params}`);
+                const data = await response.json();
+                if (data.success) {
+                    this.toolSearchModal.results = data.data;
+                }
+            } catch (error) {
+                console.error('Error loading tools:', error);
+            } finally {
+                this.toolSearchModal.loading = false;
+            }
+        },
+
+        async searchTools() {
+            this.toolSearchModal.loading = true;
+            try {
+                const params = new URLSearchParams({
+                    query: this.toolSearchModal.query,
+                    status: this.toolSearchModal.filters.status || '',
+                    limit: 30
+                });
+                const response = await fetch(`/tools/quick-search?${params}`);
+                const data = await response.json();
+                if (data.success) {
+                    this.toolSearchModal.results = data.data;
+                }
+            } catch (error) {
+                console.error('Error searching tools:', error);
+                this.toolSearchModal.results = [];
+            } finally {
+                this.toolSearchModal.loading = false;
+            }
+        },
+
+        clearToolFilters() {
+            this.toolSearchModal.filters = { status: '', category_id: '' };
+            this.searchTools();
+        },
+
+        toggleToolSelection(tool) {
+            const index = this.toolSearchModal.selectedTools.findIndex(t => t.id === tool.id);
+            if (index === -1) {
+                if (tool.available) {
+                    this.toolSearchModal.selectedTools.push(tool);
+                } else {
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'No disponible',
+                        text: 'Esta herramienta no está disponible para asignar.',
+                        confirmButtonColor: '#137fec',
+                    });
+                }
+            } else {
+                this.toolSearchModal.selectedTools.splice(index, 1);
+            }
+        },
+
+        isToolSelected(id) {
+            return this.toolSearchModal.selectedTools.some(t => t.id === id);
+        },
+
+        async addSelectedTools() {
+            if (!this.projectId) {
+                Swal.fire({ icon: 'error', title: 'Error', text: 'No se pudo identificar el proyecto.' });
+                return;
+            }
+            
+            // Filtrar solo herramientas disponibles antes de procesar
+            const availableTools = this.toolSearchModal.selectedTools.filter(t => t.available && t.status === 'Disponible');
+            const unavailableTools = this.toolSearchModal.selectedTools.filter(t => !t.available || t.status !== 'Disponible');
+            
+            // Si hay herramientas no disponibles, mostrar advertencia
+            if (unavailableTools.length > 0 && availableTools.length === 0) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'No disponible',
+                    text: 'Ninguna de las herramientas seleccionadas está disponible para asignar.',
+                    confirmButtonColor: '#137fec',
+                });
+                return;
+            }
+            
+            let successCount = 0;
+            let errors = [];
+
+            for (const tool of availableTools) {
+                try {
+                    const response = await fetch('/project-tools', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content,
+                            'Accept': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            project_id: this.projectId,
+                            tool_id: tool.id
+                        })
+                    });
+                    const data = await response.json();
+                    if (data.success) {
+                        successCount++;
+                    } else {
+                        errors.push(tool.name + ': ' + data.message);
+                    }
+                } catch (error) {
+                    errors.push(tool.name + ': Error de conexión');
+                }
+            }
+
+            this.closeToolSearchModal();
+            await this.loadProjectTools();
+
+            // Construir mensaje único consolidado
+            let title = '';
+            let text = '';
+            let icon = 'success';
+
+            if (successCount > 0) {
+                title = successCount + ' herramienta(s) asignada(s)';
+                if (unavailableTools.length > 0) {
+                    text = unavailableTools.length + ' herramienta(s) no estaban disponibles y fueron omitidas.';
+                    icon = 'warning';
+                }
+                if (errors.length > 0) {
+                    text += (text ? ' ' : '') + 'Errores: ' + errors.join(', ');
+                    icon = 'warning';
+                }
+            } else if (errors.length > 0) {
+                title = 'Error';
+                text = errors.join(', ');
+                icon = 'error';
+            }
+
+            if (title) {
+                Swal.fire({
+                    icon: icon,
+                    title: title,
+                    text: text || undefined,
+                    confirmButtonColor: '#137fec',
+                });
+            }
+        },
+
+        async loadProjectTools() {
+            if (!this.projectId) return;
+            this.loadingTools = true;
+            try {
+                const response = await fetch(`/project-tools/project/${this.projectId}`);
+                const data = await response.json();
+                if (data.success) {
+                    this.assignedTools = data.data;
+                }
+            } catch (error) {
+                console.error('Error loading project tools:', error);
+            } finally {
+                this.loadingTools = false;
+            }
+        },
+
+        async returnTool(assignmentId) {
+            const result = await Swal.fire({
+                title: '¿Devolver herramienta?',
+                text: 'Esta acción marcará la herramienta como devuelta.',
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#137fec',
+                cancelButtonColor: '#6b7280',
+                confirmButtonText: 'Sí, devolver',
+                cancelButtonText: 'Cancelar'
+            });
+            if (!result.isConfirmed) return;
+
+            try {
+                const response = await fetch(`/project-tools/${assignmentId}/return`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content,
+                        'Accept': 'application/json'
+                    }
+                });
+                const data = await response.json();
+                if (data.success) {
+                    Swal.fire({ icon: 'success', title: 'Devuelta', text: data.message, confirmButtonColor: '#137fec' });
+                    await this.loadProjectTools();
+                } else {
+                    Swal.fire({ icon: 'error', title: 'Error', text: data.message });
+                }
+            } catch (error) {
+                Swal.fire({ icon: 'error', title: 'Error', text: 'Error de conexión' });
+            }
+        },
+
         async enviarFormulario() {
-            // Construir los datos a enviar
             const details = this.items
                 .filter(i => i.despachar > 0)
                 .map(i => ({
@@ -135,7 +386,7 @@
             const payload = {
                 quote_warehouse_id: this.quoteWarehouseId,
                 observations: this.observaciones,
-                progreso_total: this.progresoTotal, // Enviar progresoTotal
+                progreso_total: this.progresoTotal,
                 details: details
             };
 
@@ -153,7 +404,7 @@
                 if (data.success) {
                     let message = data.message;
                     if (data.estadoMensaje) {
-                        message += `\n${data.estadoMensaje}`; // Agregar mensaje de cambio de estado
+                        message += `\n${data.estadoMensaje}`;
                     }
                     Swal.fire({
                         icon: 'success',
@@ -161,7 +412,7 @@
                         text: message,
                         confirmButtonColor: '#137fec',
                     }).then(() => {
-                        location.reload(); // Recargar la página para reflejar los cambios
+                        location.reload();
                     });
                 } else {
                     Swal.fire({
@@ -180,7 +431,7 @@
                 });
             }
         }
-    }">
+    }" x-init="loadToolCategories(); loadProjectTools()">
     <!-- Top Navigation -->
 
     <!-- Main Content -->
@@ -190,8 +441,7 @@
             <div class="flex flex-col justify-between gap-4 md:flex-row md:items-end">
                 <div class="flex flex-col gap-2">
                     <div class="flex items-center gap-3">
-                        <span class="inline-flex items-center px-2 py-1 text-xs font-medium rounded-md"
-                            :class="{
+                        <span class="inline-flex items-center px-2 py-1 text-xs font-medium rounded-md" :class="{
                                 'text-yellow-800 bg-yellow-100 ring-yellow-600/20 dark:bg-yellow-900/30 dark:text-yellow-400': '{{ $quoteWarehouse->status }}'
                                 === 'Pendiente' || '{{ $quoteWarehouse->status }}'
                                 === 'pending',
@@ -246,147 +496,344 @@
                     </button>
                 </div>
             </div>
-            <!-- Table Container -->
-            <div
-                class="flex flex-col overflow-hidden border shadow-sm rounded-xl border-slate-200 dark:border-slate-700 bg-surface-light dark:bg-surface-dark">
-                <div class="overflow-x-auto">
-                    <table class="w-full text-sm text-left border-collapse">
-                        <thead
-                            class="text-xs font-medium uppercase border-b bg-slate-50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400">
-                            <tr>
-                                <th class="w-24 px-4 py-4" scope="col">LÍNEA SAT</th>
-                                <th class="px-4 py-4 min-w-[300px]" scope="col">DESCRIPCIÓN ITEM</th>
-                                <th class="w-20 px-4 py-4 text-center" scope="col">Unidad</th>
-                                <th class="w-24 px-4 py-4 text-center" scope="col">Solicitado</th>
-                                <th class="w-24 px-4 py-4 text-center" scope="col">Entregado</th>
-                                <th class="w-40 px-4 py-4" scope="col">A Despachar</th>
-                                <th class="w-20 px-4 py-4 text-right" scope="col">Estado</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
-                            @foreach ($details as $i => $item)
-                                @php
-                                    $completado = ($item['entregado'] ?? 0) >= ($item['quantity'] ?? 0);
-                                    $porcentaje =
-                                        ($item['quantity'] ?? 0) > 0
+
+            <!-- ============================================== -->
+            <!-- SECCIÓN: SUMINISTROS -->
+            <!-- ============================================== -->
+            <div class="mt-2">
+                <!-- Header de la sección -->
+                <div class="flex flex-col justify-between gap-4 mb-4 md:flex-row md:items-center">
+                    <div class="flex items-center gap-3">
+                        <div
+                            class="flex items-center justify-center w-10 h-10 rounded-lg bg-emerald-100 dark:bg-emerald-900/30">
+                            <span
+                                class="material-symbols-outlined text-emerald-600 dark:text-emerald-400 text-[22px]">inventory_2</span>
+                        </div>
+                        <div>
+                            <h2 class="text-lg font-bold tracking-tight text-slate-900 dark:text-white">
+                                Suministros
+                            </h2>
+                            <p class="text-xs text-slate-500 dark:text-slate-400">
+                                Control de materiales y suministros del proyecto
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Table Container -->
+                <div
+                    class="flex flex-col overflow-hidden border shadow-sm rounded-xl border-slate-200 dark:border-slate-700 bg-surface-light dark:bg-surface-dark">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-sm text-left border-collapse">
+                            <thead
+                                class="text-xs font-medium uppercase border-b bg-slate-50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400">
+                                <tr>
+                                    <th class="w-24 px-4 py-4" scope="col">LÍNEA SAT</th>
+                                    <th class="px-4 py-4 min-w-[300px]" scope="col">DESCRIPCIÓN ITEM</th>
+                                    <th class="w-20 px-4 py-4 text-center" scope="col">Unidad</th>
+                                    <th class="w-24 px-4 py-4 text-center" scope="col">Solicitado</th>
+                                    <th class="w-24 px-4 py-4 text-center" scope="col">Entregado</th>
+                                    <th class="w-40 px-4 py-4" scope="col">A Despachar</th>
+                                    <th class="w-20 px-4 py-4 text-right" scope="col">Estado</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+                                @foreach ($details as $i => $item)
+                                    @php
+                                        $completado = ($item['entregado'] ?? 0) >= ($item['quantity'] ?? 0);
+                                        $porcentaje =
+                                            ($item['quantity'] ?? 0) > 0
                                             ? round((($item['entregado'] ?? 0) / ($item['quantity'] ?? 0)) * 100)
                                             : 0;
-                                @endphp
-                                <tr
-                                    class="transition-colors group hover:bg-slate-50 dark:hover:bg-slate-800/50 {{ $completado ? 'bg-slate-50/50 dark:bg-slate-800/30' : '' }}">
-                                    <td :class="items[{{ $i }}].entregado + items[{{ $i }}].despachar >=
-                                        items[{{ $i }}].solicitado ?
-                                        'font-mono text-xs text-center align-middle text-slate-400 dark:text-slate-500 line-through underline' :
-                                        'font-mono text-xs text-center align-middle text-slate-900 dark:text-white'"
-                                        class="font-mono text-xs text-center align-middle {{ $completado ? 'text-slate-400 dark:text-slate-500' : 'text-slate-900 dark:text-white' }}">
-                                        {{ $item['sat_line'] ?? '-' }}
-                                    </td>
-                                    <td class="px-4 py-4 break-words whitespace-normal align-top">
-                                        <div class="flex flex-col">
-                                            <span
-                                                :class="items[{{ $i }}].entregado + items[{{ $i }}]
-                                                    .despachar >= items[{{ $i }}].solicitado ?
-                                                    'line-through underline text-slate-400 dark:text-slate-500' :
-                                                    'text-xs font-medium leading-relaxed text-slate-900 dark:text-white'"
-                                                class="text-xs font-medium leading-relaxed {{ $completado ? 'text-slate-400 dark:text-slate-500' : 'text-slate-900 dark:text-white' }}">
-                                                {{ $item['sat_description'] ?? '-' }}
-                                            </span>
-                                        </div>
-                                    </td>
-                                    <td class="px-4 py-4 text-center align-top">
-                                        <span class="text-xs text-slate-400">{{ $item['unit_name'] ?? '-' }}</span>
-                                    </td>
-                                    <td class="px-4 py-4 text-center align-top">
-                                        <span
-                                            class="inline-flex items-center rounded-md bg-slate-100 dark:bg-slate-800 px-2.5 py-1 text-xs font-medium text-slate-600 dark:text-slate-300">
-                                            {{ $item['quantity'] }}
-                                        </span>
-                                    </td>
-                                    <td class="px-4 py-4 text-center align-top">
-                                        <div class="flex flex-col items-center gap-1">
-                                            <span
-                                                class="font-semibold {{ $completado ? 'text-green-600' : 'text-slate-900 dark:text-slate-200' }}">
-                                                {{ $item['entregado'] ?? 0 }}
-                                            </span>
-                                            <div
-                                                class="flex items-center justify-center w-20 h-2 mx-auto mt-1 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-700">
-                                                <div class="h-full {{ $completado ? 'bg-green-500' : 'bg-blue-500' }} rounded-full"
-                                                    style="width: {{ $porcentaje }}%"></div>
+                                    @endphp
+                                    <tr
+                                        class="transition-colors group hover:bg-slate-50 dark:hover:bg-slate-800/50 {{ $completado ? 'bg-slate-50/50 dark:bg-slate-800/30' : '' }}">
+                                        <td :class="items[{{ $i }}].entregado + items[{{ $i }}].despachar >=
+                                                                                                                items[{{ $i }}].solicitado ?
+                                                                                                                'font-mono text-xs text-center align-middle text-slate-400 dark:text-slate-500 line-through underline' :
+                                                                                                                'font-mono text-xs text-center align-middle text-slate-900 dark:text-white'"
+                                            class="font-mono text-xs text-center align-middle {{ $completado ? 'text-slate-400 dark:text-slate-500' : 'text-slate-900 dark:text-white' }}">
+                                            {{ $item['sat_line'] ?? '-' }}
+                                        </td>
+                                        <td class="px-4 py-4 break-words whitespace-normal align-top">
+                                            <div class="flex flex-col">
+                                                <span
+                                                    :class="items[{{ $i }}].entregado + items[{{ $i }}]
+                                                                                                                            .despachar >= items[{{ $i }}].solicitado ?
+                                                                                                                            'line-through underline text-slate-400 dark:text-slate-500' :
+                                                                                                                            'text-xs font-medium leading-relaxed text-slate-900 dark:text-white'"
+                                                    class="text-xs font-medium leading-relaxed {{ $completado ? 'text-slate-400 dark:text-slate-500' : 'text-slate-900 dark:text-white' }}">
+                                                    {{ $item['sat_description'] ?? '-' }}
+                                                </span>
                                             </div>
+                                        </td>
+                                        <td class="px-4 py-4 text-center align-top">
+                                            <span class="text-xs text-slate-400">{{ $item['unit_name'] ?? '-' }}</span>
+                                        </td>
+                                        <td class="px-4 py-4 text-center align-top">
+                                            <span
+                                                class="inline-flex items-center rounded-md bg-slate-100 dark:bg-slate-800 px-2.5 py-1 text-xs font-medium text-slate-600 dark:text-slate-300">
+                                                {{ $item['quantity'] }}
+                                            </span>
+                                        </td>
+                                        <td class="px-4 py-4 text-center align-top">
+                                            <div class="flex flex-col items-center gap-1">
+                                                <span
+                                                    class="font-semibold {{ $completado ? 'text-green-600' : 'text-slate-900 dark:text-slate-200' }}">
+                                                    {{ $item['entregado'] ?? 0 }}
+                                                </span>
+                                                <div
+                                                    class="flex items-center justify-center w-20 h-2 mx-auto mt-1 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-700">
+                                                    <div class="h-full {{ $completado ? 'bg-green-500' : 'bg-blue-500' }} rounded-full"
+                                                        style="width: {{ $porcentaje }}%"></div>
+                                                </div>
+                                                @if ($completado)
+                                                    <span
+                                                        class="inline-flex items-center rounded-full bg-green-50 px-2 py-0.5 text-xs font-medium text-green-700 ring-1 ring-inset ring-green-600/20 dark:bg-green-900/20 dark:text-green-400 dark:ring-green-500/30 mt-1">
+                                                        <span class="material-symbols-outlined text-[14px] mr-1">check</span>
+                                                        Completado
+                                                    </span>
+                                                @endif
+                                            </div>
+                                        </td>
+                                        <td class="px-4 py-4 align-top">
                                             @if ($completado)
-                                                <span
-                                                    class="inline-flex items-center rounded-full bg-green-50 px-2 py-0.5 text-xs font-medium text-green-700 ring-1 ring-inset ring-green-600/20 dark:bg-green-900/20 dark:text-green-400 dark:ring-green-500/30 mt-1">
+                                                <div class="relative flex items-center justify-center opacity-60">
                                                     <span
-                                                        class="material-symbols-outlined text-[14px] mr-1">check</span>
-                                                    Completado
-                                                </span>
+                                                        class="inline-flex items-center px-3 py-1 text-xs font-medium text-green-700 rounded-full bg-green-50 ring-1 ring-inset ring-green-600/20 dark:bg-green-900/20 dark:text-green-400 dark:ring-green-500/30">
+                                                        <span class="material-symbols-outlined text-[14px] mr-1">check</span>
+                                                        Completado
+                                                    </span>
+                                                </div>
+                                            @else
+                                                <div class="relative flex items-center">
+                                                    <input type="number" x-model.number="items[{{ $i }}].despachar"
+                                                        :max="items[{{ $i }}].solicitado - items[{{ $i }}]
+                                                                                                                                                                                                        .entregado"
+                                                        min="0"
+                                                        @input="if(items[{{ $i }}].despachar > (items[{{ $i }}].solicitado - items[{{ $i }}].entregado)) items[{{ $i }}].despachar = items[{{ $i }}].solicitado - items[{{ $i }}].entregado"
+                                                        class="block w-full rounded-md border-0 py-1.5 pl-2 pr-8 text-slate-900 ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-primary text-xs dark:bg-slate-900 dark:ring-slate-600 dark:text-white font-bold"
+                                                        :disabled="{{ $completado ? 'true' : 'false' }}" />
+                                                    <span
+                                                        class="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
+                                                        <span class="text-[10px] text-slate-400 uppercase">u.</span>
+                                                    </span>
+                                                </div>
                                             @endif
-                                        </div>
-                                    </td>
-                                    <td class="px-4 py-4 align-top">
-                                        @if ($completado)
-                                            <div class="relative flex items-center justify-center opacity-60">
-                                                <span
-                                                    class="inline-flex items-center px-3 py-1 text-xs font-medium text-green-700 rounded-full bg-green-50 ring-1 ring-inset ring-green-600/20 dark:bg-green-900/20 dark:text-green-400 dark:ring-green-500/30">
+                                        </td>
+                                        <td class="px-4 py-4 text-right align-top">
+                                            @if ($completado)
+                                                <div
+                                                    class="inline-flex items-center justify-center p-2 text-green-600 dark:text-green-500">
                                                     <span
-                                                        class="material-symbols-outlined text-[14px] mr-1">check</span>
-                                                    Completado
-                                                </span>
-                                            </div>
-                                        @else
-                                            <div class="relative flex items-center">
-                                                <input type="number"
-                                                    x-model.number="items[{{ $i }}].despachar"
-                                                    :max="items[{{ $i }}].solicitado - items[{{ $i }}]
-                                                        .entregado"
-                                                    min="0"
-                                                    @input="if(items[{{ $i }}].despachar > (items[{{ $i }}].solicitado - items[{{ $i }}].entregado)) items[{{ $i }}].despachar = items[{{ $i }}].solicitado - items[{{ $i }}].entregado"
-                                                    class="block w-full rounded-md border-0 py-1.5 pl-2 pr-8 text-slate-900 ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-primary text-xs dark:bg-slate-900 dark:ring-slate-600 dark:text-white font-bold"
-                                                    :disabled="{{ $completado ? 'true' : 'false' }}" />
-                                                <span
-                                                    class="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
-                                                    <span class="text-[10px] text-slate-400 uppercase">u.</span>
-                                                </span>
-                                            </div>
-                                        @endif
-                                    </td>
-                                    <td class="px-4 py-4 text-right align-top">
-                                        @if ($completado)
-                                            <div
-                                                class="inline-flex items-center justify-center p-2 text-green-600 dark:text-green-500">
-                                                <span
-                                                    class="material-symbols-outlined text-[28px] fill-1">check_circle</span>
-                                            </div>
-                                        @else
-                                            <button
-                                                @click="items[{{ $i }}].despachar = items[{{ $i }}].solicitado - items[{{ $i }}].entregado"
-                                                class="inline-flex items-center justify-center p-1.5 transition-all rounded-full group/btn"
-                                                :class="items[{{ $i }}].despachar + items[{{ $i }}]
-                                                    .entregado >= items[{{ $i }}].solicitado ?
-                                                    'bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-500' :
-                                                    'text-slate-300 dark:text-slate-600 hover:text-green-600 dark:hover:text-green-500'"
-                                                type="button" title="Marcar como listo">
-                                                <span
-                                                    class="material-symbols-outlined text-[22px] group-hover/btn:fill-1"
+                                                        class="material-symbols-outlined text-[28px] fill-1">check_circle</span>
+                                                </div>
+                                            @else
+                                                <button
+                                                    @click="items[{{ $i }}].despachar = items[{{ $i }}].solicitado - items[{{ $i }}].entregado"
+                                                    class="inline-flex items-center justify-center p-1.5 transition-all rounded-full group/btn"
                                                     :class="items[{{ $i }}].despachar + items[{{ $i }}]
-                                                        .entregado >= items[{{ $i }}].solicitado ?
-                                                        'text-green-600 dark:text-green-500' : ''">check_circle</span>
-                                            </button>
-                                        @endif
-                                    </td>
-                                </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
+                                                                                                                                                                                                    .entregado >= items[{{ $i }}].solicitado ?
+                                                                                                                                                                                                    'bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-500' :
+                                                                                                                                                                                                    'text-slate-300 dark:text-slate-600 hover:text-green-600 dark:hover:text-green-500'"
+                                                    type="button" title="Marcar como listo">
+                                                    <span class="material-symbols-outlined text-[22px] group-hover/btn:fill-1"
+                                                        :class="items[{{ $i }}].despachar + items[{{ $i }}]
+                                                                                                                                                                                                        .entregado >= items[{{ $i }}].solicitado ?
+                                                                                                                                                                                                        'text-green-600 dark:text-green-500' : ''">check_circle</span>
+                                                </button>
+                                            @endif
+                                        </td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <!-- Table Footer/Summary -->
+                <div
+                    class="flex items-center justify-between px-6 py-3 text-sm border-t bg-slate-50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400">
+                    <span>Mostrando {{ count($details) }} ítems</span>
+                    <div class="flex gap-2">
+                        <span class="font-medium text-slate-700 dark:text-slate-300">Progreso Total:</span>
+                        <span class="font-bold text-primary" x-text="progresoTotal + '%'"></span>
+                    </div>
                 </div>
             </div>
-            <!-- Table Footer/Summary -->
-            <div
-                class="flex items-center justify-between px-6 py-3 text-sm border-t bg-slate-50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400">
-                <span>Mostrando {{ count($details) }} ítems</span>
-                <div class="flex gap-2">
-                    <span class="font-medium text-slate-700 dark:text-slate-300">Progreso Total:</span>
-                    <span class="font-bold text-primary" x-text="progresoTotal + '%'"></span>
+
+            <!-- ============================================== -->
+            <!-- SECCIÓN: HERRAMIENTAS ASIGNADAS -->
+            <!-- ============================================== -->
+            <div class="mt-8">
+                <!-- Header de la sección -->
+                <div class="flex flex-col justify-between gap-4 mb-2 md:flex-row md:items-center">
+                    <div class="flex items-center gap-3">
+                        <div
+                            class="flex items-center justify-center w-10 h-10 rounded-lg bg-blue-100 dark:bg-blue-900/30">
+                            <span
+                                class="material-symbols-outlined text-blue-600 dark:text-blue-400 text-[22px]">construction</span>
+                        </div>
+                        <div>
+                            <h2 class="text-lg font-bold tracking-tight text-slate-900 dark:text-white">
+                                Herramientas Asignadas
+                            </h2>
+                            <p class="text-xs text-slate-500 dark:text-slate-400">
+                                Control de herramientas para el proyecto
+                            </p>
+                        </div>
+                    </div>
+                    <!-- Botón Agregar Herramientas -->
+                    <button type="button" @click="openToolSearchModal()"
+                        class="inline-flex items-center justify-center px-4 py-2 text-sm font-bold transition-colors rounded-lg bg-blue-600 text-white hover:bg-blue-700 shadow-lg shadow-blue-500/20 gap-2">
+                        <span class="material-symbols-outlined text-[18px]">add_circle</span>
+                        Agregar Herramientas
+                    </button>
+                </div>
+
+                <!-- Tabla de Herramientas -->
+                <div
+                    class="flex flex-col overflow-hidden border shadow-sm rounded-xl border-slate-200 dark:border-slate-700 bg-surface-light dark:bg-surface-dark">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-sm text-left border-collapse">
+                            <thead
+                                class="text-xs font-medium uppercase border-b bg-slate-50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400">
+                                <tr>
+                                    <th class="w-28 px-4 py-4" scope="col">CÓDIGO</th>
+                                    <th class="px-4 py-4 min-w-[250px]" scope="col">HERRAMIENTA</th>
+                                    <th class="w-32 px-4 py-4" scope="col">CATEGORÍA</th>
+                                    <th class="w-28 px-4 py-4 text-center" scope="col">ESTADO</th>
+                                    <th class="w-32 px-4 py-4 text-center" scope="col">FECHA ASIG.</th>
+                                    <th class="w-20 px-4 py-4 text-center" scope="col">ACCIONES</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+                                <!-- Loading State -->
+                                <template x-if="loadingTools">
+                                    <tr>
+                                        <td colspan="6" class="px-4 py-12 text-center">
+                                            <span
+                                                class="material-symbols-outlined animate-spin text-blue-500 text-3xl">progress_activity</span>
+                                            <p class="text-sm text-slate-400 mt-2">Cargando herramientas...</p>
+                                        </td>
+                                    </tr>
+                                </template>
+
+                                <!-- Empty State -->
+                                <template x-if="!loadingTools && assignedTools.length === 0">
+                                    <tr>
+                                        <td colspan="6" class="px-4 py-12 text-center">
+                                            <div class="flex flex-col items-center">
+                                                <div
+                                                    class="flex items-center justify-center w-14 h-14 mb-3 rounded-full bg-slate-100 dark:bg-slate-800">
+                                                    <span
+                                                        class="material-symbols-outlined text-slate-400 dark:text-slate-500 text-[28px]">construction</span>
+                                                </div>
+                                                <p class="text-sm font-medium text-slate-600 dark:text-slate-400">No hay
+                                                    herramientas asignadas</p>
+                                                <p class="text-xs text-slate-400 dark:text-slate-500 mt-1">Haz clic en
+                                                    "Agregar Herramientas" para asignar</p>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </template>
+
+                                <!-- Tools List -->
+                                <template x-for="assignment in assignedTools" :key="assignment.assignment_id">
+                                    <tr class="transition-colors group hover:bg-slate-50 dark:hover:bg-slate-800/50"
+                                        :class="!assignment.is_active ? 'bg-slate-50/50 dark:bg-slate-800/30' : ''">
+                                        <td class="px-4 py-4 align-middle">
+                                            <span
+                                                :class="assignment.is_active ? 'bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-400' : 'bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 line-through'"
+                                                class="font-mono text-xs px-2 py-1 rounded-md font-semibold"
+                                                x-text="assignment.tool?.code || '-'"></span>
+                                        </td>
+                                        <td class="px-4 py-4 align-middle">
+                                            <div class="flex flex-col">
+                                                <span
+                                                    :class="assignment.is_active ? 'text-slate-900 dark:text-white' : 'text-slate-400 dark:text-slate-500 line-through'"
+                                                    class="text-sm font-medium"
+                                                    x-text="assignment.tool?.name || '-'"></span>
+                                                <span class="text-xs text-slate-400 dark:text-slate-500">
+                                                    <span x-text="assignment.tool?.brand?.name || ''"></span>
+                                                    <template x-if="assignment.tool?.serial_number">
+                                                        <span> / Serie: <span
+                                                                x-text="assignment.tool?.serial_number"></span></span>
+                                                    </template>
+                                                </span>
+                                            </div>
+                                        </td>
+                                        <td class="px-4 py-4 align-middle">
+                                            <span
+                                                class="inline-flex items-center px-2 py-1 text-xs font-medium rounded-md bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300"
+                                                x-text="assignment.tool?.category?.name || '-'"></span>
+                                        </td>
+                                        <td class="px-4 py-4 text-center align-middle">
+                                            <template x-if="assignment.is_active">
+                                                <span
+                                                    class="inline-flex items-center px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
+                                                    <span class="w-1.5 h-1.5 rounded-full bg-blue-500 mr-1.5"></span>
+                                                    En Uso
+                                                </span>
+                                            </template>
+                                            <template x-if="!assignment.is_active">
+                                                <span
+                                                    class="inline-flex items-center px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
+                                                    <span
+                                                        class="material-symbols-outlined text-[12px] mr-1">check</span>
+                                                    Devuelto
+                                                </span>
+                                            </template>
+                                        </td>
+                                        <td class="px-4 py-4 text-center align-middle">
+                                            <div class="flex flex-col">
+                                                <span class="text-xs text-slate-600 dark:text-slate-400"
+                                                    x-text="assignment.assigned_at || '-'"></span>
+                                                <template x-if="assignment.returned_at">
+                                                    <span class="text-[10px] text-green-600 dark:text-green-400">
+                                                        Dev: <span x-text="assignment.returned_at"></span>
+                                                    </span>
+                                                </template>
+                                            </div>
+                                        </td>
+                                        <td class="px-4 py-4 text-center align-middle">
+                                            <template x-if="assignment.is_active">
+                                                <button type="button" @click="returnTool(assignment.assignment_id)"
+                                                    class="inline-flex items-center justify-center p-1.5 rounded-lg text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                                                    title="Devolver herramienta">
+                                                    <span class="material-symbols-outlined text-[18px]">undo</span>
+                                                </button>
+                                            </template>
+                                            <template x-if="!assignment.is_active">
+                                                <div
+                                                    class="inline-flex items-center justify-center p-1.5 text-green-600 dark:text-green-500">
+                                                    <span
+                                                        class="material-symbols-outlined text-[20px] fill-1">check_circle</span>
+                                                </div>
+                                            </template>
+                                        </td>
+                                    </tr>
+                                </template>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Footer de tabla de herramientas -->
+                    <div
+                        class="flex items-center justify-between px-6 py-3 text-sm border-t bg-slate-50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400">
+                        <span x-text="assignedTools.length + ' herramienta(s) asignada(s)'"></span>
+                        <div class="flex gap-4">
+                            <span class="flex items-center gap-1.5">
+                                <span class="w-2 h-2 rounded-full bg-blue-500"></span>
+                                <span class="font-medium text-slate-700 dark:text-slate-300"
+                                    x-text="assignedTools.filter(t => t.is_active).length + ' en uso'"></span>
+                            </span>
+                            <span class="flex items-center gap-1.5">
+                                <span class="w-2 h-2 rounded-full bg-green-500"></span>
+                                <span class="font-medium text-slate-700 dark:text-slate-300"
+                                    x-text="assignedTools.filter(t => !t.is_active).length + ' devuelto(s)'"></span>
+                            </span>
+                        </div>
+                    </div>
                 </div>
             </div>
             <!-- NUEVO: Observaciones -->
@@ -420,6 +867,9 @@
             </form>
         </div>
     </main>
+
+    {{-- Tool Search Modal Component --}}
+    @include('filament.resources.tool-resource.components.tool-search-modal')
 </body>
 
 </html>

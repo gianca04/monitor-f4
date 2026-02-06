@@ -33,6 +33,19 @@ class Project extends Model
                 ]);
             }
         });
+
+        // Crear Compliance automáticamente cuando el estado cambie a 'Aprobado'
+        static::updating(function (Project $project) {
+            // Verificar si el campo 'status' está siendo cambiado a 'Aprobado'
+            if ($project->isDirty('status') && $project->status === 'Aprobado') {
+                // Solo crear si no existe un Compliance para este proyecto
+                if (!$project->compliance()->exists()) {
+                    Compliance::create([
+                        'project_id' => $project->id,
+                    ]);
+                }
+            }
+        });
     }
 
     /**
@@ -150,6 +163,7 @@ class Project extends Model
 
     public function scopeAllowedForUser(Builder $query, ?User $user = null): Builder
     {
+        /** @var \App\Models\User|null $user */
         $user = $user ?? Auth::user();
 
         if (! $user) {
@@ -306,9 +320,12 @@ class Project extends Model
     /**
      * Relación: Un proyecto tiene muchas herramientas asignadas.
      */
-    public function tools()
+    /**
+     * Relación: Un proyecto tiene muchas unidades de herramientas asignadas.
+     */
+    public function toolUnits()
     {
-        return $this->belongsToMany(Tool::class, 'project_tools')
+        return $this->belongsToMany(ToolUnit::class, 'project_tools', 'project_id', 'tool_unit_id')
             ->withPivot(['assigned_at', 'returned_at', 'notes'])
             ->withTimestamps();
     }

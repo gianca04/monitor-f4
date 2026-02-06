@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('project_tools', function (Blueprint $table) {
             $table->id();
             $table->foreignId('project_id')->constrained()->cascadeOnDelete();
-            $table->foreignId('tool_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('tool_unit_id')->constrained('tool_units')->cascadeOnDelete(); // Reference specific unit
             $table->date('assigned_at')->nullable();
             $table->date('returned_at')->nullable();
             $table->text('notes')->nullable();

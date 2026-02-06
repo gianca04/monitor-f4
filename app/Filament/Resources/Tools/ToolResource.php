@@ -18,7 +18,11 @@ class ToolResource extends Resource
 {
     protected static ?string $model = Tool::class;
 
-    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
+    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedWrenchScrewdriver;
+
+    protected static ?string $pluralModelLabel = 'Herramientas';
+
+    protected static ?string $modelLabel = 'Herramienta';
 
     protected static ?string $recordTitleAttribute = 'name';
 

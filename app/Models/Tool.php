@@ -36,22 +36,18 @@ class Tool extends Model
 
     protected $fillable = [
         'name',
-        'code',
         'tool_brand_id',
         'tool_category_id',
         'model',
-        'serial_number',
         'description',
-        'certification_document',
-        'certification_expiry',
-        'status',
     ];
 
     protected $casts = [
-        'certification_expiry' => 'date',
         'tool_brand_id' => 'integer',
         'tool_category_id' => 'integer',
     ];
+
+    protected $appends = ['units_in_stock', 'total_units'];
 
     /**
      * Relación: Una herramienta pertenece a una marca.
@@ -70,20 +66,20 @@ class Tool extends Model
     }
 
     /**
-     * Relación: Una herramienta tiene muchas asignaciones a proyectos.
+     * Relación: Una herramienta tiene muchas unidades físicas.
      */
-    public function projectTools(): HasMany
+    public function units(): HasMany
     {
-        return $this->hasMany(ProjectTool::class);
+        return $this->hasMany(ToolUnit::class);
     }
 
-    /**
-     * Relación: Una herramienta puede estar en muchos proyectos.
-     */
-    public function projects(): BelongsToMany
+    public function getTotalUnitsAttribute(): int
     {
-        return $this->belongsToMany(Project::class, 'project_tools')
-            ->withPivot(['assigned_at', 'returned_at', 'notes'])
-            ->withTimestamps();
+        return $this->units()->count();
+    }
+
+    public function getUnitsInStockAttribute(): int
+    {
+        return $this->units()->where('status', 'Disponible')->count();
     }
 }

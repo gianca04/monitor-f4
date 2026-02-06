@@ -15,6 +15,8 @@ use App\Http\Controllers\WorkReportWordController;
 use App\Http\Controllers\RequestConsolidatedController;
 use App\Http\Controllers\WarehouseStatusController;
 use App\Http\Controllers\WorkReportController;
+use App\Http\Controllers\ToolController;
+use App\Http\Controllers\ProjectToolController;
 
 // Redirigir la raíz al dashboard de Filament
 Route::redirect('/', '/dashboard');
@@ -134,6 +136,31 @@ Route::middleware(['auth'])->group(function () {
     // Ruta para actualizar estado de almacén (Kanban)
     Route::post('/warehouse/update-status', [WarehouseStatusController::class, 'updateStatus'])
         ->name('warehouse.update-status');
+
+    // Rutas para el catálogo de herramientas
+    Route::prefix('tools')->group(function () {
+        Route::get('/', [ToolController::class, 'index'])->name('tools.index');
+        Route::get('/quick-search', [ToolController::class, 'quickSearch'])->name('tools.quick-search');
+        Route::get('/categories', [ToolController::class, 'categories'])->name('tools.categories');
+        Route::get('/expiring-certifications', [ToolController::class, 'expiringCertifications'])->name('tools.expiring-certifications');
+        Route::get('/stats', [ToolController::class, 'stats'])->name('tools.stats');
+        Route::get('/{id}', [ToolController::class, 'show'])->name('tools.show');
+        Route::post('/', [ToolController::class, 'store'])->name('tools.store');
+        Route::put('/{id}', [ToolController::class, 'update'])->name('tools.update');
+        Route::delete('/{id}', [ToolController::class, 'destroy'])->name('tools.destroy');
+    });
+
+    // Rutas para asignación de herramientas a proyectos
+    Route::prefix('project-tools')->group(function () {
+        Route::get('/', [ProjectToolController::class, 'index'])->name('project-tools.index');
+        Route::get('/available', [ProjectToolController::class, 'availableTools'])->name('project-tools.available');
+        Route::get('/project/{projectId}', [ProjectToolController::class, 'toolsByProject'])->name('project-tools.by-project');
+        Route::post('/', [ProjectToolController::class, 'store'])->name('project-tools.store');
+        Route::get('/{id}', [ProjectToolController::class, 'show'])->name('project-tools.show');
+        Route::put('/{id}', [ProjectToolController::class, 'update'])->name('project-tools.update');
+        Route::post('/{id}/return', [ProjectToolController::class, 'returnTool'])->name('project-tools.return');
+        Route::delete('/{id}', [ProjectToolController::class, 'destroy'])->name('project-tools.destroy');
+    });
 });
 
 Route::get('/crear-symlink', function () {

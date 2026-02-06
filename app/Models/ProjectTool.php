@@ -29,7 +29,7 @@ class ProjectTool extends Model
 
     protected $fillable = [
         'project_id',
-        'tool_id',
+        'tool_unit_id',
         'assigned_at',
         'returned_at',
         'notes',
@@ -39,7 +39,8 @@ class ProjectTool extends Model
         'assigned_at' => 'date',
         'returned_at' => 'date',
         'project_id' => 'integer',
-        'tool_id' => 'integer',
+        'tool_unit_id' => 'integer',
+        'tool_id' => 'integer', // Deprecated? Or just removed.
     ];
 
     /**
@@ -51,10 +52,16 @@ class ProjectTool extends Model
     }
 
     /**
-     * Relación: Una asignación pertenece a una herramienta.
+     * Relación: Una asignación pertenece a una unidad de herramienta.
      */
-    public function tool(): BelongsTo
+    public function tool(): BelongsTo // Keeping 'tool' name might be confusing if it returns a Unit. Changing to 'toolUnit' is better, but accessors might help.
     {
-        return $this->belongsTo(Tool::class);
+        return $this->belongsTo(ToolUnit::class, 'tool_unit_id');
+    }
+
+    // Helper to get the catalog tool
+    public function getCatalogToolAttribute()
+    {
+        return $this->tool?->tool;
     }
 }

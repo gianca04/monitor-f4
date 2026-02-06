@@ -162,12 +162,21 @@ class WorkreportsRelationManager extends RelationManager
                                     ->label('Herramientas')
                                     ->helperText('Agrega las herramientas utilizadas durante el trabajo.')
                                     ->schema([
-                                        TextInput::make('herramienta')
+                                        Select::make('herramienta')
                                             ->label('Herramienta')
-                                            ->placeholder('Ej: Taladro')
+                                            ->options(function () {
+                                                $project = Project::find($this->getOwnerRecord()->project_id);
+                                                if (!$project) return [];
+                                                // Retornamos las herramientas asignadas al proyecto (nombres únicos del catálogo)
+                                                return $project->toolUnits()->with('tool')->get()->pluck('tool.name', 'tool.name');
+                                            })
+                                            ->searchable()
+                                            ->preload()
                                             ->required(),
                                         TextInput::make('unidad')
                                             ->label('Unidad')
+                                            ->default('UNIDAD')
+                                            ->readOnly()
                                             ->placeholder('Ej: Unidad'),
                                         TextInput::make('cantidad')
                                             ->label('Cantidad')
@@ -627,14 +636,24 @@ class WorkreportsRelationManager extends RelationManager
                 //AssociateAction::make(),
             ])
             ->recordActions([
+                Action::make('preview_report')
+                    ->label('')
+                    ->icon('heroicon-o-eye')
+                    ->color('info')
+                    ->url(fn($record) => route('work-report.preview', $record->id))
+                    ->openUrlInNewTab()
+                    ->tooltip('Ver previsualización del reporte'),
+                Action::make('generate_evidence_report')
+                    //->label('Informe de Evidencias')
+                    ->color('danger')
+                    ->icon('heroicon-o-document-arrow-down') // Cambiado para indicar descarga/PDF
+                    ->url(fn($record) => route('evidence-report.pdf', $record->id))
+                    ->openUrlInNewTab()
+                    ->visible(fn($record) => $record->photos()->exists()) // .exists() es más eficiente que .count()
+                    ->tooltip('Generar informe PDF con evidencias fotográficas'),
+
                 ActionGroup::make([
-                    Action::make('preview_report')
-                        ->label('Previsualizar')
-                        ->icon('heroicon-o-eye')
-                        ->color('info')
-                        ->url(fn($record) => route('work-report.preview', $record->id))
-                        ->openUrlInNewTab()
-                        ->tooltip('Ver previsualización del reporte'),
+
                     // Relación de Fotos
                     //RelationManagerAction::make('photos-relation-manager')
                     //    ->label('Ver fotografías')
@@ -656,7 +675,7 @@ class WorkreportsRelationManager extends RelationManager
                     ViewAction::make()
                         ->icon('heroicon-o-eye')
                         ->color('info')
-                        ->modalWidth('screen'),
+                        ->modalWidth('7xl'),
                     EditAction::make()
                         ->icon('heroicon-o-pencil-square')
                         ->color('primary')
