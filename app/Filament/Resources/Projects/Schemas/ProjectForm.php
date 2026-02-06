@@ -746,7 +746,7 @@ class ProjectForm
                                     ->label('Estado del servicio')
                                     ->options([
                                         'Pendiente' => 'Pendiente',
-                                        'Enviada' => 'Enviada',
+                                        'Enviado' => 'Enviado',
                                         'Aprobado' => 'Aprobado',
                                         'En Ejecución' => 'En Ejecución',
                                         'Completado' => 'Completado',

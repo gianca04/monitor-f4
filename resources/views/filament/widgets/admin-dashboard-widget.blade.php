@@ -205,7 +205,8 @@
                                 </div>
                                 <div>
                                     <p class="text-sm font-bold text-red-700">S/.
-                                        {{ number_format($globalStats['total_approved_amount'], 2) }}</p>
+                                        {{ number_format($globalStats['total_approved_amount'], 2) }}
+                                    </p>
                                     <p class="text-xs text-red-600">Total Aprobado</p>
                                 </div>
                             </div>
@@ -258,7 +259,8 @@
                                 </div>
                                 <div>
                                     <p class="text-lg font-bold text-cyan-700">
-                                        {{ $globalStats['dispatches_attended'] }}</p>
+                                        {{ $globalStats['dispatches_attended'] }}
+                                    </p>
                                     <p class="text-xs text-cyan-600">Despachos</p>
                                 </div>
                             </div>
@@ -276,7 +278,8 @@
                                 </div>
                                 <div>
                                     <p class="text-lg font-bold text-orange-700">
-                                        {{ $globalStats['dispatches_pending'] }}</p>
+                                        {{ $globalStats['dispatches_pending'] }}
+                                    </p>
                                     <p class="text-xs text-orange-600">Pendientes</p>
                                 </div>
                             </div>
@@ -294,7 +297,8 @@
                                 </div>
                                 <div>
                                     <p class="text-lg font-bold text-pink-700">
-                                        {{ $globalStats['projects_with_consumption_today'] }}</p>
+                                        {{ $globalStats['projects_with_consumption_today'] }}
+                                    </p>
                                     <p class="text-xs text-pink-600">Consumo Hoy</p>
                                 </div>
                             </div>
@@ -407,8 +411,7 @@
                             $activeTab !== $key,
                     ])>
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="{{ $tab['icon'] }}" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="{{ $tab['icon'] }}" />
                         </svg>
                         <span class="hidden sm:inline">{{ $tab['label'] }}</span>
                     </button>
@@ -422,8 +425,8 @@
             <div wire:loading class="absolute inset-0 z-10 flex items-center justify-center bg-white/80">
                 <div class="flex items-center gap-2 text-indigo-600">
                     <svg class="w-6 h-6 animate-spin" fill="none" viewBox="0 0 24 24">
-                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
-                            stroke-width="4"></circle>
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4">
+                        </circle>
                         <path class="opacity-75" fill="currentColor"
                             d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
                         </path>
@@ -434,210 +437,203 @@
 
             {{-- TAB: RESUMEN --}}
             @if ($activeTab === 'overview')
-                @php $stats = $this->getOverviewStats(); @endphp
+                    @php $stats = $this->getOverviewStats(); @endphp
 
-                {{-- Tarjetas de Estadísticas --}}
-                <div class="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
-                    {{-- Proyectos --}}
-                    <div
-                        class="group relative overflow-hidden rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 p-5 shadow-lg transition-transform hover:scale-[1.02]">
-                        <div class="absolute w-24 h-24 rounded-full -right-4 -top-4 bg-white/10"></div>
-                        <div class="relative">
-                            <div class="flex items-center justify-between">
-                                <svg class="w-8 h-8 text-white/80" fill="none" stroke="currentColor"
-                                    viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
-                                </svg>
-                                <span class="text-3xl font-bold text-white">{{ $stats['projects_total'] }}</span>
+                    {{-- Tarjetas de Estadísticas --}}
+                    <div class="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
+                        {{-- Proyectos --}}
+                        <div
+                            class="group relative overflow-hidden rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 p-5 shadow-lg transition-transform hover:scale-[1.02]">
+                            <div class="absolute w-24 h-24 rounded-full -right-4 -top-4 bg-white/10"></div>
+                            <div class="relative">
+                                <div class="flex items-center justify-between">
+                                    <svg class="w-8 h-8 text-white/80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
+                                    </svg>
+                                    <span class="text-3xl font-bold text-white">{{ $stats['projects_total'] }}</span>
+                                </div>
+                                <p class="mt-2 text-sm font-medium text-white/90">Proyectos Totales</p>
+                                <div class="flex gap-2 mt-3">
+                                    <span
+                                        class="inline-flex items-center rounded-full bg-white/20 px-2 py-0.5 text-xs font-medium text-white">
+                                        ✓ {{ $stats['projects_approved'] }}
+                                    </span>
+                                    <span
+                                        class="inline-flex items-center rounded-full bg-white/20 px-2 py-0.5 text-xs font-medium text-white">
+                                        ⚡ {{ $stats['projects_in_execution'] }}
+                                    </span>
+                                </div>
                             </div>
-                            <p class="mt-2 text-sm font-medium text-white/90">Proyectos Totales</p>
-                            <div class="flex gap-2 mt-3">
-                                <span
-                                    class="inline-flex items-center rounded-full bg-white/20 px-2 py-0.5 text-xs font-medium text-white">
-                                    ✓ {{ $stats['projects_approved'] }}
-                                </span>
-                                <span
-                                    class="inline-flex items-center rounded-full bg-white/20 px-2 py-0.5 text-xs font-medium text-white">
-                                    ⚡ {{ $stats['projects_in_execution'] }}
-                                </span>
+                        </div>
+
+                        {{-- Cotizaciones Aprobadas --}}
+                        <div
+                            class="group relative overflow-hidden rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-600 p-5 shadow-lg transition-transform hover:scale-[1.02]">
+                            <div class="absolute w-24 h-24 rounded-full -right-4 -top-4 bg-white/10"></div>
+                            <div class="relative">
+                                <div class="flex items-center justify-between">
+                                    <svg class="w-8 h-8 text-white/80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M9 12l2 2 4-4m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                    <span class="text-3xl font-bold text-white">{{ $stats['quotes_approved'] }}</span>
+                                </div>
+                                <p class="mt-2 text-sm font-medium text-white/90">Cotizaciones Aprobadas</p>
+                                <div class="mt-3">
+                                    <span
+                                        class="inline-flex items-center rounded-full bg-white/20 px-2 py-0.5 text-xs font-medium text-white">
+                                        {{ $stats['quotes_pending'] }} pendientes
+                                    </span>
+                                </div>
                             </div>
+                        </div>
+
+                        {{-- Actas --}}
+                        <div
+                            class="group relative overflow-hidden rounded-xl bg-gradient-to-br from-violet-500 to-violet-600 p-5 shadow-lg transition-transform hover:scale-[1.02]">
+                            <div class="absolute w-24 h-24 rounded-full -right-4 -top-4 bg-white/10"></div>
+                            <div class="relative">
+                                <div class="flex items-center justify-between">
+                                    <svg class="w-8 h-8 text-white/80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+                                    </svg>
+                                </div>
+                                <span class="text-3xl font-bold text-white">{{ $stats['compliance_count'] }}</span>
+                            </div>
+                            <p class="mt-2 text-sm font-medium text-white/90">Actas Generadas</p>
                         </div>
                     </div>
 
-                    {{-- Cotizaciones Aprobadas --}}
+                    {{-- Reportes --}}
                     <div
-                        class="group relative overflow-hidden rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-600 p-5 shadow-lg transition-transform hover:scale-[1.02]">
+                        class="group relative overflow-hidden rounded-xl bg-gradient-to-br from-amber-500 to-orange-500 p-5 shadow-lg transition-transform hover:scale-[1.02]">
                         <div class="absolute w-24 h-24 rounded-full -right-4 -top-4 bg-white/10"></div>
                         <div class="relative">
                             <div class="flex items-center justify-between">
-                                <svg class="w-8 h-8 text-white/80" fill="none" stroke="currentColor"
-                                    viewBox="0 0 24 24">
+                                <svg class="w-8 h-8 text-white/80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M9 12l2 2 4-4m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                        d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                                 </svg>
-                                <span class="text-3xl font-bold text-white">{{ $stats['quotes_approved'] }}</span>
+                                <span class="text-3xl font-bold text-white">{{ $stats['work_reports_count'] }}</span>
                             </div>
-                            <p class="mt-2 text-sm font-medium text-white/90">Cotizaciones Aprobadas</p>
+                            <p class="mt-2 text-sm font-medium text-white/90">Reportes de Trabajo</p>
+                        </div>
+                    </div>
+
+                    {{-- Almacén --}}
+                    <div
+                        class="group relative overflow-hidden rounded-xl bg-gradient-to-br from-cyan-500 to-teal-500 p-5 shadow-lg transition-transform hover:scale-[1.02]">
+                        <div class="absolute w-24 h-24 rounded-full -right-4 -top-4 bg-white/10"></div>
+                        <div class="relative">
+                            <div class="flex items-center justify-between">
+                                <svg class="w-8 h-8 text-white/80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0" />
+                                </svg>
+                                <span class="text-3xl font-bold text-white">{{ $stats['warehouse_attended'] }}</span>
+                            </div>
+                            <p class="mt-2 text-sm font-medium text-white/90">Despachos Atendidos</p>
                             <div class="mt-3">
                                 <span
                                     class="inline-flex items-center rounded-full bg-white/20 px-2 py-0.5 text-xs font-medium text-white">
-                                    {{ $stats['quotes_pending'] }} pendientes
+                                    {{ $stats['warehouse_pending'] }} pendientes
                                 </span>
                             </div>
                         </div>
                     </div>
+                </div>
 
-                    {{-- Actas --}}
-                    <div
-                        class="group relative overflow-hidden rounded-xl bg-gradient-to-br from-violet-500 to-violet-600 p-5 shadow-lg transition-transform hover:scale-[1.02]">
-                        <div class="absolute w-24 h-24 rounded-full -right-4 -top-4 bg-white/10"></div>
-                        <div class="relative">
-                            <div class="flex items-center justify-between">
-                                <svg class="w-8 h-8 text-white/80" fill="none" stroke="currentColor"
-                                    viewBox="0 0 24 24">
+                {{-- Métricas adicionales --}}
+                @php $advancedData = $this->getAdvancedChartData(); @endphp
+                <div class="grid gap-4 mt-6 lg:grid-cols-3">
+                    {{-- Tasa de conversión --}}
+                    <div class="p-5 rounded-xl bg-gray-50 ring-1 ring-gray-200">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm font-medium text-gray-500">Tasa de Conversión</p>
+                                <p class="mt-1 text-3xl font-bold text-gray-800">
+                                    {{ $advancedData['conversion_rate'] }}%
+                                </p>
+                            </div>
+                            <div class="flex items-center justify-center w-12 h-12 bg-green-100 rounded-full">
+                                <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+                                        d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                                 </svg>
                             </div>
-                            <span class="text-3xl font-bold text-white">{{ $stats['compliance_count'] }}</span>
                         </div>
-                        <p class="mt-2 text-sm font-medium text-white/90">Actas Generadas</p>
+                        <p class="mt-2 text-xs text-gray-500">Cotizaciones aprobadas vs emitidas</p>
+                        <div class="h-2 mt-3 overflow-hidden bg-gray-200 rounded-full">
+                            <div class="h-full bg-green-500 rounded-full"
+                                style="width: {{ $advancedData['conversion_rate'] }}%"></div>
+                        </div>
                     </div>
-                </div>
 
-                {{-- Reportes --}}
-                <div
-                    class="group relative overflow-hidden rounded-xl bg-gradient-to-br from-amber-500 to-orange-500 p-5 shadow-lg transition-transform hover:scale-[1.02]">
-                    <div class="absolute w-24 h-24 rounded-full -right-4 -top-4 bg-white/10"></div>
-                    <div class="relative">
+                    {{-- Tiempo promedio de aprobación --}}
+                    <div class="p-5 rounded-xl bg-gray-50 ring-1 ring-gray-200">
                         <div class="flex items-center justify-between">
-                            <svg class="w-8 h-8 text-white/80" fill="none" stroke="currentColor"
-                                viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                            </svg>
-                            <span class="text-3xl font-bold text-white">{{ $stats['work_reports_count'] }}</span>
+                            <div>
+                                <p class="text-sm font-medium text-gray-500">Tiempo Promedio Aprobación</p>
+                                <p class="mt-1 text-3xl font-bold text-gray-800">
+                                    {{ $advancedData['avg_approval_days'] }} <span
+                                        class="text-lg font-normal text-gray-500">días</span>
+                                </p>
+                            </div>
+                            <div class="flex items-center justify-center w-12 h-12 bg-blue-100 rounded-full">
+                                <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                            </div>
                         </div>
-                        <p class="mt-2 text-sm font-medium text-white/90">Reportes de Trabajo</p>
+                        <p class="mt-2 text-xs text-gray-500">Desde creación hasta aprobación</p>
                     </div>
-                </div>
 
-                {{-- Almacén --}}
-                <div
-                    class="group relative overflow-hidden rounded-xl bg-gradient-to-br from-cyan-500 to-teal-500 p-5 shadow-lg transition-transform hover:scale-[1.02]">
-                    <div class="absolute w-24 h-24 rounded-full -right-4 -top-4 bg-white/10"></div>
-                    <div class="relative">
+                    {{-- Proyectos completados --}}
+                    <div class="p-5 rounded-xl bg-gray-50 ring-1 ring-gray-200">
                         <div class="flex items-center justify-between">
-                            <svg class="w-8 h-8 text-white/80" fill="none" stroke="currentColor"
-                                viewBox="0 0 24 24">
+                            <div>
+                                <p class="text-sm font-medium text-gray-500">Flujos Completos</p>
+                                <p class="mt-1 text-3xl font-bold text-gray-800">
+                                    {{ $this->getCompletedProjectsCount() }}
+                                </p>
+                            </div>
+                            <div class="flex items-center justify-center w-12 h-12 bg-purple-100 rounded-full">
+                                <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
+                                </svg>
+                            </div>
+                        </div>
+                        <p class="mt-2 text-xs text-gray-500">Cotización → Acta generada → Reportes → Despacho atendido</p>
+                    </div>
+                </div>
+
+                {{-- Banner de Proyectos Completos --}}
+                <div class="mt-6 overflow-hidden rounded-xl bg-gradient-to-r from-green-50 to-emerald-50 ring-1 ring-green-200">
+                    <div class="flex items-center gap-6 p-6">
+                        <div
+                            class="flex items-center justify-center flex-shrink-0 w-16 h-16 bg-green-500 rounded-full shadow-lg shadow-green-500/30">
+                            <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0" />
+                                    d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
                             </svg>
-                            <span class="text-3xl font-bold text-white">{{ $stats['warehouse_attended'] }}</span>
                         </div>
-                        <p class="mt-2 text-sm font-medium text-white/90">Despachos Atendidos</p>
-                        <div class="mt-3">
-                            <span
-                                class="inline-flex items-center rounded-full bg-white/20 px-2 py-0.5 text-xs font-medium text-white">
-                                {{ $stats['warehouse_pending'] }} pendientes
-                            </span>
+                        <div class="flex-1">
+                            <h3 class="text-lg font-bold text-green-800">Proyectos con Flujo Completo</h3>
+                            <p class="mt-1 text-sm text-green-600">
+                                Cotización aprobada → Acta generada → Reportes → Despacho atendido
+                            </p>
+                        </div>
+                        <div class="text-right">
+                            <span class="text-5xl font-bold text-green-600">{{ $this->getCompletedProjectsCount() }}</span>
+                            <p class="text-sm text-green-600">completados</p>
                         </div>
                     </div>
                 </div>
-        </div>
-
-        {{-- Métricas adicionales --}}
-        @php $advancedData = $this->getAdvancedChartData(); @endphp
-        <div class="grid gap-4 mt-6 lg:grid-cols-3">
-            {{-- Tasa de conversión --}}
-            <div class="p-5 rounded-xl bg-gray-50 ring-1 ring-gray-200">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <p class="text-sm font-medium text-gray-500">Tasa de Conversión</p>
-                        <p class="mt-1 text-3xl font-bold text-gray-800">
-                            {{ $advancedData['conversion_rate'] }}%
-                        </p>
-                    </div>
-                    <div class="flex items-center justify-center w-12 h-12 bg-green-100 rounded-full">
-                        <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor"
-                            viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                        </svg>
-                    </div>
-                </div>
-                <p class="mt-2 text-xs text-gray-500">Cotizaciones aprobadas vs emitidas</p>
-                <div class="h-2 mt-3 overflow-hidden bg-gray-200 rounded-full">
-                    <div class="h-full bg-green-500 rounded-full"
-                        style="width: {{ $advancedData['conversion_rate'] }}%"></div>
-                </div>
-            </div>
-
-            {{-- Tiempo promedio de aprobación --}}
-            <div class="p-5 rounded-xl bg-gray-50 ring-1 ring-gray-200">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <p class="text-sm font-medium text-gray-500">Tiempo Promedio Aprobación</p>
-                        <p class="mt-1 text-3xl font-bold text-gray-800">
-                            {{ $advancedData['avg_approval_days'] }} <span
-                                class="text-lg font-normal text-gray-500">días</span></p>
-                    </div>
-                    <div class="flex items-center justify-center w-12 h-12 bg-blue-100 rounded-full">
-                        <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                    </div>
-                </div>
-                <p class="mt-2 text-xs text-gray-500">Desde creación hasta aprobación</p>
-            </div>
-
-            {{-- Proyectos completados --}}
-            <div class="p-5 rounded-xl bg-gray-50 ring-1 ring-gray-200">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <p class="text-sm font-medium text-gray-500">Flujos Completos</p>
-                        <p class="mt-1 text-3xl font-bold text-gray-800">
-                            {{ $this->getCompletedProjectsCount() }}
-                        </p>
-                    </div>
-                    <div class="flex items-center justify-center w-12 h-12 bg-purple-100 rounded-full">
-                        <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor"
-                            viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
-                        </svg>
-                    </div>
-                </div>
-                <p class="mt-2 text-xs text-gray-500">Cotización → Acta generada → Reportes → Despacho atendido</p>
-            </div>
-        </div>
-
-        {{-- Banner de Proyectos Completos --}}
-        <div
-            class="mt-6 overflow-hidden rounded-xl bg-gradient-to-r from-green-50 to-emerald-50 ring-1 ring-green-200">
-            <div class="flex items-center gap-6 p-6">
-                <div
-                    class="flex items-center justify-center flex-shrink-0 w-16 h-16 bg-green-500 rounded-full shadow-lg shadow-green-500/30">
-                    <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
-                    </svg>
-                </div>
-                <div class="flex-1">
-                    <h3 class="text-lg font-bold text-green-800">Proyectos con Flujo Completo</h3>
-                    <p class="mt-1 text-sm text-green-600">
-                        Cotización aprobada → Acta generada → Reportes → Despacho atendido
-                    </p>
-                </div>
-                <div class="text-right">
-                    <span class="text-5xl font-bold text-green-600">{{ $this->getCompletedProjectsCount() }}</span>
-                    <p class="text-sm text-green-600">completados</p>
-                </div>
-            </div>
-        </div>
-        @endif
+            @endif
 
         {{-- TAB: PROYECTOS --}}
         @if ($activeTab === 'projects')
@@ -684,8 +680,7 @@
                                     </td>
                                     <td class="px-4 py-4">
                                         <div class="max-w-[200px]">
-                                            <p class="font-medium text-gray-900 truncate"
-                                                title="{{ $project['name'] }}">
+                                            <p class="font-medium text-gray-900 truncate" title="{{ $project['name'] }}">
                                                 {{ Str::limit($project['name'], 25) }}
                                             </p>
                                             <p class="text-xs text-gray-500">{{ $project['created_at'] }}</p>
@@ -702,7 +697,7 @@
                                         @php
                                             $statusStyles = [
                                                 'Pendiente' => 'bg-yellow-100 text-yellow-700 ring-yellow-600/20',
-                                                'Enviada' => 'bg-blue-100 text-blue-700 ring-blue-600/20',
+                                                'Enviado' => 'bg-blue-100 text-blue-700 ring-blue-600/20',
                                                 'Aprobado' => 'bg-green-100 text-green-700 ring-green-600/20',
                                                 'En Ejecución' => 'bg-indigo-100 text-indigo-700 ring-indigo-600/20',
                                                 'Completado' => 'bg-emerald-100 text-emerald-700 ring-emerald-600/20',
@@ -849,8 +844,7 @@
                                         <div class="flex flex-col items-center">
                                             <svg class="w-12 h-12 text-gray-300" fill="none" stroke="currentColor"
                                                 viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round"
-                                                    stroke-width="1.5"
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
                                                     d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
                                             </svg>
                                             <p class="mt-4 text-sm font-medium text-gray-500">No se encontraron
@@ -883,8 +877,7 @@
                 {{-- NUEVO: Gráfico Circular - Proyectos por Estado --}}
                 <div class="p-6 rounded-xl bg-gray-50 ring-1 ring-gray-200">
                     <h4 class="flex items-center gap-2 mb-6 text-lg font-semibold text-gray-800">
-                        <svg class="w-5 h-5 text-indigo-500" fill="none" stroke="currentColor"
-                            viewBox="0 0 24 24">
+                        <svg class="w-5 h-5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z" />
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -909,9 +902,8 @@
                                             $dashOffset = -$offset * 3.14159;
                                             $offset += $percentage;
                                         @endphp
-                                        <circle cx="50" cy="50" r="40" fill="transparent"
-                                            stroke="{{ $item['color'] }}" stroke-width="20"
-                                            stroke-dasharray="{{ $dashArray }} 314.159"
+                                        <circle cx="50" cy="50" r="40" fill="transparent" stroke="{{ $item['color'] }}"
+                                            stroke-width="20" stroke-dasharray="{{ $dashArray }} 314.159"
                                             stroke-dashoffset="{{ $dashOffset }}" transform="rotate(-90 50 50)"
                                             class="transition-all duration-500 cursor-pointer hover:opacity-80">
                                             <title>{{ $item['status'] }}: {{ $item['count'] }}
@@ -937,13 +929,11 @@
                                         <div class="flex items-center gap-2">
                                             <span class="w-3 h-3 rounded-full"
                                                 style="background-color: {{ $item['color'] }}"></span>
-                                            <span
-                                                class="text-sm font-medium text-gray-700">{{ $item['status'] }}</span>
+                                            <span class="text-sm font-medium text-gray-700">{{ $item['status'] }}</span>
                                         </div>
                                         <div class="text-right">
                                             <span class="text-sm font-bold text-gray-900">{{ $item['count'] }}</span>
-                                            <span
-                                                class="ml-1 text-xs text-gray-500">({{ $item['percentage'] }}%)</span>
+                                            <span class="ml-1 text-xs text-gray-500">({{ $item['percentage'] }}%)</span>
                                         </div>
                                     </div>
                                 @endforeach
@@ -963,8 +953,7 @@
                 {{-- NUEVO: Proyecto Más Costoso + Top 5 --}}
                 <div class="p-6 rounded-xl bg-gray-50 ring-1 ring-gray-200">
                     <h4 class="flex items-center gap-2 mb-6 text-lg font-semibold text-gray-800">
-                        <svg class="w-5 h-5 text-amber-500" fill="none" stroke="currentColor"
-                            viewBox="0 0 24 24">
+                        <svg class="w-5 h-5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
@@ -973,13 +962,11 @@
 
                     @if ($mostExpensive && $mostExpensive['total_amount'] > 0)
                         {{-- Tarjeta del proyecto más costoso --}}
-                        <div
-                            class="p-4 mb-4 overflow-hidden bg-gradient-to-br from-amber-500 to-orange-500 rounded-xl">
+                        <div class="p-4 mb-4 overflow-hidden bg-gradient-to-br from-amber-500 to-orange-500 rounded-xl">
                             <div class="flex items-start justify-between">
                                 <div class="flex-1">
                                     <p class="text-xs font-medium text-white/80">🏆 Más costoso</p>
-                                    <h5 class="mt-1 text-lg font-bold text-white truncate"
-                                        title="{{ $mostExpensive['name'] }}">
+                                    <h5 class="mt-1 text-lg font-bold text-white truncate" title="{{ $mostExpensive['name'] }}">
                                         {{ Str::limit($mostExpensive['name'], 30) }}
                                     </h5>
                                     <p class="mt-1 text-sm text-white/90">{{ $mostExpensive['service_code'] }}</p>
@@ -987,7 +974,8 @@
                                 </div>
                                 <div class="text-right">
                                     <p class="text-2xl font-bold text-white">S/.
-                                        {{ number_format($mostExpensive['total_amount'], 2) }}</p>
+                                        {{ number_format($mostExpensive['total_amount'], 2) }}
+                                    </p>
                                     <span
                                         class="inline-block px-2 py-0.5 mt-1 text-xs font-medium rounded-full bg-white/20 text-white">
                                         {{ $mostExpensive['status'] }}
@@ -1000,16 +988,14 @@
                         <h5 class="mb-3 text-sm font-semibold text-gray-700">Top 5 Proyectos por Costo</h5>
                         <div class="space-y-2">
                             @foreach ($topProjects as $index => $project)
-                                <div
-                                    class="flex items-center gap-3 p-2 transition-colors bg-white rounded-lg hover:bg-gray-100">
+                                <div class="flex items-center gap-3 p-2 transition-colors bg-white rounded-lg hover:bg-gray-100">
                                     <span
                                         class="flex items-center justify-center w-6 h-6 text-xs font-bold rounded-full
-                                        {{ $index === 0 ? 'bg-amber-100 text-amber-700' : ($index === 1 ? 'bg-gray-200 text-gray-600' : 'bg-orange-100 text-orange-600') }}">
+                                                    {{ $index === 0 ? 'bg-amber-100 text-amber-700' : ($index === 1 ? 'bg-gray-200 text-gray-600' : 'bg-orange-100 text-orange-600') }}">
                                         {{ $index + 1 }}
                                     </span>
                                     <div class="flex-1 min-w-0">
-                                        <p class="text-sm font-medium text-gray-800 truncate"
-                                            title="{{ $project['name'] }}">
+                                        <p class="text-sm font-medium text-gray-800 truncate" title="{{ $project['name'] }}">
                                             {{ Str::limit($project['name'], 25) }}
                                         </p>
                                         <p class="text-xs text-gray-500">{{ $project['service_code'] }}</p>
@@ -1034,8 +1020,7 @@
                 {{-- NUEVO: Gastos Mensuales (12 meses) --}}
                 <div class="p-6 lg:col-span-2 rounded-xl bg-gray-50 ring-1 ring-gray-200">
                     <h4 class="flex items-center gap-2 mb-6 text-lg font-semibold text-gray-800">
-                        <svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor"
-                            viewBox="0 0 24 24">
+                        <svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                         </svg>
@@ -1120,15 +1105,14 @@
 
                                         {{-- Valor encima de la barra --}}
                                         @if ($expense['total'] > 0)
-                                            <span
-                                                class="mb-1 text-[10px] font-bold text-gray-600 hidden group-hover:block">
+                                            <span class="mb-1 text-[10px] font-bold text-gray-600 hidden group-hover:block">
                                                 {{ number_format($expense['total'] / 1000, 1) }}k
                                             </span>
                                         @endif
 
                                         {{-- Barra --}}
                                         <div class="w-full rounded-t-md transition-all duration-300 cursor-pointer
-                                            {{ $expense['is_current'] ? 'bg-gradient-to-t from-green-600 to-green-400' : 'bg-gradient-to-t from-green-400 to-green-300 hover:from-green-500 hover:to-green-400' }}"
+                                                        {{ $expense['is_current'] ? 'bg-gradient-to-t from-green-600 to-green-400' : 'bg-gradient-to-t from-green-400 to-green-300 hover:from-green-500 hover:to-green-400' }}"
                                             style="height: {{ max($heightPct, 2) }}%; min-height: {{ $expense['total'] > 0 ? '8px' : '2px' }};">
                                         </div>
                                     </div>
@@ -1173,8 +1157,7 @@
                 {{-- Proyectos por Estado (barras) - EXISTENTE --}}
                 <div class="p-6 rounded-xl bg-gray-50 ring-1 ring-gray-200">
                     <h4 class="flex items-center gap-2 mb-6 text-lg font-semibold text-gray-800">
-                        <svg class="w-5 h-5 text-indigo-500" fill="none" stroke="currentColor"
-                            viewBox="0 0 24 24">
+                        <svg class="w-5 h-5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z" />
                         </svg>
@@ -1184,7 +1167,7 @@
                         @php
                             $statusConfig = [
                                 'Pendiente' => ['color' => 'bg-yellow-500', 'emoji' => '⏳'],
-                                'Enviada' => ['color' => 'bg-blue-500', 'emoji' => '📤'],
+                                'Enviado' => ['color' => 'bg-blue-500', 'emoji' => '📤'],
                                 'Aprobado' => ['color' => 'bg-green-500', 'emoji' => '✅'],
                                 'En Ejecución' => ['color' => 'bg-indigo-500', 'emoji' => '⚡'],
                                 'Completado' => ['color' => 'bg-emerald-500', 'emoji' => '🎉'],
@@ -1245,18 +1228,15 @@
                                 $bgColor = $colorMap[$activity['color']] ?? 'bg-gray-500';
                             @endphp
                             <div class="relative flex gap-4 pl-10">
-                                <div
-                                    class="absolute left-3 top-1 h-4 w-4 rounded-full {{ $bgColor }} ring-4 ring-white">
+                                <div class="absolute left-3 top-1 h-4 w-4 rounded-full {{ $bgColor }} ring-4 ring-white">
                                 </div>
                                 <div class="flex-1 p-4 rounded-lg bg-gray-50">
                                     <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                                         <div>
                                             <p class="font-medium text-gray-800">{{ $activity['message'] }}</p>
                                             <p class="flex items-center gap-1 mt-1 text-xs text-gray-500">
-                                                <svg class="w-3 h-3" fill="none" stroke="currentColor"
-                                                    viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round"
-                                                        stroke-width="2"
+                                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                                         d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                                                 </svg>
                                                 {{ $activity['employee'] ?? 'Sistema' }}

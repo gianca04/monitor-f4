@@ -19,29 +19,39 @@ class QuoteObserver
      */
     public function updated(Quote $quote): void
     {
-        if ($quote->isDirty('status') && $quote->status === 'Aprobado') {
-            // Anular otras cotizaciones aprobadas del mismo proyecto
-            Quote::where('project_id', $quote->project_id)
-                ->where('id', '!=', $quote->id)
-                ->where('status', 'Aprobado')
-                ->update(['status' => 'Anulado']);
+        if ($quote->isDirty('status')) {
+            $project = $quote->project;
 
-            // Actualizar fecha de aprobación y estado en el proyecto
-            if ($quote->project) {
-                $quote->project->update([
-                    'quote_approved_at' => now(),
-                    'status' => 'Aprobado',
-                ]);
-            }
-        }
+            if ($project) {
+                switch ($quote->status) {
+                    case 'Pendiente':
+                        $project->update(['status' => 'Pendiente']);
+                        break;
 
-        if ($quote->isDirty('status') && $quote->status === 'Enviado') {
-            // Actualizar fecha de envío y estado en el proyecto
-            if ($quote->project) {
-                $quote->project->update([
-                    'quote_sent_at' => now(),
-                    'status' => 'Enviado',
-                ]);
+                    case 'Enviado':
+                        $project->update([
+                            'status' => 'Enviado',
+                            'quote_sent_at' => now(),
+                        ]);
+                        break;
+
+                    case 'Aprobado':
+                        // Anular otras cotizaciones aprobadas del mismo proyecto
+                        Quote::where('project_id', $quote->project_id)
+                            ->where('id', '!=', $quote->id)
+                            ->where('status', 'Aprobado')
+                            ->update(['status' => 'Anulado']);
+
+                        $project->update([
+                            'status' => 'Aprobado',
+                            'quote_approved_at' => now(),
+                        ]);
+                        break;
+
+                    case 'Anulado':
+                        $project->update(['status' => 'Anulado']);
+                        break;
+                }
             }
         }
     }

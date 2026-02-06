@@ -83,7 +83,7 @@ class ProjectsTable
                     })
                     ->color(fn(?string $state): string => match ($state) {
                         'pending', 'Pendiente' => 'warning',
-                        'Enviada' => 'info',
+                        'Enviado' => 'info',
                         'Aprobado' => 'success',
                         'En Ejecución' => 'primary',
                         'Completado', 'Facturado' => 'success',
@@ -264,7 +264,7 @@ class ProjectsTable
                     ->label('Estado')
                     ->options([
                         'pending' => 'Pendiente',
-                        'Enviada' => 'Enviada',
+                        'Enviado' => 'Enviado',
                         'Aprobado' => 'Aprobado',
                         'En Ejecución' => 'En Ejecución',
                         'Completado' => 'Completado',
@@ -308,7 +308,7 @@ class ProjectsTable
                                 ->label('Nuevo estado')
                                 ->options([
                                     'Pendiente' => 'Pendiente',
-                                    'Enviada' => 'Enviada',
+                                    'Enviado' => 'Enviado',
                                     'Aprobado' => 'Aprobado',
                                     'En Ejecución' => 'En Ejecución',
                                     'Completado' => 'Completado',

@@ -674,7 +674,7 @@ class AdminDashboardWidget extends Widget
 
         $statuses = [
             'Pendiente' => ['color' => '#F59E0B', 'label' => 'Pendiente'],
-            'Enviada' => ['color' => '#3B82F6', 'label' => 'Enviada'],
+            'Enviado' => ['color' => '#3B82F6', 'label' => 'Enviado'],
             'Aprobado' => ['color' => '#10B981', 'label' => 'Aprobado'],
             'En Ejecución' => ['color' => '#6366F1', 'label' => 'En Ejecución'],
             'Completado' => ['color' => '#047857', 'label' => 'Completado'],
