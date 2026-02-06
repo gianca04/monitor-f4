@@ -17,6 +17,7 @@ use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Resources\RelationManagers\RelationManager;
+use Filament\Schemas\Components\Livewire;
 use Filament\Schemas\Schema;
 use Filament\Tables\Columns\SelectColumn;
 use Filament\Tables\Columns\TextColumn;
@@ -57,7 +58,14 @@ class QuotesRelationManager extends RelationManager
                         'Enviado' => 'Enviado',
                         'Aprobado' => 'Aprobado',
                         'Anulado' => 'Anulado',
-                    ]),
+                    ])
+                    ->updateStateUsing(function ($state, $record, $livewire) {
+                        // 1. Guardamos el nuevo estado en el registro de la tabla
+                        $record->update(['status' => $state]);
+
+                        // 2. Emitimos el evento al formulario padre
+                        $livewire->dispatch('update-parent-form');
+                    }),
             ])
             ->filters([
                 //
