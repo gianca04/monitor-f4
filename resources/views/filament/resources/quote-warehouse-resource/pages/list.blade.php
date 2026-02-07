@@ -549,9 +549,9 @@
                                     <tr
                                         class="transition-colors group hover:bg-slate-50 dark:hover:bg-slate-800/50 {{ $completado ? 'bg-slate-50/50 dark:bg-slate-800/30' : '' }}">
                                         <td :class="items[{{ $i }}].entregado + items[{{ $i }}].despachar >=
-                                                                                                                items[{{ $i }}].solicitado ?
-                                                                                                                'font-mono text-xs text-center align-middle text-slate-400 dark:text-slate-500 line-through underline' :
-                                                                                                                'font-mono text-xs text-center align-middle text-slate-900 dark:text-white'"
+                                                                                                                        items[{{ $i }}].solicitado ?
+                                                                                                                        'font-mono text-xs text-center align-middle text-slate-400 dark:text-slate-500 line-through underline' :
+                                                                                                                        'font-mono text-xs text-center align-middle text-slate-900 dark:text-white'"
                                             class="font-mono text-xs text-center align-middle {{ $completado ? 'text-slate-400 dark:text-slate-500' : 'text-slate-900 dark:text-white' }}">
                                             {{ $item['sat_line'] ?? '-' }}
                                         </td>
@@ -559,9 +559,9 @@
                                             <div class="flex flex-col">
                                                 <span
                                                     :class="items[{{ $i }}].entregado + items[{{ $i }}]
-                                                                                                                            .despachar >= items[{{ $i }}].solicitado ?
-                                                                                                                            'line-through underline text-slate-400 dark:text-slate-500' :
-                                                                                                                            'text-xs font-medium leading-relaxed text-slate-900 dark:text-white'"
+                                                                                                                                    .despachar >= items[{{ $i }}].solicitado ?
+                                                                                                                                    'line-through underline text-slate-400 dark:text-slate-500' :
+                                                                                                                                    'text-xs font-medium leading-relaxed text-slate-900 dark:text-white'"
                                                     class="text-xs font-medium leading-relaxed {{ $completado ? 'text-slate-400 dark:text-slate-500' : 'text-slate-900 dark:text-white' }}">
                                                     {{ $item['sat_description'] ?? '-' }}
                                                 </span>
@@ -609,7 +609,7 @@
                                                 <div class="relative flex items-center">
                                                     <input type="number" x-model.number="items[{{ $i }}].despachar"
                                                         :max="items[{{ $i }}].solicitado - items[{{ $i }}]
-                                                                                                                                                                                                        .entregado"
+                                                                                                                                                                                                                        .entregado"
                                                         min="0"
                                                         @input="if(items[{{ $i }}].despachar > (items[{{ $i }}].solicitado - items[{{ $i }}].entregado)) items[{{ $i }}].despachar = items[{{ $i }}].solicitado - items[{{ $i }}].entregado"
                                                         class="block w-full rounded-md border-0 py-1.5 pl-2 pr-8 text-slate-900 ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-primary text-xs dark:bg-slate-900 dark:ring-slate-600 dark:text-white font-bold"
@@ -633,14 +633,14 @@
                                                     @click="items[{{ $i }}].despachar = items[{{ $i }}].solicitado - items[{{ $i }}].entregado"
                                                     class="inline-flex items-center justify-center p-1.5 transition-all rounded-full group/btn"
                                                     :class="items[{{ $i }}].despachar + items[{{ $i }}]
-                                                                                                                                                                                                    .entregado >= items[{{ $i }}].solicitado ?
-                                                                                                                                                                                                    'bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-500' :
-                                                                                                                                                                                                    'text-slate-300 dark:text-slate-600 hover:text-green-600 dark:hover:text-green-500'"
+                                                                                                                                                                                                                    .entregado >= items[{{ $i }}].solicitado ?
+                                                                                                                                                                                                                    'bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-500' :
+                                                                                                                                                                                                                    'text-slate-300 dark:text-slate-600 hover:text-green-600 dark:hover:text-green-500'"
                                                     type="button" title="Marcar como listo">
                                                     <span class="material-symbols-outlined text-[22px] group-hover/btn:fill-1"
                                                         :class="items[{{ $i }}].despachar + items[{{ $i }}]
-                                                                                                                                                                                                        .entregado >= items[{{ $i }}].solicitado ?
-                                                                                                                                                                                                        'text-green-600 dark:text-green-500' : ''">check_circle</span>
+                                                                                                                                                                                                                        .entregado >= items[{{ $i }}].solicitado ?
+                                                                                                                                                                                                                        'text-green-600 dark:text-green-500' : ''">check_circle</span>
                                                 </button>
                                             @endif
                                         </td>
@@ -851,10 +851,7 @@
                 <input type="hidden" name="progreso_total" :value="progresoTotal">
                 <div class="flex items-center justify-between pt-2">
                     <div class="flex gap-4">
-                        <button @click="$wire.closeModal()"
-                            class="flex min-w-[120px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-12 px-6 bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-300 dark:hover:bg-slate-600 gap-2 text-base font-bold leading-normal transition-colors">
-                            Cancelar
-                        </button>
+
                         <!-- Botón Confirmar -->
                         <button type="button"
                             class="flex min-w-[200px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-12 px-6 bg-primary hover:bg-primary-dark text-white gap-2 pl-5 text-base font-bold leading-normal shadow-lg shadow-primary/20 transition-all transform hover:-translate-y-0.5"

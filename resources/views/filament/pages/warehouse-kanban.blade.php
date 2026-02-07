@@ -52,6 +52,9 @@
                         <h3 class="text-base font-bold leading-tight truncate text-slate-900 dark:text-white">
                             {{ $quote?->subClient?->name ?? 'Sin Cliente' }}
                         </h3>
+                        <p class="text-sm font-medium text-slate-600 dark:text-slate-300 truncate">
+                            {{ $quote?->project?->name ?? 'Sin Proyecto' }}
+                        </p>
                         <span class="text-xs text-slate-500 dark:text-slate-400">
                             {{ $quote?->quote_date?->format('d/m/Y') ?? 'N/A' }}
                         </span>
@@ -76,8 +79,7 @@
                         {{-- Barra de progreso --}}
                         <div class="w-full h-2 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
                             {{-- Usamos la variable $colorName para construir la clase bg-color-500 --}}
-                            <div class="h-full bg-{{ $colorName }}-500 rounded-full"
-                                style="width: {{ $progress }}%">
+                            <div class="h-full bg-{{ $colorName }}-500 rounded-full" style="width: {{ $progress }}%">
                             </div>
                         </div>
 
@@ -124,7 +126,8 @@
                 <div :class="isFullscreen ? 'fixed inset-0 w-screen h-screen max-w-none max-h-none rounded-none' :
                     'w-full max-w-6xl h-[92vh] rounded-xl'"
                     class="relative flex flex-col overflow-hidden transition-all duration-300 bg-white border border-gray-200 shadow-2xl dark:bg-gray-900 dark:border-gray-700"
-                    {{-- @click.away="closePreview()" --}} {{-- Eliminado para que no se cierre al hacer clic fuera --}}>
+                    {{-- @click.away="closePreview()" --}} {{-- Eliminado para que no se cierre al hacer clic fuera
+                    --}}>
 
                     <div
                         class="flex items-center justify-between p-4 border-b dark:border-gray-800 bg-gray-50 dark:bg-gray-800">
