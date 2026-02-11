@@ -239,7 +239,16 @@ class Quote extends Model
 
             // Asignamos el service_code tipo COT-$ID (sin padding)
             $project->service_code = 'COT-' . $project->id;
+            // Si el proyecto tiene fecha de envío de cotización, la usamos para la cotización
+            if (!empty($data['quote_sent_at'])) {
+                $project->quote_sent_at = $data['quote_sent_at'];
+            }
             $project->save();
+
+            // Si hay fecha de envío en el proyecto, la cotización toma esa fecha
+            if ($project->quote_sent_at) {
+                $data['quote_date'] = $project->quote_sent_at;
+            }
 
             $data['project_id'] = $project->id;
 

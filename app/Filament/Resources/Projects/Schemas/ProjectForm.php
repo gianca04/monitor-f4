@@ -753,8 +753,8 @@ class ProjectForm
                                         'Facturado' => 'Facturado',
                                         'Anulado' => 'Anulado',
                                     ])
-                                    ->default('Pendiente')
-                                    ->live(),
+                                    ->default('Pendiente'),
+
 
                                 DatePicker::make('quote_sent_at')
                                     ->label('Fecha Cotización Enviada'),

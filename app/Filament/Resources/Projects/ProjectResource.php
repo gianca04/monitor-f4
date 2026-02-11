@@ -5,6 +5,7 @@ namespace App\Filament\Resources\Projects;
 use App\Filament\Resources\Projects\Pages\CreateProject;
 use App\Filament\Resources\Projects\Pages\EditProject;
 use App\Filament\Resources\Projects\Pages\ListProjects;
+use App\Filament\Resources\Projects\RelationManagers\ProjectRequirementsRelationManager;
 use App\Filament\Resources\Projects\RelationManagers\QuotesRelationManager;
 use App\Filament\Resources\Projects\Schemas\ProjectForm;
 use App\Filament\Resources\Projects\Tables\ProjectsTable;
@@ -51,6 +52,7 @@ class ProjectResource extends Resource
         return [
             //
             QuotesRelationManager::class,
+            ProjectRequirementsRelationManager::class,
         ];
     }
 

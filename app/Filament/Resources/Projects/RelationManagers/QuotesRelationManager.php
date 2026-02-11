@@ -23,10 +23,15 @@ use Filament\Tables\Columns\SelectColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 
+use Livewire\Attributes\On;
+
 class QuotesRelationManager extends RelationManager
 {
+    #[On('update-relation-manager')]
+    public function refresh() {}
+
     protected static string $relationship = 'quotes';
-    protected static ?string $title = 'Cotizaciones del Proyecto';
+    protected static ?string $title = 'Cotizaciones';
     protected static ?string $pluralModelLabel = 'Cotizaciones';
     protected static ?string $modelLabel = 'Cotización';
     protected static ?string $recordTitleAttribute = 'request_number';

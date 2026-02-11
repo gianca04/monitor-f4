@@ -37,13 +37,24 @@ class Project extends Model
         // Crear Compliance automáticamente cuando el estado cambie a 'Aprobado'
         static::updating(function (Project $project) {
             // Verificar si el campo 'status' está siendo cambiado a 'Aprobado'
-            if ($project->isDirty('status') && $project->status === 'Aprobado') {
-                // Solo crear si no existe un Compliance para este proyecto
-                if (!$project->compliance()->exists()) {
-                    Compliance::create([
-                        'project_id' => $project->id,
-                        'state' => 'Aprobado',
-                    ]);
+            if ($project->isDirty('status')) {
+                // 1. Crear Compliance si es Aprobado
+                if ($project->status === 'Aprobado') {
+                    // Solo crear si no existe un Compliance para este proyecto
+                    if (!$project->compliance()->exists()) {
+                        Compliance::create([
+                            'project_id' => $project->id,
+                            'state' => 'Aprobado',
+                        ]);
+                    }
+                }
+
+                // 2. Sincronizar estado con la cotización más reciente
+                if (in_array($project->status, ['Enviado', 'Aprobado', 'Anulado'])) {
+                    $latestQuote = $project->latestQuote;
+                    if ($latestQuote && $latestQuote->status !== $project->status) {
+                        $latestQuote->update(['status' => $project->status]);
+                    }
                 }
             }
         });
@@ -329,5 +340,21 @@ class Project extends Model
         return $this->belongsToMany(ToolUnit::class, 'project_tools', 'project_id', 'tool_unit_id')
             ->withPivot(['assigned_at', 'returned_at', 'notes'])
             ->withTimestamps();
+    }
+
+    /**
+     * Get the consumables for the project.
+     */
+    public function consumables()
+    {
+        return $this->hasMany(Consumable::class);
+    }
+
+    /**
+     * Relación: Un proyecto tiene muchos requerimientos de proyecto.
+     */
+    public function projectRequirements()
+    {
+        return $this->hasMany(ProjectRequirement::class);
     }
 }

@@ -16,4 +16,12 @@ class Unit extends Model
     {
         return $this->hasMany(Pricelist::class);
     }
+
+    /**
+     * Get the consumables for the unit.
+     */
+    public function consumables(): HasMany
+    {
+        return $this->hasMany(Consumable::class);
+    }
 }

@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use App\Observers\QuoteDetailObserver;
 
 /**
  * Modelo QuoteDetail - Detalle de Cotización
@@ -31,6 +32,11 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class QuoteDetail extends Model
 {
     use HasFactory;
+
+    protected static function booted()
+    {
+        static::observe(QuoteDetailObserver::class);
+    }
 
     /**
      * La tabla asociada al modelo.
@@ -97,5 +103,10 @@ class QuoteDetail extends Model
     public function pricelist(): BelongsTo
     {
         return $this->belongsTo(Pricelist::class, 'pricelist_id');
+    }
+
+    public function projectRequirements(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(ProjectRequirement::class);
     }
 }

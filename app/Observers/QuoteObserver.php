@@ -3,21 +3,32 @@
 namespace App\Observers;
 
 use App\Models\Quote;
-use App\Models\QuoteWarehouse;
-use Illuminate\Support\Facades\Auth;
+use App\Services\QuoteService;
 
 class QuoteObserver
 {
+    /**
+     * @var QuoteService
+     */
+    protected $quoteService;
+
+    public function __construct(QuoteService $quoteService)
+    {
+        $this->quoteService = $quoteService;
+    }
+
     /**
      * Handle the Quote "created" event.
      */
     public function created(Quote $quote): void
     {
+        // Only trigger initial sync if status is already 'Aprobado' (uncommon but possible)
         if ($quote->status === 'Aprobado') {
-            $this->createWarehouse($quote);
+            $this->quoteService->handleWarehouseLogic($quote);
+            $this->quoteService->syncProjectStatus($quote);
+            $this->quoteService->generateProjectRequirements($quote);
         }
     }
-
 
     /**
      * Handle the Quote "updated" event.
@@ -25,71 +36,11 @@ class QuoteObserver
     public function updated(Quote $quote): void
     {
         if ($quote->isDirty('status')) {
-            $project = $quote->project;
-
-            if ($project) {
-                switch ($quote->status) {
-                    case 'Pendiente':
-                        $project->update(['status' => 'Pendiente']);
-                        break;
-
-                    case 'Enviado':
-                        $project->update([
-                            'status' => 'Enviado',
-                            'quote_sent_at' => now(),
-                        ]);
-                        break;
-
-                    case 'Aprobado':
-                        // Anular otras cotizaciones aprobadas del mismo proyecto
-                        Quote::where('project_id', $quote->project_id)
-                            ->where('id', '!=', $quote->id)
-                            ->where('status', 'Aprobado')
-                            ->update(['status' => 'Anulado']);
-
-                        $project->update([
-                            'status' => 'Aprobado',
-                            'quote_approved_at' => now(),
-                        ]);
-                        break;
-
-                    case 'Anulado':
-                        $project->update(['status' => 'Anulado']);
-                        break;
-                }
-            }
-
-            // Gestión de Almacén basada en cambio de estado
-            if ($quote->status === 'Aprobado') {
-                $this->createWarehouse($quote);
-            } elseif ($quote->status === 'Anulado') {
-                $this->deleteWarehouse($quote);
-            }
+            // Apply business rules for status changes
+            $this->quoteService->syncProjectStatus($quote);
+            $this->quoteService->handleWarehouseLogic($quote);
+            $this->quoteService->generateProjectRequirements($quote);
         }
-    }
-
-    /**
-     * Create a warehouse record for the quote if it doesn't exist.
-     */
-    protected function createWarehouse(Quote $quote): void
-    {
-        $exists = QuoteWarehouse::where('quote_id', $quote->id)->exists();
-        if (!$exists) {
-            QuoteWarehouse::create([
-                'quote_id'    => $quote->id,
-                'employee_id' => Auth::id(),
-                'status'      => 'Pendiente',
-                'observations' => null,
-            ]);
-        }
-    }
-
-    /**
-     * Delete the warehouse record for the quote.
-     */
-    protected function deleteWarehouse(Quote $quote): void
-    {
-        QuoteWarehouse::where('quote_id', $quote->id)->delete();
     }
 
     /**
@@ -97,7 +48,7 @@ class QuoteObserver
      */
     public function deleted(Quote $quote): void
     {
-        //
+        // Add cleanup logic here if needed via service
     }
 
     /**
