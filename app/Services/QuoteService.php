@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Quote;
 use App\Models\QuoteWarehouse;
 use App\Models\Project;
+use App\Models\ProjectRequirement;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 
@@ -51,6 +52,8 @@ class QuoteService
 
             case 'Anulado':
                 $project->update(['status' => 'Anulado']);
+                // Limpiar requisitos generados si se anula la cotización
+                $this->clearProjectRequirements($quote);
                 break;
         }
     }
@@ -124,13 +127,16 @@ class QuoteService
             return;
         }
 
+        // Optional: Clear existing requirements for this quote to avoid duplicates or stale data
+        // $this->clearProjectRequirements($quote); 
+
         // Load details if not already loaded
         $quote->loadMissing('details');
 
         foreach ($quote->details as $detail) {
             // Filter only 'SUMINISTRO' type
             if ($detail->item_type === 'SUMINISTRO') {
-                \App\Models\ProjectRequirement::firstOrCreate(
+                \App\Models\ProjectRequirement::updateOrCreate(
                     [
                         'quote_detail_id' => $detail->id,
                     ],
@@ -144,5 +150,20 @@ class QuoteService
                 );
             }
         }
+    }
+
+    /**
+     * Clear Project Requirements generated from this Quote.
+     *
+     * @param Quote $quote
+     * @return void
+     */
+    public function clearProjectRequirements(Quote $quote): void
+    {
+        // Delete requirements associated with this quote's details
+        ProjectRequirement::whereIn(
+            'quote_detail_id',
+            $quote->details()->pluck('id')
+        )->delete();
     }
 }

@@ -15,27 +15,41 @@ class ProjectRequirementsTable
         return $table
             ->columns([
 
-                TextColumn::make('requirement.product_description')
+                TextColumn::make('product_name')
+                    ->label('Producto / Descripción')
+                    ->limit(50)
+                    ->tooltip(fn($state): string => $state)
+                    ->searchable(['requirement.product_description', 'quoteDetail.pricelist.sat_description'])
                     ->sortable(),
-                TextColumn::make('requirement.consumableType.name'),
-                TextColumn::make('requirement.unit.name'),
+
+                TextColumn::make('consumable_type_name')
+                    ->label('Tipo'),
+
+                TextColumn::make('unit_name')
+                    ->label('Unidad'),
                 TextColumn::make('quantity')
                     ->numeric()
+                    ->label('Cantidad')
                     ->sortable(),
                 TextColumn::make('price_unit')
                     ->numeric()
+                    ->label('Precio Unitario')
                     ->sortable(),
                 TextColumn::make('subtotal')
                     ->numeric()
+                    ->label('Subtotal')
                     ->sortable(),
                 TextColumn::make('comments')
+                    ->label('Comentarios')
                     ->searchable(),
                 TextColumn::make('created_at')
                     ->dateTime()
+                    ->label('Fecha de Creación')
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('updated_at')
                     ->dateTime()
+                    ->label('Fecha de Actualización')
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])

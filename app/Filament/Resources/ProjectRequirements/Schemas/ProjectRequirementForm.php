@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\ProjectRequirements\Schemas;
 
+use App\Models\ProjectRequirement;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
@@ -29,8 +30,10 @@ class ProjectRequirementForm
                     ->afterStateUpdated(function ($state, Set $set) {
                         if ($state) {
                             $requirement = \App\Models\Requirement::find($state);
-                            if ($requirement && $requirement->unit) {
+                            if ($requirement) {
                                 $set('unit_symbol', $requirement->unit->symbol ?? '$');
+                                $set('requirement_type', $requirement->consumableType->name ?? 'N/A');
+                                $set('unit_of_measure', $requirement->unit->name ?? 'N/A');
                             }
                         }
                     })
@@ -67,6 +70,19 @@ class ProjectRequirementForm
                                     ->label('Categoría'),
                             ]),
                     ]),
+
+                TextInput::make('requirement_type')
+                    ->label('Tipo de Requisito')
+                    ->readOnly()
+                    ->dehydrated(false)
+                    ->formatStateUsing(fn(?ProjectRequirement $record) => $record?->consumable_type_name),
+
+                TextInput::make('unit_of_measure')
+                    ->label('Unidad de Medida')
+                    ->readOnly()
+                    ->dehydrated(false)
+                    ->formatStateUsing(fn(?ProjectRequirement $record) => $record?->unit_name),
+
                 TextInput::make('quantity')
                     ->label('Cantidad')
                     ->required()

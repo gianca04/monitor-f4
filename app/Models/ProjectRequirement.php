@@ -25,7 +25,36 @@ class ProjectRequirement extends Model
         'price_unit' => 'decimal:2',
     ];
 
-    protected $appends = ['subtotal'];
+    protected $appends = ['subtotal', 'product_name', 'unit_name', 'consumable_type_name'];
+
+    /**
+     * Get the consolidated product name.
+     */
+    public function getProductNameAttribute(): string
+    {
+        return $this->requirement->product_description
+            ?? $this->quoteDetail->pricelist->sat_description
+            ?? 'N/A';
+    }
+
+    /**
+     * Get the consolidated unit name.
+     */
+    public function getUnitNameAttribute(): string
+    {
+        return $this->requirement->unit->name
+            ?? $this->quoteDetail->pricelist->unit->name
+            ?? 'N/A';
+    }
+
+    /**
+     * Get the consolidated consumable type name.
+     */
+    public function getConsumableTypeNameAttribute(): string
+    {
+        return $this->requirement->consumableType->name
+            ?? 'Suministro'; // Default for QuoteDetail items
+    }
 
     /**
      * Calculate the subtotal attribute.
