@@ -32,7 +32,7 @@ class ProjectRequirementForm
                             $requirement = \App\Models\Requirement::find($state);
                             if ($requirement) {
                                 $set('unit_symbol', $requirement->unit->symbol ?? '$');
-                                $set('requirement_type', $requirement->consumableType->name ?? 'N/A');
+                                $set('requirement_type', $requirement->requirementType->name ?? 'N/A');
                                 $set('unit_of_measure', $requirement->unit->name ?? 'N/A');
                             }
                         }
@@ -44,7 +44,7 @@ class ProjectRequirementForm
                             ->columnSpanFull()
                             ->required(),
                         Select::make('requirement_type_id')
-                            ->label('Tipo de Requisito')
+                            ->label('Tipo de requerimiento')
                             ->relationship('requirementType', 'name')
                             ->required()
                             ->searchable()

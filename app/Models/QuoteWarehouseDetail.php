@@ -40,7 +40,7 @@ class QuoteWarehouseDetail extends Model
      */
     protected $fillable = [
         'quote_warehouse_id',
-        'quote_detail_id',
+        'project_requirement_id',
         'attended_quantity',
     ];
 
@@ -66,13 +66,13 @@ class QuoteWarehouseDetail extends Model
     }
 
     /**
-     * Obtiene el detalle de la cotización asociado.
+     * Obtiene el requerimiento de proyecto asociado.
      *
      * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
      */
-    public function quoteDetail(): BelongsTo
+    public function projectRequirement(): BelongsTo
     {
-        return $this->belongsTo(QuoteDetail::class, 'quote_detail_id');
+        return $this->belongsTo(ProjectRequirement::class, 'project_requirement_id');
     }
 
     /**

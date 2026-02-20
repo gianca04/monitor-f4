@@ -108,11 +108,11 @@
     x-data="{
         quoteWarehouseId: {{ $quoteWarehouse->id }},
         projectId: {{ $quoteWarehouse->quote->project_id ?? 'null' }},
-        status: '{{ $quoteWarehouse->estatus }}',
+        status: '{{ $quoteWarehouse->status }}',
         items: [
             @foreach ($details as $i => $item)
                 {
-                    quote_detail_id: {{ $item['quote_detail_id'] }},
+                    project_requirement_id: {{ $item['project_requirement_id'] }},
                     solicitado: {{ $item['quantity'] }},
                     entregado: {{ $item['entregado'] ?? 0 }},
                     despachar: {{ $item['a_despachar'] ?? 0 }}
@@ -379,7 +379,7 @@
             const details = this.items
                 .filter(i => i.despachar > 0)
                 .map(i => ({
-                    quote_detail_id: i.quote_detail_id,
+                    project_requirement_id: i.project_requirement_id,
                     a_despachar: i.despachar,
                     quantity: i.solicitado
                 }));
@@ -549,9 +549,9 @@
                                     <tr
                                         class="transition-colors group hover:bg-slate-50 dark:hover:bg-slate-800/50 {{ $completado ? 'bg-slate-50/50 dark:bg-slate-800/30' : '' }}">
                                         <td :class="items[{{ $i }}].entregado + items[{{ $i }}].despachar >=
-                                                                                                                        items[{{ $i }}].solicitado ?
-                                                                                                                        'font-mono text-xs text-center align-middle text-slate-400 dark:text-slate-500 line-through underline' :
-                                                                                                                        'font-mono text-xs text-center align-middle text-slate-900 dark:text-white'"
+                                                                                                                                            items[{{ $i }}].solicitado ?
+                                                                                                                                            'font-mono text-xs text-center align-middle text-slate-400 dark:text-slate-500 line-through underline' :
+                                                                                                                                            'font-mono text-xs text-center align-middle text-slate-900 dark:text-white'"
                                             class="font-mono text-xs text-center align-middle {{ $completado ? 'text-slate-400 dark:text-slate-500' : 'text-slate-900 dark:text-white' }}">
                                             {{ $item['sat_line'] ?? '-' }}
                                         </td>
@@ -559,11 +559,11 @@
                                             <div class="flex flex-col">
                                                 <span
                                                     :class="items[{{ $i }}].entregado + items[{{ $i }}]
-                                                                                                                                    .despachar >= items[{{ $i }}].solicitado ?
-                                                                                                                                    'line-through underline text-slate-400 dark:text-slate-500' :
-                                                                                                                                    'text-xs font-medium leading-relaxed text-slate-900 dark:text-white'"
+                                                                                                                                                        .despachar >= items[{{ $i }}].solicitado ?
+                                                                                                                                                        'line-through underline text-slate-400 dark:text-slate-500' :
+                                                                                                                                                        'text-xs font-medium leading-relaxed text-slate-900 dark:text-white'"
                                                     class="text-xs font-medium leading-relaxed {{ $completado ? 'text-slate-400 dark:text-slate-500' : 'text-slate-900 dark:text-white' }}">
-                                                    {{ $item['sat_description'] ?? '-' }}
+                                                    {{ $item['product_name'] ?? '-' }}
                                                 </span>
                                             </div>
                                         </td>
@@ -609,7 +609,7 @@
                                                 <div class="relative flex items-center">
                                                     <input type="number" x-model.number="items[{{ $i }}].despachar"
                                                         :max="items[{{ $i }}].solicitado - items[{{ $i }}]
-                                                                                                                                                                                                                        .entregado"
+                                                                                                                                                                                                                                                                .entregado"
                                                         min="0"
                                                         @input="if(items[{{ $i }}].despachar > (items[{{ $i }}].solicitado - items[{{ $i }}].entregado)) items[{{ $i }}].despachar = items[{{ $i }}].solicitado - items[{{ $i }}].entregado"
                                                         class="block w-full rounded-md border-0 py-1.5 pl-2 pr-8 text-slate-900 ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-primary text-xs dark:bg-slate-900 dark:ring-slate-600 dark:text-white font-bold"
@@ -633,14 +633,14 @@
                                                     @click="items[{{ $i }}].despachar = items[{{ $i }}].solicitado - items[{{ $i }}].entregado"
                                                     class="inline-flex items-center justify-center p-1.5 transition-all rounded-full group/btn"
                                                     :class="items[{{ $i }}].despachar + items[{{ $i }}]
-                                                                                                                                                                                                                    .entregado >= items[{{ $i }}].solicitado ?
-                                                                                                                                                                                                                    'bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-500' :
-                                                                                                                                                                                                                    'text-slate-300 dark:text-slate-600 hover:text-green-600 dark:hover:text-green-500'"
+                                                                                                                                                                                                                                                            .entregado >= items[{{ $i }}].solicitado ?
+                                                                                                                                                                                                                                                            'bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-500' :
+                                                                                                                                                                                                                                                            'text-slate-300 dark:text-slate-600 hover:text-green-600 dark:hover:text-green-500'"
                                                     type="button" title="Marcar como listo">
                                                     <span class="material-symbols-outlined text-[22px] group-hover/btn:fill-1"
                                                         :class="items[{{ $i }}].despachar + items[{{ $i }}]
-                                                                                                                                                                                                                        .entregado >= items[{{ $i }}].solicitado ?
-                                                                                                                                                                                                                        'text-green-600 dark:text-green-500' : ''">check_circle</span>
+                                                                                                                                                                                                                                                                .entregado >= items[{{ $i }}].solicitado ?
+                                                                                                                                                                                                                                                                'text-green-600 dark:text-green-500' : ''">check_circle</span>
                                                 </button>
                                             @endif
                                         </td>
@@ -661,181 +661,8 @@
                 </div>
             </div>
 
-            <!-- ============================================== -->
-            <!-- SECCIÓN: HERRAMIENTAS ASIGNADAS -->
-            <!-- ============================================== -->
-            <div class="mt-8">
-                <!-- Header de la sección -->
-                <div class="flex flex-col justify-between gap-4 mb-2 md:flex-row md:items-center">
-                    <div class="flex items-center gap-3">
-                        <div
-                            class="flex items-center justify-center w-10 h-10 rounded-lg bg-blue-100 dark:bg-blue-900/30">
-                            <span
-                                class="material-symbols-outlined text-blue-600 dark:text-blue-400 text-[22px]">construction</span>
-                        </div>
-                        <div>
-                            <h2 class="text-lg font-bold tracking-tight text-slate-900 dark:text-white">
-                                Herramientas Asignadas
-                            </h2>
-                            <p class="text-xs text-slate-500 dark:text-slate-400">
-                                Control de herramientas para el proyecto
-                            </p>
-                        </div>
-                    </div>
-                    <!-- Botón Agregar Herramientas -->
-                    <button type="button" @click="openToolSearchModal()"
-                        class="inline-flex items-center justify-center px-4 py-2 text-sm font-bold transition-colors rounded-lg bg-blue-600 text-white hover:bg-blue-700 shadow-lg shadow-blue-500/20 gap-2">
-                        <span class="material-symbols-outlined text-[18px]">add_circle</span>
-                        Agregar Herramientas
-                    </button>
-                </div>
 
-                <!-- Tabla de Herramientas -->
-                <div
-                    class="flex flex-col overflow-hidden border shadow-sm rounded-xl border-slate-200 dark:border-slate-700 bg-surface-light dark:bg-surface-dark">
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-sm text-left border-collapse">
-                            <thead
-                                class="text-xs font-medium uppercase border-b bg-slate-50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400">
-                                <tr>
-                                    <th class="w-28 px-4 py-4" scope="col">CÓDIGO</th>
-                                    <th class="px-4 py-4 min-w-[250px]" scope="col">HERRAMIENTA</th>
-                                    <th class="w-32 px-4 py-4" scope="col">CATEGORÍA</th>
-                                    <th class="w-28 px-4 py-4 text-center" scope="col">ESTADO</th>
-                                    <th class="w-32 px-4 py-4 text-center" scope="col">FECHA ASIG.</th>
-                                    <th class="w-20 px-4 py-4 text-center" scope="col">ACCIONES</th>
-                                </tr>
-                            </thead>
-                            <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
-                                <!-- Loading State -->
-                                <template x-if="loadingTools">
-                                    <tr>
-                                        <td colspan="6" class="px-4 py-12 text-center">
-                                            <span
-                                                class="material-symbols-outlined animate-spin text-blue-500 text-3xl">progress_activity</span>
-                                            <p class="text-sm text-slate-400 mt-2">Cargando herramientas...</p>
-                                        </td>
-                                    </tr>
-                                </template>
 
-                                <!-- Empty State -->
-                                <template x-if="!loadingTools && assignedTools.length === 0">
-                                    <tr>
-                                        <td colspan="6" class="px-4 py-12 text-center">
-                                            <div class="flex flex-col items-center">
-                                                <div
-                                                    class="flex items-center justify-center w-14 h-14 mb-3 rounded-full bg-slate-100 dark:bg-slate-800">
-                                                    <span
-                                                        class="material-symbols-outlined text-slate-400 dark:text-slate-500 text-[28px]">construction</span>
-                                                </div>
-                                                <p class="text-sm font-medium text-slate-600 dark:text-slate-400">No hay
-                                                    herramientas asignadas</p>
-                                                <p class="text-xs text-slate-400 dark:text-slate-500 mt-1">Haz clic en
-                                                    "Agregar Herramientas" para asignar</p>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                </template>
-
-                                <!-- Tools List -->
-                                <template x-for="assignment in assignedTools" :key="assignment.assignment_id">
-                                    <tr class="transition-colors group hover:bg-slate-50 dark:hover:bg-slate-800/50"
-                                        :class="!assignment.is_active ? 'bg-slate-50/50 dark:bg-slate-800/30' : ''">
-                                        <td class="px-4 py-4 align-middle">
-                                            <span
-                                                :class="assignment.is_active ? 'bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-400' : 'bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 line-through'"
-                                                class="font-mono text-xs px-2 py-1 rounded-md font-semibold"
-                                                x-text="assignment.tool?.code || '-'"></span>
-                                        </td>
-                                        <td class="px-4 py-4 align-middle">
-                                            <div class="flex flex-col">
-                                                <span
-                                                    :class="assignment.is_active ? 'text-slate-900 dark:text-white' : 'text-slate-400 dark:text-slate-500 line-through'"
-                                                    class="text-sm font-medium"
-                                                    x-text="assignment.tool?.name || '-'"></span>
-                                                <span class="text-xs text-slate-400 dark:text-slate-500">
-                                                    <span x-text="assignment.tool?.brand?.name || ''"></span>
-                                                    <template x-if="assignment.tool?.serial_number">
-                                                        <span> / Serie: <span
-                                                                x-text="assignment.tool?.serial_number"></span></span>
-                                                    </template>
-                                                </span>
-                                            </div>
-                                        </td>
-                                        <td class="px-4 py-4 align-middle">
-                                            <span
-                                                class="inline-flex items-center px-2 py-1 text-xs font-medium rounded-md bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300"
-                                                x-text="assignment.tool?.category?.name || '-'"></span>
-                                        </td>
-                                        <td class="px-4 py-4 text-center align-middle">
-                                            <template x-if="assignment.is_active">
-                                                <span
-                                                    class="inline-flex items-center px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
-                                                    <span class="w-1.5 h-1.5 rounded-full bg-blue-500 mr-1.5"></span>
-                                                    En Uso
-                                                </span>
-                                            </template>
-                                            <template x-if="!assignment.is_active">
-                                                <span
-                                                    class="inline-flex items-center px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
-                                                    <span
-                                                        class="material-symbols-outlined text-[12px] mr-1">check</span>
-                                                    Devuelto
-                                                </span>
-                                            </template>
-                                        </td>
-                                        <td class="px-4 py-4 text-center align-middle">
-                                            <div class="flex flex-col">
-                                                <span class="text-xs text-slate-600 dark:text-slate-400"
-                                                    x-text="assignment.assigned_at || '-'"></span>
-                                                <template x-if="assignment.returned_at">
-                                                    <span class="text-[10px] text-green-600 dark:text-green-400">
-                                                        Dev: <span x-text="assignment.returned_at"></span>
-                                                    </span>
-                                                </template>
-                                            </div>
-                                        </td>
-                                        <td class="px-4 py-4 text-center align-middle">
-                                            <template x-if="assignment.is_active">
-                                                <button type="button" @click="returnTool(assignment.assignment_id)"
-                                                    class="inline-flex items-center justify-center p-1.5 rounded-lg text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
-                                                    title="Devolver herramienta">
-                                                    <span class="material-symbols-outlined text-[18px]">undo</span>
-                                                </button>
-                                            </template>
-                                            <template x-if="!assignment.is_active">
-                                                <div
-                                                    class="inline-flex items-center justify-center p-1.5 text-green-600 dark:text-green-500">
-                                                    <span
-                                                        class="material-symbols-outlined text-[20px] fill-1">check_circle</span>
-                                                </div>
-                                            </template>
-                                        </td>
-                                    </tr>
-                                </template>
-                            </tbody>
-                        </table>
-                    </div>
-
-                    <!-- Footer de tabla de herramientas -->
-                    <div
-                        class="flex items-center justify-between px-6 py-3 text-sm border-t bg-slate-50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400">
-                        <span x-text="assignedTools.length + ' herramienta(s) asignada(s)'"></span>
-                        <div class="flex gap-4">
-                            <span class="flex items-center gap-1.5">
-                                <span class="w-2 h-2 rounded-full bg-blue-500"></span>
-                                <span class="font-medium text-slate-700 dark:text-slate-300"
-                                    x-text="assignedTools.filter(t => t.is_active).length + ' en uso'"></span>
-                            </span>
-                            <span class="flex items-center gap-1.5">
-                                <span class="w-2 h-2 rounded-full bg-green-500"></span>
-                                <span class="font-medium text-slate-700 dark:text-slate-300"
-                                    x-text="assignedTools.filter(t => !t.is_active).length + ' devuelto(s)'"></span>
-                            </span>
-                        </div>
-                    </div>
-                </div>
-            </div>
             <!-- NUEVO: Observaciones -->
             <div class="mt-6">
                 <label for="warehouse-observations"
@@ -865,8 +692,6 @@
         </div>
     </main>
 
-    {{-- Tool Search Modal Component --}}
-    @include('filament.resources.tool-resource.components.tool-search-modal')
 </body>
 
 </html>

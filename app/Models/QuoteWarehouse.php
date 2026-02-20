@@ -86,22 +86,41 @@ class QuoteWarehouse extends Model
      */
     public function calculateProgress(): int
     {
-        // Obtener todos los detalles relacionados
-        $details = $this->quote->details;
+        // Obtener el proyecto asociado a la cotización
+        $project = $this->quote->project;
+
+        if (!$project) {
+            return 0;
+        }
+
+        // Obtener todos los requerimientos del proyecto
+        $requirements = $project->projectRequirements;
+
+        // Cargar los detalles de almacén para evitar N+1
+        $warehouseDetails = $this->details;
 
         // Variables para almacenar los totales
         $totalSolicitado = 0;
         $totalAtendido = 0;
 
-        foreach ($details as $detail) {
-            $totalSolicitado += $detail->quantity;
+        foreach ($requirements as $req) {
+            $totalSolicitado += $req->quantity;
 
-            // Sumar las cantidades atendidas de los detalles de almacén relacionados
-            $attendedQuantity = $this->details()
-                ->where('quote_detail_id', $detail->id)
-                ->sum('attended_quantity');
+            // Buscar el detalle de almacén correspondiente
+            // Como la relación es 1 a 1 entre warehouse_detail y project_requirement para un quote_warehouse específico (idealmente)
+            // aunque project requirement es único, un quote_warehouse puede tener varios detalles... no, wait.
+            // QuoteWarehouseDetail tiene quote_warehouse_id y project_requirement_id.
 
-            $totalAtendido += $attendedQuantity;
+            $attendedAmount = $warehouseDetails->where('project_requirement_id', $req->id)->sum('attended_quantity');
+
+            // Limitamos a lo solicitado por si acaso hay sobre-despacho, aunque la lógica de negocio suele permitirlo o no.
+            // La lógica original simplemente sumaba. Mantendremos la suma simple pero considerando el maximo solicitado por item en la logica visual
+            // Para progreso global, si despachamos de más, cuenta como 100% de ese item? 
+            // La fórmula original era sum(atendido) / sum(solicitado). Si atendido > solicitado, el progreso puede pasar de 100%.
+            // Vamos a usar la misma lógica: sum(min(atendido, solicitado)) para que no pase de 100% real?
+            // El código anterior sumaba bruto. Vamos a sumar min(atendido, solicitado) para ser más precisos con "progreso".
+
+            $totalAtendido += min($attendedAmount, $req->quantity);
         }
 
         // Calcular el porcentaje de progreso y redondear al entero más cercano

@@ -95,20 +95,22 @@ class WorkReport extends Model
         if (!$this->project_id) {
             return collect();
         }
+
+        // Re-intento de Query Builder sólida:
         return DB::table('quote_warehouse_details as qwd')
-            ->join('quote_warehouse as qw', 'qwd.quote_warehouse_id', '=', 'qw.id')
-            ->join('quotes as q', 'qw.quote_id', '=', 'q.id')
-            ->join('quote_details as qd', 'qwd.quote_detail_id', '=', 'qd.id')
-            ->join('pricelists as p', 'qd.pricelist_id', '=', 'p.id')
-            ->join('units as u', 'p.unit_id', '=', 'u.id')
-            ->where('q.project_id', $this->project_id)
-            ->where('qd.item_type', 'SUMINISTRO')
+            ->join('project_requirements as pr', 'qwd.project_requirement_id', '=', 'pr.id')
+            ->leftJoin('requirements as r', 'pr.requirement_id', '=', 'r.id')
+            ->leftJoin('quote_details as qd', 'pr.quote_detail_id', '=', 'qd.id')
+            ->leftJoin('pricelists as p', 'qd.pricelist_id', '=', 'p.id')
+            ->leftJoin('units as u_req', 'r.unit_id', '=', 'u_req.id')
+            ->leftJoin('units as u_price', 'p.unit_id', '=', 'u_price.id')
+            ->where('pr.project_id', $this->project_id) // Filtrar por proyecto directo del requerimiento
             ->where('qwd.attended_quantity', '>', 0)
             ->select([
                 'qwd.id',
-                'p.sat_description',
-                'p.sat_line',
-                'u.name as unit_name',
+                DB::raw("COALESCE(r.product_description, p.sat_description, pr.comments) as sat_description"),
+                DB::raw("COALESCE(p.sat_line, 'SUMINISTRO') as sat_line"),
+                DB::raw("COALESCE(u_req.name, u_price.name, 'Unid') as unit_name"),
                 'qwd.attended_quantity'
             ])
             ->get();

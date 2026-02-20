@@ -18,7 +18,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property \Illuminate\Support\Carbon|null $updated_at
  *
  * @property-read \App\Models\Project $project
- * @property-read \App\Models\ConsumableType $consumableType
+ * @property-read \App\Models\RequirementType $requirementType
  * @property-read \App\Models\Unit $unit
  */
 class Requirement extends Model
@@ -26,12 +26,12 @@ class Requirement extends Model
     use HasFactory;
     protected $fillable = [
         'product_description',
-        'consumable_type_id',
+        'requirement_type_id',
         'unit_id',
     ];
 
     protected $casts = [
-        'consumable_type_id' => 'integer',
+        'requirement_type_id' => 'integer',
         'unit_id' => 'integer',
     ];
 

@@ -25,12 +25,22 @@
                         default => 'gray',
                     };
 
-                    // Lógica de ítems atendidos (se mantiene igual)
+                    // Lógica de items atendidos
+                    $projectReqs = $quote->project ? $quote->project->projectRequirements : collect();
+
                     $itemsAtendidos = $quote->quoteDetails
-                        ->filter(function ($detail) use ($quoteWarehouse) {
+                        ->filter(function ($detail) use ($quoteWarehouse, $projectReqs) {
+                            if ($detail->item_type !== 'SUMINISTRO')
+                                return false;
+
+                            $req = $projectReqs->firstWhere('quote_detail_id', $detail->id);
+
+                            if (!$req)
+                                return false;
+
                             $attendedQuantity = $quoteWarehouse
                                 ->details()
-                                ->where('quote_detail_id', $detail->id)
+                                ->where('project_requirement_id', $req->id)
                                 ->sum('attended_quantity');
                             return $attendedQuantity >= $detail->quantity;
                         })

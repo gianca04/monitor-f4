@@ -345,10 +345,6 @@ class Project extends Model
     /**
      * Get the consumables for the project.
      */
-    public function consumables()
-    {
-        return $this->hasMany(Consumable::class);
-    }
 
     /**
      * Relación: Un proyecto tiene muchos requerimientos de proyecto.

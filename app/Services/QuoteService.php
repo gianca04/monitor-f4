@@ -102,19 +102,10 @@ class QuoteService
     {
         QuoteWarehouse::where('quote_id', $quote->id)->delete();
     }
-    /**
-     * Handle updates to a quote detail.
-     * Currently touches the parent quote to update timestamps.
-     *
-     * @param \App\Models\QuoteDetail $detail
-     * @return void
-     */
     public function handleDetailChange(\App\Models\QuoteDetail $detail): void
     {
-        // Update parent quote timestamp or perform recalculations if needed
         $detail->quote()->touch();
     }
-
     /**
      * Generate Project Requirements from Quote Details when approved.
      *
@@ -160,10 +151,7 @@ class QuoteService
      */
     public function clearProjectRequirements(Quote $quote): void
     {
-        // Delete requirements associated with this quote's details
-        ProjectRequirement::whereIn(
-            'quote_detail_id',
-            $quote->details()->pluck('id')
-        )->delete();
+        // Delete requirements associated with this project
+        ProjectRequirement::where('project_id', $quote->project_id)->delete();
     }
 }

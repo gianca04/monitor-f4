@@ -13,11 +13,11 @@ return new class extends Migration
     {
         Schema::create('visit_photos', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('visit_id')
-                ->constrained('visits')
+            $table->foreignId('visit_report_id')
+                ->constrained('visit_reports')
                 ->onDelete('cascade');
             $table->string('photo_path')->nullable();
-            $table->text('descripcion')->nullable();
+            $table->text('description')->nullable();
             $table->timestamps();
         });
     }

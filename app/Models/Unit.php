@@ -18,10 +18,10 @@ class Unit extends Model
     }
 
     /**
-     * Get the consumables for the unit.
+     * Get the requirements for the unit.
      */
-    public function consumables(): HasMany
+    public function requirements(): HasMany
     {
-        return $this->hasMany(Consumable::class);
+        return $this->hasMany(Requirement::class);
     }
 }

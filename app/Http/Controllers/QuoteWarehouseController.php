@@ -30,37 +30,45 @@ class QuoteWarehouseController extends Controller
         $quote = $quoteWarehouse->quote;
         $quote->load([
             'subClient',
-            'quoteDetails.pricelist.unit'
+            'project.projectRequirements.requirement.unit', // Cargar relaciones necesarias
+            'project.projectRequirements.requirement.requirementType',
+            'project.projectRequirements.quoteDetail.pricelist'
         ]);
 
-        // Cambiar: Cargar relación anidada para acceder a Employee
         $quoteWarehouse->load('employee.employee');
 
         // Obtener los detalles atendidos por almacén (quote_warehouse_details)
-        $warehouseDetails = QuoteWarehouseDetail::where('quote_warehouse_id', $quoteWarehouse->id)
-            ->get()
-            ->keyBy('quote_detail_id');
+        $warehouseDetailsCollection = QuoteWarehouseDetail::where('quote_warehouse_id', $quoteWarehouse->id)->get();
 
-        $groupedDetails = $quote->quoteDetails->groupBy('item_type');
+        // Map by project_requirement_id
+        $detailsByReqId = $warehouseDetailsCollection->whereNotNull('project_requirement_id')->keyBy('project_requirement_id');
+
+        $projectRequirements = $quote->project->projectRequirements ?? collect();
 
         $details = [];
-        foreach (['SUMINISTRO'] as $type) {
-            if ($groupedDetails->has($type)) {
-                foreach ($groupedDetails[$type] as $detail) {
-                    $attended = $warehouseDetails[$detail->id]->attended_quantity ?? 0;
-                    $details[] = [
-                        'item_type'        => $type,
-                        'quote_detail_id'  => $detail->id,
-                        'sat_line'         => $detail->pricelist->sat_line ?? '',
-                        'sat_description'  => $detail->pricelist->sat_description ?? '',
-                        'quantity'         => $detail->quantity,
-                        'unit_price'       => $detail->unit_price,
-                        'subtotal'         => $detail->subtotal,
-                        'unit_name'        => $detail->pricelist->unit->name ?? '',
-                        'entregado'        => $attended,
-                    ];
-                }
+
+        foreach ($projectRequirements as $req) {
+            $quoteDetailId = $req->quote_detail_id;
+            $attended = 0;
+
+            // Try to find attendance
+            if (isset($detailsByReqId[$req->id])) {
+                $attended = $detailsByReqId[$req->id]->attended_quantity;
             }
+
+            // Usamos los accessors del modelo ProjectRequirement
+            $details[] = [
+                'project_requirement_id' => $req->id, // Principal ID
+                'quote_detail_id'  => $quoteDetailId, // Mantenemos para referencia en frontend si es necesario
+                'sat_line'         => $req->quoteDetail->pricelist->sat_line ?? '-',
+                'product_name'     => $req->product_name,
+                'quantity'         => $req->quantity,
+                'unit_price'       => $req->price_unit,
+                'subtotal'         => $req->subtotal,
+                'unit_name'        => $req->unit_name,
+                'entregado'        => $attended,
+                'type_name'        => $req->consumable_type_name,
+            ];
         }
 
         return view('filament.resources.quote-warehouse-resource.pages.list', [
@@ -68,8 +76,6 @@ class QuoteWarehouseController extends Controller
             'client'       => $quote->subClient->name ?? '',
             'details'      => $details,
             'quoteWarehouse' => $quoteWarehouse,
-            'satLine'      =>  $detail->pricelist->sat_line ?? '',
-            'description'  => $detail->pricelist->sat_description ?? '',
         ]);
     }
 
@@ -122,9 +128,9 @@ class QuoteWarehouseController extends Controller
             }
 
             foreach ($details as $i => $detail) {
-                // Solo guardar si a_despachar > 0 y quote_detail_id existe
+                // Solo guardar si a_despachar > 0 y existe project_requirement_id
                 if (
-                    !isset($detail['quote_detail_id']) ||
+                    !isset($detail['project_requirement_id']) ||
                     !isset($detail['a_despachar']) ||
                     $detail['a_despachar'] <= 0
                 ) {
@@ -132,15 +138,15 @@ class QuoteWarehouseController extends Controller
                 }
 
                 Log::info('Detalle recibido', [
-                    'quote_warehouse_id' => $quoteWarehouse->id,
-                    'quote_detail_id'    => $detail['quote_detail_id'],
-                    'attended_quantity'  => $detail['a_despachar'],
+                    'quote_warehouse_id'     => $quoteWarehouse->id,
+                    'project_requirement_id' => $detail['project_requirement_id'],
+                    'attended_quantity'      => $detail['a_despachar'],
                 ]);
 
                 try {
-                    // Verificar si ya existe un registro para este quote_detail_id
+                    // Verificar si ya existe un registro para este project_requirement_id
                     $detalleExistente = QuoteWarehouseDetail::where('quote_warehouse_id', $quoteWarehouse->id)
-                        ->where('quote_detail_id', $detail['quote_detail_id'])
+                        ->where('project_requirement_id', $detail['project_requirement_id'])
                         ->first();
 
                     if ($detalleExistente) {
@@ -151,9 +157,9 @@ class QuoteWarehouseController extends Controller
                     } else {
                         // Si no existe, creamos un nuevo registro
                         QuoteWarehouseDetail::create([
-                            'quote_warehouse_id' => $quoteWarehouse->id,
-                            'quote_detail_id'    => $detail['quote_detail_id'],
-                            'attended_quantity'  => $detail['a_despachar'],
+                            'quote_warehouse_id'     => $quoteWarehouse->id,
+                            'project_requirement_id' => $detail['project_requirement_id'],
+                            'attended_quantity'      => $detail['a_despachar'],
                         ]);
                     }
 
