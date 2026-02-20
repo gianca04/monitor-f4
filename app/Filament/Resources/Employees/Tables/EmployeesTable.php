@@ -37,8 +37,8 @@ class EmployeesTable
                 TextColumn::make('document_type')
                     ->colors([
                         'success' => 'DNI',
-                        'warning' => 'FOREIGN_CARD',
-                        'info' => 'PASSPORT',
+                        'warning' => 'CARNET DE EXTRANJERIA',
+                        'info' => 'PASAPORTE',
                     ])
                     ->searchable()
                     ->badge()

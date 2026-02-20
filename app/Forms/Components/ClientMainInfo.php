@@ -29,8 +29,8 @@ class ClientMainInfo
                         ->options([
                             'RUC' => 'RUC',
                             'DNI' => 'DNI',
-                            'FOREIGN_CARD' => 'Carné de Extranjería',
-                            'PASSPORT' => 'Pasaporte',
+                            'CARNET DE EXTRANJERIA' => 'Carné de Extranjería',
+                            'PASAPORTE' => 'Pasaporte',
                         ])
                         ->required()
                         ->searchable()

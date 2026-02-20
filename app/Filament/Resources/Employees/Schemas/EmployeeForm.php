@@ -31,8 +31,8 @@ class EmployeeForm
                                     ->label('Tipo de Documento')
                                     ->options([
                                         'DNI' => 'DNI',
-                                        'PASSPORT' => 'Pasaporte',
-                                        'FOREIGN_CARD' => 'Carnet de Extranjería',
+                                        'PASAPORTE' => 'Pasaporte',
+                                        'CARNET DE EXTRANJERIA' => 'Carnet de Extranjería',
                                     ])
                                     ->required()
                                     ->searchable()
@@ -42,7 +42,6 @@ class EmployeeForm
                                     ->label('Número de Documento')
                                     ->required()
                                     ->unique(ignoreRecord: true)
-                                    ->minLength(8)
                                     ->maxLength(12)
                                     ->numeric()
                                     ->placeholder('Ingresar número de documento'),

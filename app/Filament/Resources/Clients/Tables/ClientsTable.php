@@ -39,8 +39,8 @@ class   ClientsTable
                     ->colors([
                         'primary' => 'RUC',
                         'success' => 'DNI',
-                        'warning' => 'FOREIGN_CARD',
-                        'info' => 'PASSPORT',
+                        'warning' => 'CARNET DE EXTRANJERIA',
+                        'info' => 'PASAPORTE',
                     ])
                     ->sortable(),
                 TextColumn::make('document_number')
@@ -93,8 +93,8 @@ class   ClientsTable
                     ->options([
                         'RUC' => 'RUC',
                         'DNI' => 'DNI',
-                        'FOREIGN_CARD' => 'Carné de Extranjería',
-                        'PASSPORT' => 'Pasaporte',
+                        'CARNET DE EXTRANJERIA' => 'Carné de Extranjería',
+                        'PASAPORTE' => 'Pasaporte',
                     ]),
                 SelectFilter::make('person_type')
                     ->label('Tipo de persona')
