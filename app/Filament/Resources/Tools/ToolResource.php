@@ -21,6 +21,7 @@ class ToolResource extends Resource
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedWrenchScrewdriver;
 
     protected static ?string $pluralModelLabel = 'Herramientas';
+    protected static string|\UnitEnum|null $navigationGroup = 'Administración';
 
     protected static ?string $modelLabel = 'Herramienta';
 

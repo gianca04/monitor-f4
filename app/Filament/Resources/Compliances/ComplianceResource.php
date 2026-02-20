@@ -85,7 +85,7 @@ class ComplianceResource extends Resource
                 ->icon(Heroicon::OutlinedDocumentCheck)
                 ->group('Operaciones')
                 ->url(static::getUrl())
-                ->sort(2),
+                ->sort(5),
         ];
     }
 }

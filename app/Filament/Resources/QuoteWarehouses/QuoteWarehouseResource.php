@@ -59,10 +59,10 @@ class QuoteWarehouseResource extends Resource
         return [
             NavigationItem::make('Atención de cotizaciones')
                 ->icon(Heroicon::OutlinedBuildingStorefront)
-                ->group('Ventas y Cotizaciones')
+                ->group('Operaciones')
                 ->url(static::getUrl())
                 ->badge(fn() => static::getNavigationBadge())
-                ->sort(3),
+                ->sort(4),
         ];
     }
 

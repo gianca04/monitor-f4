@@ -71,7 +71,7 @@ class ProjectResource extends Resource
                 ->icon(Heroicon::OutlinedPuzzlePiece)
                 ->group('Operaciones')
                 ->url(static::getUrl())
-                ->sort(2),
+                ->sort(1),
         ];
     }
 }

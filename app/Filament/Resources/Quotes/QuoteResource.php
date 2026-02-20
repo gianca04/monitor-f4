@@ -57,7 +57,7 @@ class QuoteResource extends Resource
         return [
             NavigationItem::make('Cotizaciones')
                 ->icon(Heroicon::OutlinedDocumentText)
-                ->group('Ventas y Cotizaciones')
+                ->group('Operaciones')
                 ->url(static::getUrl())
                 ->sort(3),
         ];

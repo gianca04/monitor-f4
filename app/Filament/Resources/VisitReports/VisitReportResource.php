@@ -18,9 +18,9 @@ class VisitReportResource extends Resource
 {
     protected static ?string $model = VisitReport::class;
 
-    protected static string|BackedEnum|null $navigationIcon = Heroicon::ClipboardDocumentCheck;
+    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedClipboardDocumentCheck;
 
-    protected static string|\UnitEnum|null $navigationGroup = 'Reportes';
+    protected static string|\UnitEnum|null $navigationGroup = 'Operaciones';
 
     protected static ?string $modelLabel = 'Reporte de Visita';
 

@@ -53,9 +53,9 @@ class PricelistResource extends Resource
     public static function getNavigationItems(): array
     {
         return [
-            NavigationItem::make('Administrar preciarios')
+            NavigationItem::make('Preciario')
                 ->icon(Heroicon::OutlinedDocumentCheck)
-                ->group('Ventas y Cotizaciones')
+                ->group('Administración')
                 ->url(static::getUrl())
                 ->sort(3),
         ];
