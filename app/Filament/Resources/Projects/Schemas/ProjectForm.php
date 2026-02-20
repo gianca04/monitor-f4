@@ -567,15 +567,19 @@ class ProjectForm
 
                                         // FIN DE SELECT DE EMPLEADO COTIZADOR
 
-                                        DatePicker::make('visit_date')
-                                            ->label('Fecha de la visita'),
+                                        Grid::make(3)
+                                            ->columnSpanFull()
+                                            ->schema([
+                                                DatePicker::make('visit_date')
+                                                    ->label('Fecha de la visita'),
 
-                                        TimePicker::make('entry_time')
-                                            ->label('Hora de ingreso'),
+                                                TimePicker::make('entry_time')
+                                                    ->label('Hora de ingreso'),
 
-                                        TimePicker::make('exit_time')
-                                            ->label('Hora de salida'),
+                                                TimePicker::make('exit_time')
+                                                    ->label('Hora de salida'),
 
+                                            ]),
                                         TextInput::make('amount')
                                             ->numeric()
                                             ->prefix('S/ ')
@@ -650,97 +654,105 @@ class ProjectForm
                                         ->suffix('días'),
                                 ]),
 
-                                Select::make('task_type')
-                                    ->label('Tipo de tarea')
-                                    ->options([
-                                        'OPEX' => 'OPEX',
-                                        'CAPEX' => 'CAPEX',
+                                Grid::make(2)
+                                    ->columnSpanFull()
+                                    ->schema([
+                                        Select::make('task_type')
+                                            ->label('Tipo de tarea')
+                                            ->options([
+                                                'OPEX' => 'OPEX',
+                                                'CAPEX' => 'CAPEX',
+                                            ]),
+
+                                        TextInput::make('has_quote')
+                                            ->label('¿Tiene cotización?')
+                                            ->disabled()
+                                            ->dehydrated(false) // No guardar en BD
+                                            ->formatStateUsing(function ($record) {
+                                                return $record?->has_quote ?? 'NO';
+                                            }),
+
+                                        Select::make('has_report')
+                                            ->label('¿Tiene informe?')
+                                            ->default('NO')
+                                            ->native(false)
+                                            ->options([
+                                                'SI' => 'SI',
+                                                'NO' => 'NO',
+                                            ]),
+
+                                        Select::make('compliance_relation_view') // Nombre virtual único
+                                            ->label('Acta de Conformidad Relacionada')
+                                            ->placeholder('No se ha generado Acta para este proyecto')
+
+                                            // 1. Cargar la opción si existe la relación
+                                            ->options(function (?Project $record) {
+                                                if (!$record || !$record->compliance) {
+                                                    return [];
+                                                }
+                                                // Mostramos el ID y el Estado del acta encontrada
+                                                return [
+                                                    $record->compliance->id => "Acta #{$record->compliance->id} - Estado: {$record->compliance->state}"
+                                                ];
+                                            })
+
+                                            // 2. Pre-seleccionar el valor (Hidratar)
+                                            ->afterStateHydrated(function ($component, ?Project $record) {
+                                                // Le asignamos al select el ID del acta relacionada
+                                                $component->state($record?->compliance?->id);
+                                            })
+
+                                            // 3. Configuraciones visuales y de seguridad
+                                            ->disabled()        // Bloqueado porque no puedes cambiar el acta desde aquí (es 1:1)
+                                            ->dehydrated(false) // IMPORTANTE: Esto evita que Filament intente guardar este campo en la tabla 'projects'
+                                            ->prefixIcon('heroicon-m-document-check')
+
+                                            // 4. Botón de Acción para ir al Acta o Descargarla (Opcional pero muy útil)
+                                            ->suffixAction(
+                                                Action::make('view_compliance_pdf')
+                                                    ->icon('heroicon-o-eye')
+                                                    ->tooltip('Ver/Descargar PDF')
+                                                    ->color('success')
+                                                    ->url(
+                                                        fn(?Project $record) => $record?->compliance
+                                                            ? url("/actas/{$record->compliance->id}/preview")
+                                                            : null
+                                                    )
+                                                    ->openUrlInNewTab()
+                                                    ->visible(fn(?Project $record) => $record?->compliance !== null)
+                                            ),
                                     ]),
-
-                                TextInput::make('has_quote')
-                                    ->label('¿Tiene cotización?')
-                                    ->disabled()
-                                    ->dehydrated(false) // No guardar en BD
-                                    ->formatStateUsing(function ($record) {
-                                        return $record?->has_quote ?? 'NO';
-                                    }),
-
-                                Select::make('has_report')
-                                    ->label('¿Tiene informe?')
-                                    ->default('NO')
-                                    ->native(false)
-                                    ->options([
-                                        'SI' => 'SI',
-                                        'NO' => 'NO',
-                                    ]),
-
-                                Select::make('compliance_relation_view') // Nombre virtual único
-                                    ->label('Acta de Conformidad Relacionada')
-                                    ->placeholder('No se ha generado Acta para este proyecto')
-
-                                    // 1. Cargar la opción si existe la relación
-                                    ->options(function (?Project $record) {
-                                        if (!$record || !$record->compliance) {
-                                            return [];
-                                        }
-                                        // Mostramos el ID y el Estado del acta encontrada
-                                        return [
-                                            $record->compliance->id => "Acta #{$record->compliance->id} - Estado: {$record->compliance->state}"
-                                        ];
-                                    })
-
-                                    // 2. Pre-seleccionar el valor (Hidratar)
-                                    ->afterStateHydrated(function ($component, ?Project $record) {
-                                        // Le asignamos al select el ID del acta relacionada
-                                        $component->state($record?->compliance?->id);
-                                    })
-
-                                    // 3. Configuraciones visuales y de seguridad
-                                    ->disabled()        // Bloqueado porque no puedes cambiar el acta desde aquí (es 1:1)
-                                    ->dehydrated(false) // IMPORTANTE: Esto evita que Filament intente guardar este campo en la tabla 'projects'
-                                    ->prefixIcon('heroicon-m-document-check')
-
-                                    // 4. Botón de Acción para ir al Acta o Descargarla (Opcional pero muy útil)
-                                    ->suffixAction(
-                                        Action::make('view_compliance_pdf')
-                                            ->icon('heroicon-o-eye')
-                                            ->tooltip('Ver/Descargar PDF')
-                                            ->color('success')
-                                            ->url(
-                                                fn(?Project $record) => $record?->compliance
-                                                    ? url("/actas/{$record->compliance->id}/preview")
-                                                    : null
-                                            )
-                                            ->openUrlInNewTab()
-                                            ->visible(fn(?Project $record) => $record?->compliance !== null)
-                                    ),
 
                             ]),
 
                         Tabs\Tab::make('Datos de Facturación')
                             ->schema([
-                                Select::make('fracttal_status')
-                                    ->label('Estado en Fracttal')
-                                    ->native(false)
-                                    ->options([
-                                        'Sin OT' => 'Sin OT',
-                                        'En Proceso' => 'En Proceso',
-                                        'En Revisión' => 'En Revisión',
-                                        'Finalizado' => 'Finalizado',
-                                    ])
-                                    ->default('Sin OT'),
+                                Grid::make(3)
+                                    ->columnSpanFull()
+                                    ->schema([
+                                        Select::make('fracttal_status')
+                                            ->label('Estado en Fracttal')
+                                            ->native(false)
+                                            ->options([
+                                                'Sin OT' => 'Sin OT',
+                                                'En Proceso' => 'En Proceso',
+                                                'En Revisión' => 'En Revisión',
+                                                'Finalizado' => 'Finalizado',
+                                            ])
+                                            ->default('Sin OT'),
 
-                                TextInput::make('purchase_order')
-                                    ->label('Orden de Compra')
-                                    ->maxLength(255),
+                                        TextInput::make('purchase_order')
+                                            ->label('Orden de Compra')
+                                            ->maxLength(255),
 
-                                TextInput::make('migo_code')
-                                    ->label('MIGO')
-                                    ->maxLength(255),
+                                        TextInput::make('migo_code')
+                                            ->label('MIGO')
+                                            ->maxLength(255),
+                                    ]),
                             ]),
 
                         Tabs\Tab::make('Seguimiento')
-                            ->columns(2)
+                            ->columns(3)
                             ->schema([
                                 Select::make('status')
                                     ->label('Estado del servicio')
@@ -779,6 +791,8 @@ class ProjectForm
 
                                 Textarea::make('final_comments')
                                     ->label('Comentarios Finales')
+                                    ->maxLength(255)
+                                    ->columnSpanFull()
                                     ->rows(2),
                             ]),
                     ])

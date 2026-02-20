@@ -27,7 +27,7 @@ class ListProjects extends ListRecords
             CreateAction::make(),
             //IMPORTACION POR CSV
             //DESCARGA DE PLANTILLA CSV
-            Action::make('descargarPlantillaCsv')
+            /*Action::make('descargarPlantillaCsv')
                 ->label('Descargar plantilla CSV')
                 ->icon('heroicon-o-document-arrow-down')
                 ->color('gray')
@@ -54,8 +54,7 @@ class ListProjects extends ListRecords
                 ])
                 ->action(function (array $data) {
                     $this->importCsv($data);
-                }),
-
+                }),*/
         ];
     }
     protected function descargarPlantilla(): StreamedResponse

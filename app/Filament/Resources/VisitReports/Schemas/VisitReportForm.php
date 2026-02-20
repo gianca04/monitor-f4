@@ -43,17 +43,18 @@ class VisitReportForm
                                     ->required(),
 
                                 Select::make('project_id')
-                                    ->label('Proyecto')
+                                    ->label('Solicitud de trabajo')
                                     ->prefixIcon('heroicon-m-briefcase')
-                                    ->helperText('Solo se listan proyectos pendientes, enviados o aprobados')
+                                    ->helperText('Solo se listan las solicitudes pendientes, enviados o aprobados')
                                     ->relationship(
                                         name: 'project',
-                                        titleAttribute: 'name',
+                                        titleAttribute: 'service_code',
                                         modifyQueryUsing: fn(Builder $query) => $query
-                                            ->allowedForUser() // Mantiene la seguridad por empleado
-                                            ->pendientesORevision() // Aplica el nuevo filtro
+                                            ->allowedForUser()
+                                            ->pendientesORevision()
                                     )
-                                    ->searchable()
+                                    ->getOptionLabelFromRecordUsing(fn($record) => "{$record->service_code} - {$record->name}")
+                                    ->searchable(['service_code', 'name'])
                                     ->preload()
                                     ->live()
                                     ->required(),
@@ -65,33 +66,37 @@ class VisitReportForm
                                     ->required()
                                     ->maxLength(255),
 
-                                DatePicker::make('report_date')
-                                    ->label('Fecha')
-                                    ->native(false)
-                                    ->displayFormat('d/m/Y')
-                                    ->required()
-                                    ->helperText('Selecciona la fecha de la visita')
-                                    ->suffixAction(
-                                        Action::make('set_today')
-                                            ->icon('heroicon-o-calendar')
-                                            ->tooltip('Establecer fecha de hoy')
-                                            ->color('primary')
-                                            ->action(function (callable $set) {
-                                                $set('report_date', now()->format('Y-m-d'));
-                                            })
-                                    ),
+                                Grid::make(3)
+                                    ->columnSpanFull()
+                                    ->schema([
+                                        DatePicker::make('report_date')
+                                            ->label('Fecha')
+                                            ->native(false)
+                                            ->displayFormat('d/m/Y')
+                                            ->required()
+                                            ->helperText('Selecciona la fecha de la visita')
+                                            ->suffixAction(
+                                                Action::make('set_today')
+                                                    ->icon('heroicon-o-calendar')
+                                                    ->tooltip('Establecer fecha de hoy')
+                                                    ->color('primary')
+                                                    ->action(function (callable $set) {
+                                                        $set('report_date', now()->format('Y-m-d'));
+                                                    })
+                                            ),
 
-                                TimePicker::make('start_time')
-                                    ->label('Hora de inicio')
-                                    ->seconds(false)
-                                    ->displayFormat('H:i')
-                                    ->helperText('Hora de inicio de la visita'),
+                                        TimePicker::make('start_time')
+                                            ->label('Hora de inicio')
+                                            ->seconds(false)
+                                            ->displayFormat('H:i')
+                                            ->helperText('Hora de inicio de la visita'),
 
-                                TimePicker::make('end_time')
-                                    ->label('Hora de finalización')
-                                    ->seconds(false)
-                                    ->displayFormat('H:i')
-                                    ->helperText('Hora de finalización de la visita'),
+                                        TimePicker::make('end_time')
+                                            ->label('Hora de finalización')
+                                            ->seconds(false)
+                                            ->displayFormat('H:i')
+                                            ->helperText('Hora de finalización de la visita'),
+                                    ]),
                             ]),
 
                         // ── TAB: Actividades ──

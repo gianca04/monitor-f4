@@ -3,34 +3,30 @@
     <div class="admin-dashboard-widget" x-data="{ activeTab: @entangle('activeTab') }">
         @php
             $quickStats = $this->getQuickStats();
-            $alerts = $this->getAlerts();
+            $urgentItems = $this->getUrgentItems();
             $globalStats = $this->getGlobalStats();
+            $advancedData = $this->getAdvancedChartData();
+            $completedCount = $this->getCompletedProjectsCount();
         @endphp
 
-        {{-- Header Principal --}}
+        {{-- Header compacto --}}
         <div class="relative mb-6 overflow-hidden bg-white shadow-lg rounded-2xl ring-1 ring-gray-200">
-            {{-- Barra superior de color --}}
-            <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500">
+            <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-slate-400 via-indigo-500 to-slate-400">
             </div>
-
             <div class="relative z-10 p-6">
-                {{-- Fila superior: Título y Filtros --}}
                 <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                     <div class="flex items-center gap-4">
-                        <div class="relative">
-                            <div
-                                class="flex items-center justify-center w-16 h-16 border shadow-lg rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 shadow-indigo-500/30">
-                                <svg class="text-white w-9 h-9" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                                </svg>
-                            </div>
+                        <div
+                            class="flex items-center justify-center w-14 h-14 shadow-lg rounded-2xl bg-gradient-to-br from-indigo-500 to-indigo-600 shadow-indigo-500/20">
+                            <svg class="text-white w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                            </svg>
                         </div>
                         <div>
-                            <h1 class="text-2xl font-bold text-gray-800 lg:text-3xl">Panel Administrativo</h1>
-                            <p class="flex items-center gap-2 mt-1 text-sm text-gray-500">
-                                <svg class="w-4 h-4 text-indigo-500" fill="none" stroke="currentColor"
-                                    viewBox="0 0 24 24">
+                            <h1 class="text-2xl font-bold text-gray-800">Panel Administrativo</h1>
+                            <p class="flex items-center gap-2 mt-1 text-sm text-gray-400">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                         d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                                 </svg>
@@ -38,8 +34,7 @@
                             </p>
                         </div>
                     </div>
-
-                    {{-- Filtros con wire:model.live para reactividad --}}
+                    {{-- Filtros --}}
                     <div class="flex flex-wrap items-center gap-3">
                         <div class="relative">
                             <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
@@ -50,7 +45,7 @@
                                 </svg>
                             </div>
                             <input type="month" wire:model.live="monthFilter"
-                                class="pl-10 pr-4 text-sm text-gray-700 placeholder-gray-400 transition border border-gray-300 h-11 rounded-xl bg-gray-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent" />
+                                class="pl-10 pr-4 text-sm text-gray-700 transition border border-gray-200 h-10 rounded-xl bg-gray-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent" />
                         </div>
                         <div class="relative">
                             <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
@@ -61,7 +56,7 @@
                                 </svg>
                             </div>
                             <select wire:model.live="statusFilter"
-                                class="pl-10 pr-10 text-sm text-gray-700 transition border border-gray-300 appearance-none h-11 rounded-xl bg-gray-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+                                class="pl-10 pr-10 text-sm text-gray-700 transition border border-gray-200 appearance-none h-10 rounded-xl bg-gray-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
                                 <option value="all">Todos los estados</option>
                                 <option value="Pendiente">Pendiente</option>
                                 <option value="Enviada">Enviada</option>
@@ -72,308 +67,177 @@
                             </select>
                         </div>
                         <button wire:click="$refresh"
-                            class="flex items-center justify-center transition bg-gray-100 hover:bg-gray-200 h-11 w-11 rounded-xl"
+                            class="flex items-center justify-center transition bg-gray-100 hover:bg-gray-200 h-10 w-10 rounded-xl"
                             wire:loading.class="animate-spin">
-                            <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                     d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                             </svg>
                         </button>
                     </div>
                 </div>
-
-                {{-- Indicador de filtro activo --}}
                 <div class="flex items-center gap-2 mt-3 text-sm">
-                    <span class="text-gray-500">Mostrando datos de:</span>
-                    <span class="px-2 py-1 font-medium text-indigo-700 bg-indigo-100 rounded-lg">
+                    <span class="text-gray-400">Mostrando:</span>
+                    <span class="px-2 py-0.5 font-medium text-indigo-700 bg-indigo-50 rounded-md text-xs">
                         {{ \Carbon\Carbon::createFromFormat('Y-m', $monthFilter)->format('F Y') }}
                     </span>
                     @if ($statusFilter !== 'all')
-                        <span class="px-2 py-1 font-medium text-purple-700 bg-purple-100 rounded-lg">
-                            Estado: {{ $statusFilter }}
+                        <span class="px-2 py-0.5 font-medium text-gray-600 bg-gray-100 rounded-md text-xs">
+                            {{ $statusFilter }}
                         </span>
                     @endif
                 </div>
+            </div>
+        </div>
 
-                {{-- Estadísticas Globales del Sistema (como UnifiedStatsWidget) --}}
-                <div class="mt-6">
-                    <h3 class="flex items-center gap-2 mb-3 text-sm font-semibold text-gray-700">
-                        <svg class="w-4 h-4 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-                        </svg>
-                        Estadísticas Globales del Sistema
-                    </h3>
-                    <div class="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
-                        {{-- Clientes --}}
-                        <div class="p-3 border border-blue-200 bg-blue-50 rounded-xl">
-                            <div class="flex items-center gap-2">
-                                <div class="flex items-center justify-center w-8 h-8 bg-blue-500 rounded-lg">
-                                    <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor"
-                                        viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-                                    </svg>
-                                </div>
-                                <div>
-                                    <p class="text-lg font-bold text-blue-700">{{ $globalStats['clients'] }}</p>
-                                    <p class="text-xs text-blue-600">Clientes</p>
-                                </div>
-                            </div>
-                        </div>
-
-                        {{-- Empleados Activos --}}
-                        <div class="p-3 border border-green-200 bg-green-50 rounded-xl">
-                            <div class="flex items-center gap-2">
-                                <div class="flex items-center justify-center w-8 h-8 bg-green-500 rounded-lg">
-                                    <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor"
-                                        viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
-                                    </svg>
-                                </div>
-                                <div>
-                                    <p class="text-lg font-bold text-green-700">{{ $globalStats['active_employees'] }}
-                                    </p>
-                                    <p class="text-xs text-green-600">Empleados</p>
-                                </div>
-                            </div>
-                        </div>
-
-                        {{-- Total Proyectos --}}
-                        <div class="p-3 border border-indigo-200 bg-indigo-50 rounded-xl">
-                            <div class="flex items-center gap-2">
-                                <div class="flex items-center justify-center w-8 h-8 bg-indigo-500 rounded-lg">
-                                    <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor"
-                                        viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                                    </svg>
-                                </div>
-                                <div>
-                                    <p class="text-lg font-bold text-indigo-700">{{ $globalStats['total_projects'] }}
-                                    </p>
-                                    <p class="text-xs text-indigo-600">Proyectos</p>
-                                </div>
-                            </div>
-                        </div>
-
-                        {{-- Cotizaciones Emitidas --}}
-                        <div class="p-3 border border-yellow-200 bg-yellow-50 rounded-xl">
-                            <div class="flex items-center gap-2">
-                                <div class="flex items-center justify-center w-8 h-8 bg-yellow-500 rounded-lg">
-                                    <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor"
-                                        viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                                    </svg>
-                                </div>
-                                <div>
-                                    <p class="text-lg font-bold text-yellow-700">{{ $globalStats['total_quotes'] }}</p>
-                                    <p class="text-xs text-yellow-600">Cotizaciones</p>
-                                </div>
-                            </div>
-                        </div>
-
-                        {{-- Cotizaciones Aprobadas --}}
-                        <div class="p-3 border bg-emerald-50 border-emerald-200 rounded-xl">
-                            <div class="flex items-center gap-2">
-                                <div class="flex items-center justify-center w-8 h-8 rounded-lg bg-emerald-500">
-                                    <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor"
-                                        viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
-                                    </svg>
-                                </div>
-                                <div>
-                                    <p class="text-lg font-bold text-emerald-700">{{ $globalStats['approved_quotes'] }}
-                                    </p>
-                                    <p class="text-xs text-emerald-600">Aprobadas</p>
-                                </div>
-                            </div>
-                        </div>
-
-                        {{-- Total S/. Aprobadas --}}
-                        <div class="p-3 border border-red-200 bg-red-50 rounded-xl">
-                            <div class="flex items-center gap-2">
-                                <div class="flex items-center justify-center w-8 h-8 bg-red-500 rounded-lg">
-                                    <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor"
-                                        viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                    </svg>
-                                </div>
-                                <div>
-                                    <p class="text-sm font-bold text-red-700">S/.
-                                        {{ number_format($globalStats['total_approved_amount'], 2) }}
-                                    </p>
-                                    <p class="text-xs text-red-600">Total Aprobado</p>
-                                </div>
-                            </div>
-                        </div>
-
-                        {{-- Actas --}}
-                        <div class="p-3 border border-gray-200 bg-gray-50 rounded-xl">
-                            <div class="flex items-center gap-2">
-                                <div class="flex items-center justify-center w-8 h-8 bg-gray-500 rounded-lg">
-                                    <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor"
-                                        viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
-                                    </svg>
-                                </div>
-                                <div>
-                                    <p class="text-lg font-bold text-gray-700">{{ $globalStats['compliances'] }}</p>
-                                    <p class="text-xs text-gray-600">Actas</p>
-                                </div>
-                            </div>
-                        </div>
-
-                        {{-- Preciario --}}
-                        <div class="p-3 border border-purple-200 bg-purple-50 rounded-xl">
-                            <div class="flex items-center gap-2">
-                                <div class="flex items-center justify-center w-8 h-8 bg-purple-500 rounded-lg">
-                                    <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor"
-                                        viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                                    </svg>
-                                </div>
-                                <div>
-                                    <p class="text-lg font-bold text-purple-700">{{ $globalStats['pricelist_items'] }}
-                                    </p>
-                                    <p class="text-xs text-purple-600">Preciario</p>
-                                </div>
-                            </div>
-                        </div>
-
-                        {{-- Despachos Atendidos --}}
-                        <div class="p-3 border bg-cyan-50 border-cyan-200 rounded-xl">
-                            <div class="flex items-center gap-2">
-                                <div class="flex items-center justify-center w-8 h-8 rounded-lg bg-cyan-500">
-                                    <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor"
-                                        viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0" />
-                                    </svg>
-                                </div>
-                                <div>
-                                    <p class="text-lg font-bold text-cyan-700">
-                                        {{ $globalStats['dispatches_attended'] }}
-                                    </p>
-                                    <p class="text-xs text-cyan-600">Despachos</p>
-                                </div>
-                            </div>
-                        </div>
-
-                        {{-- Despachos Pendientes --}}
-                        <div class="p-3 border border-orange-200 bg-orange-50 rounded-xl">
-                            <div class="flex items-center gap-2">
-                                <div class="flex items-center justify-center w-8 h-8 bg-orange-500 rounded-lg">
-                                    <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor"
-                                        viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                    </svg>
-                                </div>
-                                <div>
-                                    <p class="text-lg font-bold text-orange-700">
-                                        {{ $globalStats['dispatches_pending'] }}
-                                    </p>
-                                    <p class="text-xs text-orange-600">Pendientes</p>
-                                </div>
-                            </div>
-                        </div>
-
-                        {{-- Consumo Hoy --}}
-                        <div class="p-3 border border-pink-200 bg-pink-50 rounded-xl">
-                            <div class="flex items-center gap-2">
-                                <div class="flex items-center justify-center w-8 h-8 bg-pink-500 rounded-lg">
-                                    <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor"
-                                        viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-                                    </svg>
-                                </div>
-                                <div>
-                                    <p class="text-lg font-bold text-pink-700">
-                                        {{ $globalStats['projects_with_consumption_today'] }}
-                                    </p>
-                                    <p class="text-xs text-pink-600">Consumo Hoy</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                {{-- Estadísticas rápidas del mes filtrado --}}
-                <div class="grid grid-cols-2 gap-3 mt-6 md:grid-cols-5">
-                    <div class="p-4 border border-gray-200 bg-gray-50 rounded-xl">
-                        <div class="flex items-center justify-between">
-                            <span class="text-xs font-medium text-gray-500 uppercase">Proyectos (mes)</span>
-                            @if ($quickStats['projects_trend'] > 0)
-                                <span class="flex items-center gap-1 text-xs font-medium text-green-600">
-                                    <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                                        <path fill-rule="evenodd"
-                                            d="M5.293 9.707a1 1 0 010-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 01-1.414 1.414L11 7.414V15a1 1 0 11-2 0V7.414L6.707 9.707a1 1 0 01-1.414 0z"
-                                            clip-rule="evenodd" />
-                                    </svg>
-                                    {{ $quickStats['projects_trend'] }}%
-                                </span>
-                            @elseif($quickStats['projects_trend'] < 0)
-                                <span class="flex items-center gap-1 text-xs font-medium text-red-600">
-                                    <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                                        <path fill-rule="evenodd"
-                                            d="M14.707 10.293a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 111.414-1.414L9 12.586V5a1 1 0 012 0v7.586l2.293-2.293a1 1 0 011.414 0z"
-                                            clip-rule="evenodd" />
-                                    </svg>
-                                    {{ abs($quickStats['projects_trend']) }}%
-                                </span>
-                            @endif
-                        </div>
-                        <p class="mt-2 text-2xl font-bold text-gray-800">{{ $quickStats['projects_this_month'] }}</p>
-                    </div>
-                    <div class="p-4 border border-gray-200 bg-gray-50 rounded-xl">
-                        <span class="text-xs font-medium text-gray-500 uppercase">Cotizaciones</span>
-                        <p class="mt-2 text-2xl font-bold text-gray-800">{{ $quickStats['quotes_this_month'] }}</p>
-                    </div>
-                    <div class="p-4 border border-gray-200 bg-gray-50 rounded-xl">
-                        <span class="text-xs font-medium text-gray-500 uppercase">Aprobadas</span>
-                        <p class="mt-2 text-2xl font-bold text-green-600">{{ $quickStats['approved_this_month'] }}</p>
-                    </div>
-                    <div class="p-4 border border-gray-200 bg-gray-50 rounded-xl">
-                        <span class="text-xs font-medium text-gray-500 uppercase">Pendientes</span>
-                        <p class="mt-2 text-2xl font-bold text-amber-600">{{ $quickStats['pending_actions'] }}</p>
-                    </div>
-                    <div class="hidden p-4 border border-gray-200 md:block bg-gray-50 rounded-xl">
-                        <span class="text-xs font-medium text-gray-500 uppercase">Flujos completos</span>
-                        <p class="mt-2 text-2xl font-bold text-indigo-600">{{ $this->getCompletedProjectsCount() }}
-                        </p>
-                    </div>
-                </div>
-
-                {{-- Alertas importantes --}}
-                @if (count($alerts) > 0)
-                    <div class="flex gap-3 mt-4 overflow-x-auto">
-                        @foreach ($alerts as $alert)
-                            @php
-                                $alertColors = [
-                                    'warning' => 'bg-amber-100 text-amber-700 border-amber-300',
-                                    'danger' => 'bg-red-100 text-red-700 border-red-300',
-                                    'info' => 'bg-blue-100 text-blue-700 border-blue-300',
-                                ];
-                            @endphp
-                            <div
-                                class="flex items-center flex-shrink-0 gap-2 px-4 py-2 text-xs font-medium border rounded-full {{ $alertColors[$alert['type']] ?? $alertColors['info'] }}">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        {{-- ═══════════════════════════════════════════════════════════════ --}}
+        {{-- NIVEL 1: LO URGENTE — Atención Inmediata --}}
+        {{-- ═══════════════════════════════════════════════════════════════ --}}
+        @if (count($urgentItems) > 0)
+            <div class="mb-6 space-y-2">
+                @foreach ($urgentItems as $item)
+                    <a href="{{ $item['url'] }}"
+                        class="flex items-center gap-4 px-5 py-3 transition-all bg-white border rounded-xl hover:shadow-md group
+                                {{ $item['type'] === 'danger' ? 'border-red-200 hover:border-red-300' : 'border-amber-200 hover:border-amber-300' }}">
+                        <div class="flex items-center justify-center flex-shrink-0 w-10 h-10 rounded-lg
+                                    {{ $item['type'] === 'danger' ? 'bg-red-100' : 'bg-amber-100' }}">
+                            @if ($item['icon'] === 'exclamation-triangle')
+                                <svg class="w-5 h-5 {{ $item['type'] === 'danger' ? 'text-red-600' : 'text-amber-600' }}"
+                                    fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                         d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                                 </svg>
-                                {{ $alert['message'] }}
-                            </div>
-                        @endforeach
+                            @elseif ($item['icon'] === 'clock')
+                                <svg class="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                            @elseif ($item['icon'] === 'truck')
+                                <svg class="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0" />
+                                </svg>
+                            @elseif ($item['icon'] === 'user-minus')
+                                <svg class="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M13 7a4 4 0 11-8 0 4 4 0 018 0zM9 14a6 6 0 00-6 6v1h12v-1a6 6 0 00-6-6zM21 12h-6" />
+                                </svg>
+                            @endif
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <p
+                                class="text-sm font-semibold {{ $item['type'] === 'danger' ? 'text-red-800' : 'text-amber-800' }}">
+                                {{ $item['title'] }}</p>
+                            <p class="text-xs {{ $item['type'] === 'danger' ? 'text-red-500' : 'text-amber-500' }}">
+                                {{ $item['description'] }}</p>
+                        </div>
+                        <div class="flex items-center gap-2 flex-shrink-0">
+                            <span
+                                class="inline-flex items-center justify-center w-8 h-8 text-sm font-bold rounded-full
+                                        {{ $item['type'] === 'danger' ? 'bg-red-600 text-white' : 'bg-amber-500 text-white' }}">
+                                {{ $item['count'] }}
+                            </span>
+                            <svg class="w-4 h-4 text-gray-300 transition group-hover:text-gray-500" fill="none"
+                                stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                            </svg>
+                        </div>
+                    </a>
+                @endforeach
+            </div>
+        @endif
+
+        {{-- ═══════════════════════════════════════════════════════════════ --}}
+        {{-- NIVEL 2: SALUD DEL NEGOCIO — KPIs Reales --}}
+        {{-- ═══════════════════════════════════════════════════════════════ --}}
+        <div class="grid grid-cols-2 gap-4 mb-6 lg:grid-cols-4">
+            {{-- KPI: Tasa de Conversión --}}
+            <div class="p-5 bg-white border border-gray-200 rounded-xl">
+                <div class="flex items-center justify-between mb-3">
+                    <p class="text-xs font-semibold tracking-wider text-gray-400 uppercase">Tasa de Conversión</p>
+                    <div class="flex items-center justify-center w-9 h-9 rounded-lg bg-emerald-50">
+                        <svg class="w-5 h-5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                        </svg>
                     </div>
+                </div>
+                <p class="text-3xl font-bold text-gray-900">{{ $advancedData['conversion_rate'] }}<span
+                        class="text-lg text-gray-400">%</span></p>
+                <div class="h-1.5 mt-3 overflow-hidden bg-gray-100 rounded-full">
+                    <div class="h-full rounded-full bg-emerald-500 transition-all duration-500"
+                        style="width: {{ $advancedData['conversion_rate'] }}%"></div>
+                </div>
+                <p class="mt-2 text-xs text-gray-400">Aprobadas vs emitidas (mes)</p>
+            </div>
+
+            {{-- KPI: Tiempo Promedio Aprobación --}}
+            <div class="p-5 bg-white border border-gray-200 rounded-xl">
+                <div class="flex items-center justify-between mb-3">
+                    <p class="text-xs font-semibold tracking-wider text-gray-400 uppercase">Tiempo Aprobación</p>
+                    <div class="flex items-center justify-center w-9 h-9 rounded-lg bg-blue-50">
+                        <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                    </div>
+                </div>
+                <p class="text-3xl font-bold text-gray-900">{{ $advancedData['avg_approval_days'] }} <span
+                        class="text-lg font-normal text-gray-400">días</span></p>
+                <p class="mt-2 text-xs text-gray-400">Promedio creación → aprobación</p>
+            </div>
+
+            {{-- KPI: Total Aprobado (S/.) --}}
+            <div class="p-5 bg-white border border-gray-200 rounded-xl">
+                <div class="flex items-center justify-between mb-3">
+                    <p class="text-xs font-semibold tracking-wider text-gray-400 uppercase">Total Aprobado</p>
+                    <div class="flex items-center justify-center w-9 h-9 rounded-lg bg-gray-50">
+                        <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                    </div>
+                </div>
+                <p class="text-2xl font-bold text-gray-900">S/.
+                    {{ number_format($quickStats['approved_amount_this_month'], 2) }}</p>
+                @if ($quickStats['amount_trend'] != 0)
+                    <div class="flex items-center gap-1 mt-2">
+                        @if ($quickStats['amount_trend'] > 0)
+                            <svg class="w-3.5 h-3.5 text-emerald-500" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd"
+                                    d="M5.293 9.707a1 1 0 010-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 01-1.414 1.414L11 7.414V15a1 1 0 11-2 0V7.414L6.707 9.707a1 1 0 01-1.414 0z"
+                                    clip-rule="evenodd" />
+                            </svg>
+                            <span class="text-xs font-medium text-emerald-600">+{{ $quickStats['amount_trend'] }}% vs mes
+                                anterior</span>
+                        @else
+                            <svg class="w-3.5 h-3.5 text-red-500" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd"
+                                    d="M14.707 10.293a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 111.414-1.414L9 12.586V5a1 1 0 012 0v7.586l2.293-2.293a1 1 0 011.414 0z"
+                                    clip-rule="evenodd" />
+                            </svg>
+                            <span class="text-xs font-medium text-red-600">{{ $quickStats['amount_trend'] }}% vs mes
+                                anterior</span>
+                        @endif
+                    </div>
+                @else
+                    <p class="mt-2 text-xs text-gray-400">Este mes</p>
                 @endif
+            </div>
+
+            {{-- KPI: Flujos Completos --}}
+            <div class="p-5 bg-white border border-gray-200 rounded-xl">
+                <div class="flex items-center justify-between mb-3">
+                    <p class="text-xs font-semibold tracking-wider text-gray-400 uppercase">Flujos Completos</p>
+                    <div class="flex items-center justify-center w-9 h-9 rounded-lg bg-indigo-50">
+                        <svg class="w-5 h-5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
+                        </svg>
+                    </div>
+                </div>
+                <p class="text-3xl font-bold text-gray-900">{{ $completedCount }}</p>
+                <p class="mt-2 text-xs text-gray-400">Cotización → Acta → Reportes → Despacho</p>
             </div>
         </div>
 
@@ -437,202 +301,91 @@
 
             {{-- TAB: RESUMEN --}}
             @if ($activeTab === 'overview')
-                    @php $stats = $this->getOverviewStats(); @endphp
+                @php $stats = $this->getOverviewStats(); @endphp
 
-                    {{-- Tarjetas de Estadísticas --}}
-                    <div class="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
-                        {{-- Proyectos --}}
-                        <div
-                            class="group relative overflow-hidden rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 p-5 shadow-lg transition-transform hover:scale-[1.02]">
-                            <div class="absolute w-24 h-24 rounded-full -right-4 -top-4 bg-white/10"></div>
-                            <div class="relative">
-                                <div class="flex items-center justify-between">
-                                    <svg class="w-8 h-8 text-white/80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
-                                    </svg>
-                                    <span class="text-3xl font-bold text-white">{{ $stats['projects_total'] }}</span>
-                                </div>
-                                <p class="mt-2 text-sm font-medium text-white/90">Proyectos Totales</p>
-                                <div class="flex gap-2 mt-3">
-                                    <span
-                                        class="inline-flex items-center rounded-full bg-white/20 px-2 py-0.5 text-xs font-medium text-white">
-                                        ✓ {{ $stats['projects_approved'] }}
-                                    </span>
-                                    <span
-                                        class="inline-flex items-center rounded-full bg-white/20 px-2 py-0.5 text-xs font-medium text-white">
-                                        ⚡ {{ $stats['projects_in_execution'] }}
-                                    </span>
-                                </div>
-                            </div>
-                        </div>
-
-                        {{-- Cotizaciones Aprobadas --}}
-                        <div
-                            class="group relative overflow-hidden rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-600 p-5 shadow-lg transition-transform hover:scale-[1.02]">
-                            <div class="absolute w-24 h-24 rounded-full -right-4 -top-4 bg-white/10"></div>
-                            <div class="relative">
-                                <div class="flex items-center justify-between">
-                                    <svg class="w-8 h-8 text-white/80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M9 12l2 2 4-4m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                    </svg>
-                                    <span class="text-3xl font-bold text-white">{{ $stats['quotes_approved'] }}</span>
-                                </div>
-                                <p class="mt-2 text-sm font-medium text-white/90">Cotizaciones Aprobadas</p>
-                                <div class="mt-3">
-                                    <span
-                                        class="inline-flex items-center rounded-full bg-white/20 px-2 py-0.5 text-xs font-medium text-white">
-                                        {{ $stats['quotes_pending'] }} pendientes
-                                    </span>
-                                </div>
-                            </div>
-                        </div>
-
-                        {{-- Actas --}}
-                        <div
-                            class="group relative overflow-hidden rounded-xl bg-gradient-to-br from-violet-500 to-violet-600 p-5 shadow-lg transition-transform hover:scale-[1.02]">
-                            <div class="absolute w-24 h-24 rounded-full -right-4 -top-4 bg-white/10"></div>
-                            <div class="relative">
-                                <div class="flex items-center justify-between">
-                                    <svg class="w-8 h-8 text-white/80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
-                                    </svg>
-                                </div>
-                                <span class="text-3xl font-bold text-white">{{ $stats['compliance_count'] }}</span>
-                            </div>
-                            <p class="mt-2 text-sm font-medium text-white/90">Actas Generadas</p>
-                        </div>
-                    </div>
-
-                    {{-- Reportes --}}
-                    <div
-                        class="group relative overflow-hidden rounded-xl bg-gradient-to-br from-amber-500 to-orange-500 p-5 shadow-lg transition-transform hover:scale-[1.02]">
-                        <div class="absolute w-24 h-24 rounded-full -right-4 -top-4 bg-white/10"></div>
-                        <div class="relative">
-                            <div class="flex items-center justify-between">
-                                <svg class="w-8 h-8 text-white/80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                                </svg>
-                                <span class="text-3xl font-bold text-white">{{ $stats['work_reports_count'] }}</span>
-                            </div>
-                            <p class="mt-2 text-sm font-medium text-white/90">Reportes de Trabajo</p>
-                        </div>
-                    </div>
-
-                    {{-- Almacén --}}
-                    <div
-                        class="group relative overflow-hidden rounded-xl bg-gradient-to-br from-cyan-500 to-teal-500 p-5 shadow-lg transition-transform hover:scale-[1.02]">
-                        <div class="absolute w-24 h-24 rounded-full -right-4 -top-4 bg-white/10"></div>
-                        <div class="relative">
-                            <div class="flex items-center justify-between">
-                                <svg class="w-8 h-8 text-white/80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0" />
-                                </svg>
-                                <span class="text-3xl font-bold text-white">{{ $stats['warehouse_attended'] }}</span>
-                            </div>
-                            <p class="mt-2 text-sm font-medium text-white/90">Despachos Atendidos</p>
-                            <div class="mt-3">
-                                <span
-                                    class="inline-flex items-center rounded-full bg-white/20 px-2 py-0.5 text-xs font-medium text-white">
-                                    {{ $stats['warehouse_pending'] }} pendientes
-                                </span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                {{-- Métricas adicionales --}}
-                @php $advancedData = $this->getAdvancedChartData(); @endphp
-                <div class="grid gap-4 mt-6 lg:grid-cols-3">
-                    {{-- Tasa de conversión --}}
-                    <div class="p-5 rounded-xl bg-gray-50 ring-1 ring-gray-200">
-                        <div class="flex items-center justify-between">
-                            <div>
-                                <p class="text-sm font-medium text-gray-500">Tasa de Conversión</p>
-                                <p class="mt-1 text-3xl font-bold text-gray-800">
-                                    {{ $advancedData['conversion_rate'] }}%
-                                </p>
-                            </div>
-                            <div class="flex items-center justify-center w-12 h-12 bg-green-100 rounded-full">
-                                <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                                </svg>
-                            </div>
-                        </div>
-                        <p class="mt-2 text-xs text-gray-500">Cotizaciones aprobadas vs emitidas</p>
-                        <div class="h-2 mt-3 overflow-hidden bg-gray-200 rounded-full">
-                            <div class="h-full bg-green-500 rounded-full"
-                                style="width: {{ $advancedData['conversion_rate'] }}%"></div>
-                        </div>
-                    </div>
-
-                    {{-- Tiempo promedio de aprobación --}}
-                    <div class="p-5 rounded-xl bg-gray-50 ring-1 ring-gray-200">
-                        <div class="flex items-center justify-between">
-                            <div>
-                                <p class="text-sm font-medium text-gray-500">Tiempo Promedio Aprobación</p>
-                                <p class="mt-1 text-3xl font-bold text-gray-800">
-                                    {{ $advancedData['avg_approval_days'] }} <span
-                                        class="text-lg font-normal text-gray-500">días</span>
-                                </p>
-                            </div>
-                            <div class="flex items-center justify-center w-12 h-12 bg-blue-100 rounded-full">
-                                <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                </svg>
-                            </div>
-                        </div>
-                        <p class="mt-2 text-xs text-gray-500">Desde creación hasta aprobación</p>
-                    </div>
-
-                    {{-- Proyectos completados --}}
-                    <div class="p-5 rounded-xl bg-gray-50 ring-1 ring-gray-200">
-                        <div class="flex items-center justify-between">
-                            <div>
-                                <p class="text-sm font-medium text-gray-500">Flujos Completos</p>
-                                <p class="mt-1 text-3xl font-bold text-gray-800">
-                                    {{ $this->getCompletedProjectsCount() }}
-                                </p>
-                            </div>
-                            <div class="flex items-center justify-center w-12 h-12 bg-purple-100 rounded-full">
-                                <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
-                                </svg>
-                            </div>
-                        </div>
-                        <p class="mt-2 text-xs text-gray-500">Cotización → Acta generada → Reportes → Despacho atendido</p>
-                    </div>
-                </div>
-
-                {{-- Banner de Proyectos Completos --}}
-                <div class="mt-6 overflow-hidden rounded-xl bg-gradient-to-r from-green-50 to-emerald-50 ring-1 ring-green-200">
-                    <div class="flex items-center gap-6 p-6">
-                        <div
-                            class="flex items-center justify-center flex-shrink-0 w-16 h-16 bg-green-500 rounded-full shadow-lg shadow-green-500/30">
-                            <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
+                {{-- Resumen del Mes — Compact stat row --}}
+                        <h3 class="flex items-center gap-2 mb-4 text-sm font-semibold text-gray-600">
+                            <svg class="w-4 h-4 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16" />
                             </svg>
+                            Resumen del Mes
+                        </h3>
+                        <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+                            {{-- Proyectos --}}
+                            <div class="p-4 bg-gray-50 border border-gray-200 rounded-xl">
+                                <div class="flex items-center gap-3 mb-2">
+                                    <div class="flex items-center justify-center w-8 h-8 rounded-lg bg-indigo-100">
+                                        <svg class="w-4 h-4 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
+                                        </svg>
+                                    </div>
+                                    <span class="text-xs font-medium tracking-wider text-gray-400 uppercase">Proyectos</span>
+                                </div>
+                                <p class="text-2xl font-bold text-gray-900">{{ $stats['projects_total'] }}</p>
+                                <div class="flex gap-2 mt-2">
+                                    <span class="text-xs text-emerald-600">✓ {{ $stats['projects_approved'] }}</span>
+                                    <span class="text-xs text-blue-600">⚡ {{ $stats['projects_in_execution'] }}</span>
+                                </div>
+                            </div>
+
+                            {{-- Cotizaciones --}}
+                            <div class="p-4 bg-gray-50 border border-gray-200 rounded-xl">
+                                <div class="flex items-center gap-3 mb-2">
+                                    <div class="flex items-center justify-center w-8 h-8 rounded-lg bg-emerald-100">
+                                        <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                        </svg>
+                                    </div>
+                                    <span class="text-xs font-medium tracking-wider text-gray-400 uppercase">Cotizaciones</span>
+                                </div>
+                                <p class="text-2xl font-bold text-gray-900">{{ $stats['quotes_approved'] }}</p>
+                                <div class="mt-2">
+                                    <span class="text-xs text-amber-600">{{ $stats['quotes_pending'] }} pendientes</span>
+                                </div>
+                            </div>
+
+                            {{-- Actas --}}
+                            <div class="p-4 bg-gray-50 border border-gray-200 rounded-xl">
+                                <div class="flex items-center gap-3 mb-2">
+                                    <div class="flex items-center justify-center w-8 h-8 rounded-lg bg-gray-200">
+                                        <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+                                        </svg>
+                                    </div>
+                                    <span class="text-xs font-medium tracking-wider text-gray-400 uppercase">Actas</span>
+                                </div>
+                                <p class="text-2xl font-bold text-gray-900">{{ $stats['compliance_count'] }}</p>
+                            </div>
+
+                            {{-- Reportes --}}
+                            <div class="p-4 bg-gray-50 border border-gray-200 rounded-xl">
+                                <div class="flex items-center gap-3 mb-2">
+                                    <div class="flex items-center justify-center w-8 h-8 rounded-lg bg-amber-100">
+                                        <svg class="w-4 h-4 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                        </svg>
+                                    </div>
+                                    <span class="text-xs font-medium tracking-wider text-gray-400 uppercase">Reportes</span>
+                                </div>
+                                <p class="text-2xl font-bold text-gray-900">{{ $stats['work_reports_count'] }}</p>
+                            </div>
+
+                            {{-- Despachos --}}
+                            <div class="p-4 bg-gray-50 border border-gray-200 rounded-xl">
+                                <div class="flex items-center gap-3 mb-2">
+                                    <div class="flex items-center justify-center w-8 h-8 rounded-lg bg-gray-200">
+                                        <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0" />
+                                        </svg>
+                                    </div>
+                                    <span class="text-xs font-medium tracking-wider text-gray-400 uppercase">Despachos</span>
+                                </div>
+                                <p class="text-2xl font-bold text-gray-900">{{ $stats['warehouse_attended'] }}</p>
+                                <div class="mt-2">
+                                    <span class="text-xs text-amber-600">{{ $stats['warehouse_pending'] }} pendientes</span>
+                                </div>
+                            </div>
                         </div>
-                        <div class="flex-1">
-                            <h3 class="text-lg font-bold text-green-800">Proyectos con Flujo Completo</h3>
-                            <p class="mt-1 text-sm text-green-600">
-                                Cotización aprobada → Acta generada → Reportes → Despacho atendido
-                            </p>
-                        </div>
-                        <div class="text-right">
-                            <span class="text-5xl font-bold text-green-600">{{ $this->getCompletedProjectsCount() }}</span>
-                            <p class="text-sm text-green-600">completados</p>
-                        </div>
-                    </div>
-                </div>
             @endif
 
         {{-- TAB: PROYECTOS --}}
@@ -991,7 +744,7 @@
                                 <div class="flex items-center gap-3 p-2 transition-colors bg-white rounded-lg hover:bg-gray-100">
                                     <span
                                         class="flex items-center justify-center w-6 h-6 text-xs font-bold rounded-full
-                                                    {{ $index === 0 ? 'bg-amber-100 text-amber-700' : ($index === 1 ? 'bg-gray-200 text-gray-600' : 'bg-orange-100 text-orange-600') }}">
+                                                                {{ $index === 0 ? 'bg-amber-100 text-amber-700' : ($index === 1 ? 'bg-gray-200 text-gray-600' : 'bg-orange-100 text-orange-600') }}">
                                         {{ $index + 1 }}
                                     </span>
                                     <div class="flex-1 min-w-0">
@@ -1112,7 +865,7 @@
 
                                         {{-- Barra --}}
                                         <div class="w-full rounded-t-md transition-all duration-300 cursor-pointer
-                                                        {{ $expense['is_current'] ? 'bg-gradient-to-t from-green-600 to-green-400' : 'bg-gradient-to-t from-green-400 to-green-300 hover:from-green-500 hover:to-green-400' }}"
+                                                                    {{ $expense['is_current'] ? 'bg-gradient-to-t from-green-600 to-green-400' : 'bg-gradient-to-t from-green-400 to-green-300 hover:from-green-500 hover:to-green-400' }}"
                                             style="height: {{ max($heightPct, 2) }}%; min-height: {{ $expense['total'] > 0 ? '8px' : '2px' }};">
                                         </div>
                                     </div>

@@ -2,6 +2,9 @@
 
 namespace App\Filament\Widgets;
 
+use App\Filament\Resources\Projects\ProjectResource;
+use App\Filament\Resources\Quotes\QuoteResource;
+use App\Filament\Resources\QuoteWarehouses\QuoteWarehouseResource;
 use App\Models\Client;
 use App\Models\Compliance;
 use App\Models\Employee;
@@ -50,33 +53,92 @@ class AdminDashboardWidget extends Widget
     }
 
     /**
-     * Estadísticas globales del sistema (como UnifiedStatsWidget)
+     * Compact summary stats (only essential operational metrics)
      */
     public function getGlobalStats(): array
     {
-        // Calcular total S/. de cotizaciones aprobadas
         $totalApprovedQuotesAmount = Quote::where('status', 'Aprobado')
             ->join('quote_details', 'quotes.id', '=', 'quote_details.quote_id')
             ->sum(DB::raw('quote_details.quantity * quote_details.unit_price'));
 
-        // Calcular proyectos con consumo hoy
-        $projectsWithConsumptionToday = ProjectConsumption::whereDate('consumed_at', today())
-            ->distinct('project_id')
-            ->count('project_id');
-
         return [
-            'clients' => Client::count(),
             'active_employees' => Employee::where('active', true)->count(),
-            'total_projects' => Project::count(),
-            'total_quotes' => Quote::count(),
-            'compliances' => Compliance::count(),
-            'approved_quotes' => Quote::where('status', 'Aprobado')->count(),
             'total_approved_amount' => $totalApprovedQuotesAmount,
-            'pricelist_items' => Pricelist::count(),
-            'dispatches_attended' => QuoteWarehouse::where('status', 'Atendido')->count(),
             'dispatches_pending' => QuoteWarehouse::whereIn('status', ['Parcial', 'Pendiente'])->count(),
-            'projects_with_consumption_today' => $projectsWithConsumptionToday,
+            'projects_with_consumption_today' => ProjectConsumption::whereDate('consumed_at', today())
+                ->distinct('project_id')
+                ->count('project_id'),
         ];
+    }
+
+    /**
+     * Level 1: Urgent items needing immediate attention (with actionable URLs)
+     */
+    public function getUrgentItems(): array
+    {
+        $year = $this->getFilterYear();
+        $month = $this->getFilterMonth();
+        $items = [];
+
+        // Cotizaciones pendientes por más de 7 días
+        $oldPendingQuotes = Quote::where('status', 'Pendiente')
+            ->where('created_at', '<', now()->subDays(7))
+            ->count();
+        if ($oldPendingQuotes > 0) {
+            $items[] = [
+                'type' => 'danger',
+                'icon' => 'exclamation-triangle',
+                'title' => "{$oldPendingQuotes} cotizaciones pendientes +7 días",
+                'description' => 'Requieren aprobación urgente',
+                'count' => $oldPendingQuotes,
+                'url' => QuoteResource::getUrl('index'),
+            ];
+        }
+
+        // Cotizaciones pendientes recientes (menos de 7 días)
+        $recentPendingQuotes = Quote::where('status', 'Pendiente')
+            ->where('created_at', '>=', now()->subDays(7))
+            ->count();
+        if ($recentPendingQuotes > 0) {
+            $items[] = [
+                'type' => 'warning',
+                'icon' => 'clock',
+                'title' => "{$recentPendingQuotes} cotizaciones pendientes",
+                'description' => 'Pendientes de aprobación',
+                'count' => $recentPendingQuotes,
+                'url' => QuoteResource::getUrl('index'),
+            ];
+        }
+
+        // Despachos pendientes o parciales
+        $pendingDispatches = QuoteWarehouse::whereIn('status', ['Pendiente', 'Parcial'])->count();
+        if ($pendingDispatches > 0) {
+            $items[] = [
+                'type' => 'warning',
+                'icon' => 'truck',
+                'title' => "{$pendingDispatches} despachos pendientes",
+                'description' => 'Pendientes de atender en almacén',
+                'count' => $pendingDispatches,
+                'url' => QuoteWarehouseResource::getUrl('index'),
+            ];
+        }
+
+        // Proyectos sin supervisor
+        $noSupervisor = Project::whereNull('supervisor_id')
+            ->whereNotIn('status', ['Completado', 'Facturado', 'Anulado'])
+            ->count();
+        if ($noSupervisor > 0) {
+            $items[] = [
+                'type' => 'danger',
+                'icon' => 'user-minus',
+                'title' => "{$noSupervisor} proyectos sin supervisor",
+                'description' => 'Requieren asignación de supervisor',
+                'count' => $noSupervisor,
+                'url' => ProjectResource::getUrl('index'),
+            ];
+        }
+
+        return $items;
     }
 
     public function getOverviewStats(): array
@@ -168,12 +230,32 @@ class AdminDashboardWidget extends Widget
             ->whereMonth('created_at', $month)
             ->count();
 
+        // Month-over-month approved amount comparison
+        $approvedAmountThisMonth = Quote::where('quotes.status', 'Aprobado')
+            ->whereYear('quotes.created_at', $year)
+            ->whereMonth('quotes.created_at', $month)
+            ->join('quote_details', 'quotes.id', '=', 'quote_details.quote_id')
+            ->sum(DB::raw('quote_details.quantity * quote_details.unit_price'));
+
+        $approvedAmountLastMonth = Quote::where('quotes.status', 'Aprobado')
+            ->whereYear('quotes.created_at', $lastMonthDate->year)
+            ->whereMonth('quotes.created_at', $lastMonthDate->month)
+            ->join('quote_details', 'quotes.id', '=', 'quote_details.quote_id')
+            ->sum(DB::raw('quote_details.quantity * quote_details.unit_price'));
+
+        $amountTrend = $approvedAmountLastMonth > 0
+            ? round((($approvedAmountThisMonth - $approvedAmountLastMonth) / $approvedAmountLastMonth) * 100)
+            : ($approvedAmountThisMonth > 0 ? 100 : 0);
+
         return [
             'projects_this_month' => $projectsThisMonth,
             'projects_trend' => $projectsTrend,
             'quotes_this_month' => $quotesThisMonth,
             'approved_this_month' => $approvedThisMonth,
             'pending_actions' => $pendingQuotes + $pendingWarehouse,
+            'approved_amount_this_month' => $approvedAmountThisMonth,
+            'approved_amount_last_month' => $approvedAmountLastMonth,
+            'amount_trend' => $amountTrend,
         ];
     }
 
