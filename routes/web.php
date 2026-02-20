@@ -6,6 +6,7 @@ use App\Http\Controllers\VisitReportPdfController;
 use App\Http\Controllers\WorkReportExcelController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\EvidenceReportController;
+use App\Http\Controllers\VisitReportEvidenceController;
 use App\Http\Controllers\QuoteExportController;
 use App\Http\Controllers\QuoteWarehouseController;
 use App\Http\Controllers\WorkReportConsolidatedController;
@@ -24,6 +25,11 @@ Route::redirect('/', '/dashboard');
 // Ruta para generar Informe de Evidencias (PDF con fotos)
 Route::get('/evidence-report/{workReport}/pdf', [EvidenceReportController::class, 'generateReport'])
     ->name('evidence-report.pdf')
+    ->middleware('auth');
+
+// Ruta para generar Informe de Evidencias de Visita (PDF con fotos)
+Route::get('/visit-report-evidence/{visitReport}/pdf', [VisitReportEvidenceController::class, 'generateReport'])
+    ->name('visit-report-evidence.pdf')
     ->middleware('auth');
 
 // Ruta para generar reporte PDF de trabajo

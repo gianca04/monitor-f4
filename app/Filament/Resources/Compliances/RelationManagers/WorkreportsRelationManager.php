@@ -555,7 +555,7 @@ class WorkreportsRelationManager extends RelationManager
                                             ->label('Foto Después')
                                             ->image()
                                             ->downloadable()
-                                            ->directory('work-reports/photos')
+                                            ->directory('visit-reports/photos')
                                             ->visibility('public')
                                             ->disk('public')
                                             ->acceptedFileTypes(types: ['image/jpeg', 'image/png', 'image/webp'])

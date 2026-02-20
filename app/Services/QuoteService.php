@@ -127,7 +127,7 @@ class QuoteService
         foreach ($quote->details as $detail) {
             // Filter only 'SUMINISTRO' type
             if ($detail->item_type === 'SUMINISTRO') {
-                \App\Models\ProjectRequirement::updateOrCreate(
+                ProjectRequirement::updateOrCreate(
                     [
                         'quote_detail_id' => $detail->id,
                     ],

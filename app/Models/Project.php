@@ -172,7 +172,16 @@ class Project extends Model
     {
         return $query->has('quotes');
     }
-
+    /**
+     * Filtra proyectos que no estén finalizados.
+     */
+    /**
+     * Filtra proyectos que están en proceso inicial o aprobación.
+     */
+    public function scopePendientesORevision(Builder $query): Builder
+    {
+        return $query->whereIn('status', ['Pendiente', 'Enviado', 'Aprobado']);
+    }
     public function scopeAllowedForUser(Builder $query, ?User $user = null): Builder
     {
         /** @var \App\Models\User|null $user */
