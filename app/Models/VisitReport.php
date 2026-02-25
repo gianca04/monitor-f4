@@ -14,6 +14,7 @@ class VisitReport extends Model
     protected $fillable = [
         'employee_id',
         'project_id',
+        'sub_client_id',
         'name',
         'suggestions',
         'conclusions',
@@ -46,11 +47,20 @@ class VisitReport extends Model
     }
 
     /**
-     * Accessor: Obtener el sub-cliente a través del proyecto.
+     * Relación directa: Un reporte de visita pertenece a un sub-cliente.
+     */
+    public function directSubClient()
+    {
+        return $this->belongsTo(SubClient::class, 'sub_client_id');
+    }
+
+    /**
+     * Accessor: Obtener el sub-cliente. Prioriza la relación directa,
+     * de lo contrario lo obtiene a través del proyecto (compatibilidad).
      */
     public function getSubClientAttribute()
     {
-        return $this->project?->subClient;
+        return $this->sub_client_id ? $this->directSubClient : $this->project?->subClient;
     }
 
     /**

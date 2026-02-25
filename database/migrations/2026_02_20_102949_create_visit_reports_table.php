@@ -14,7 +14,8 @@ return new class extends Migration
         Schema::create('visit_reports', function (Blueprint $table) {
             $table->id();
             $table->foreignId('employee_id')->constrained('employees')->cascadeOnDelete();
-            $table->foreignId('project_id')->constrained('projects')->cascadeOnDelete();
+            $table->foreignId('project_id')->nullable()->constrained('projects')->cascadeOnDelete();
+            $table->foreignId('sub_client_id')->nullable()->constrained('sub_clients')->cascadeOnDelete();
             $table->string('name')->nullable();
             $table->text('suggestions')->nullable();
             $table->text('conclusions')->nullable();

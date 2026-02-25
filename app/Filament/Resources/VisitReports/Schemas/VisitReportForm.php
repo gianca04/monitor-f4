@@ -2,8 +2,10 @@
 
 namespace App\Filament\Resources\VisitReports\Schemas;
 
+use App\Models\Client;
 use App\Models\Employee;
 use App\Models\Project;
+use App\Models\SubClient;
 use Filament\Actions\Action;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\FileUpload;
@@ -55,6 +57,49 @@ class VisitReportForm
                                     )
                                     ->getOptionLabelFromRecordUsing(fn($record) => "{$record->service_code} - {$record->name}")
                                     ->searchable(['service_code', 'name'])
+                                    ->preload()
+                                    ->live()
+                                    ->nullable()
+                                    ->afterStateUpdated(function ($state, callable $set) {
+                                        if ($state) {
+                                            $project = Project::with('subClient')->find($state);
+                                            if ($project?->subClient) {
+                                                $set('client_id', $project->subClient->client_id);
+                                                $set('sub_client_id', $project->sub_client_id);
+                                            }
+                                        }
+                                    }),
+
+                                Select::make('client_id')
+                                    ->label('Cliente')
+                                    ->prefixIcon('heroicon-m-user-group')
+                                    ->options(Client::query()->pluck('business_name', 'id'))
+                                    ->searchable()
+                                    ->preload()
+                                    ->live()
+                                    ->dehydrated(false)
+                                    ->afterStateUpdated(fn(callable $set) => $set('sub_client_id', null))
+                                    ->afterStateHydrated(function ($state, callable $set, $record) {
+                                        if ($record && $record->sub_client) {
+                                            $set('client_id', $record->sub_client->client_id);
+                                        }
+                                    }),
+
+                                Select::make('sub_client_id')
+                                    ->label('Tienda / Sede')
+                                    ->prefixIcon('heroicon-m-building-office-2')
+                                    ->relationship(
+                                        name: 'directSubClient',
+                                        titleAttribute: 'name',
+                                        modifyQueryUsing: function (Builder $query, callable $get) {
+                                            $clientId = $get('client_id');
+                                            if ($clientId) {
+                                                return $query->where('client_id', $clientId);
+                                            }
+                                            return $query;
+                                        }
+                                    )
+                                    ->searchable()
                                     ->preload()
                                     ->live()
                                     ->required(),

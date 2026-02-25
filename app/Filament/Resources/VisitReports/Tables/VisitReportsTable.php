@@ -41,6 +41,19 @@ class VisitReportsTable
                     ->limit(30)
                     ->toggleable(),
 
+                TextColumn::make('directSubClient.client.name')
+                    ->label('Cliente')
+                    ->searchable()
+                    ->sortable()
+                    ->toggleable(),
+
+                TextColumn::make('directSubClient.name')
+                    ->label('Sub-cliente')
+                    ->searchable()
+                    ->sortable()
+                    ->limit(30)
+                    ->toggleable(),
+
                 TextColumn::make('report_date')
                     ->label('Fecha')
                     ->date('d/m/Y')
