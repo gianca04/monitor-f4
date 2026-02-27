@@ -37,9 +37,6 @@ class WorkReportForm
                 Textarea::make('suggestions')
                     ->default(null)
                     ->columnSpanFull(),
-                Textarea::make('tools')
-                    ->default(null)
-                    ->columnSpanFull(),
                 Textarea::make('conclusions')
                     ->default(null)
                     ->columnSpanFull(),

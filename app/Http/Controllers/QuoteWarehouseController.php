@@ -85,7 +85,7 @@ class QuoteWarehouseController extends Controller
     public function store(StoreQuoteWarehouseDetailRequest $request)
     {
         try {
-            $quoteWarehouse = \App\Models\QuoteWarehouse::findOrFail($request->input('quote_warehouse_id'));
+            $quoteWarehouse = QuoteWarehouse::findOrFail($request->input('quote_warehouse_id'));
             $quoteWarehouse->observations = $request->input('observations');
 
             // Cambiar: Guardar user_id en employee_id (para respetar la FK)

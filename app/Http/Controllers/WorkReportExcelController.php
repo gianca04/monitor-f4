@@ -57,6 +57,7 @@ class WorkReportExcelController extends Controller
         $html = '';
 
         foreach ($workReports as $report) {
+            /** @var WorkReport $report */
             // Preparar los datos del reporte usando el método existente
             $data = $this->prepareDataForBladePdf($report);
 
@@ -82,19 +83,19 @@ class WorkReportExcelController extends Controller
 
         return $pdf->download('reportes_trabajo_' . date('Y-m-d') . '.pdf');
     }
-    private function parseToolsAndMaterials($toolsJson)
+    private function parseMaterials($materialsJson)
     {
-        if (!$toolsJson)
+        if (!$materialsJson)
             return [];
 
-        $tools = is_array($toolsJson) ? $toolsJson : json_decode($toolsJson, true);
-        return array_map(function ($tool) {
+        $materials = is_array($materialsJson) ? $materialsJson : json_decode($materialsJson, true);
+        return array_map(function ($material) {
             return [
-                'nombre' => $tool['name'] ?? $tool['nombre'] ?? '',
-                'unidad' => $tool['unit'] ?? $tool['unidad'] ?? '',
-                'cantidad' => $tool['quantity'] ?? $tool['cantidad'] ?? '',
+                'nombre' => $material['name'] ?? $material['nombre'] ?? '',
+                'unidad' => $material['unit'] ?? $material['unidad'] ?? '',
+                'cantidad' => $material['quantity'] ?? $material['cantidad'] ?? '',
             ];
-        }, $tools ?? []);
+        }, $materials ?? []);
     }
 
     private function parsePersonnel($personnelData)
@@ -232,9 +233,9 @@ class WorkReportExcelController extends Controller
     public function prepareDataForBladePdf(WorkReport $workReport): array
     {
         // Datos básicos del reporte
-        $reportDate = $workReport->report_date?->format('d/m/Y') ?? 'N/A';
-        $startTime = $workReport->start_time?->format('H:i') ?? 'N/A';
-        $endTime = $workReport->end_time?->format('H:i') ?? 'N/A';
+        $reportDate = ($workReport->report_date instanceof \DateTimeInterface) ? $workReport->report_date->format('d/m/Y') : 'N/A';
+        $startTime = ($workReport->start_time instanceof \DateTimeInterface) ? $workReport->start_time->format('H:i') : 'N/A';
+        $endTime = ($workReport->end_time instanceof \DateTimeInterface) ? $workReport->end_time->format('H:i') : 'N/A';
 
         // Datos del cliente (WorkReport -> Project -> SubClient -> Client)
         $clientName = $workReport->project?->subClient?->client?->business_name ?? 'N/A';
@@ -252,46 +253,46 @@ class WorkReportExcelController extends Controller
 
         $consumedItems = [];
 
-        // 1. Procesar Herramientas (Primero)
-        $tools = $workReport->tools ?? [];
-        if (!empty($tools) && is_array($tools)) {
-            foreach ($tools as $tool) {
-                if (empty($tool['herramienta'])) continue;
-
-                $consumedItems[] = [
-                    'description' => $tool['herramienta'],
-                    'sat_line' => '',
-                    'unit' => $tool['unidad'] ?? 'Und',
-                    'quantity' => $tool['cantidad'] ?? 0,
-                    'type' => 'tool',
-                ];
-            }
-        }
-
-        // 2. Procesar Materiales (Después)
+        // 2. Procesar Materiales
         $materials = $workReport->materials ?? [];
         if (!empty($materials) && is_array($materials)) {
-            $materialIds = array_column($materials, 'material_id');
-            $details = \App\Models\QuoteWarehouseDetail::whereIn('id', $materialIds)
-                ->with(['quoteDetail.pricelist'])
-                ->get()
-                ->keyBy('id');
+            // Fallback: cargar detalles de BD solo si hay items sin description (registros antiguos)
+            $needsDbLookup = collect($materials)->contains(fn($m) => empty($m['description']));
+            $details = collect();
+
+            if ($needsDbLookup) {
+                $materialIds = array_column($materials, 'material_id');
+                $details = \App\Models\QuoteWarehouseDetail::whereIn('id', $materialIds)
+                    ->with(['projectRequirement.quoteDetail.pricelist', 'projectRequirement.requirement.requirementType'])
+                    ->get()
+                    ->keyBy('id');
+            }
 
             foreach ($materials as $m) {
                 if (empty($m['material_id'])) continue;
 
+                // Prioridad: datos del JSON snapshot, fallback: BD (registros antiguos)
                 $detail = $details->get($m['material_id']);
-                $description = $detail?->quoteDetail?->pricelist?->sat_description ?? 'Suministro';
+                $description = $m['description'] ?? $detail?->projectRequirement?->product_name ?? 'Suministro';
+                $satLine = $m['sat_line'] ?? ($detail?->projectRequirement?->quoteDetail?->pricelist?->sat_line ?? '');
+
+                $isReusable = isset($m['is_reusable'])
+                    ? (bool) $m['is_reusable']
+                    : (bool) $detail?->projectRequirement?->requirement?->requirementType?->is_reusable;
 
                 $consumedItems[] = [
                     'description' => $description,
-                    'sat_line' => $m['sat_line'] ?? ($detail?->quoteDetail?->pricelist?->sat_line ?? ''),
+                    'sat_line' => $satLine,
                     'unit' => $m['unit_name'] ?? '',
                     'quantity' => $m['used_quantity'] ?? 0,
-                    'type' => 'material',
+                    'is_reusable' => $isReusable,
                 ];
             }
         }
+
+        // Separar consumibles de herramientas/equipos
+        $materialItems = array_filter($consumedItems, fn($item) => !$item['is_reusable']);
+        $toolItems = array_filter($consumedItems, fn($item) => $item['is_reusable']);
 
         // Procesar personal con nombres y cargos
         $personnelData = $this->processPersonnelForPdf($workReport->personnel ?? []);
@@ -318,7 +319,8 @@ class WorkReportExcelController extends Controller
             'workToDo' => $workToDo ?: 'N/A',
             'conclusions' => $conclusions ?: 'N/A',
             'suggestions' => $suggestions ?: 'N/A',
-            'consumedItems' => $consumedItems,
+            'consumedItems' => array_values($materialItems),
+            'toolItems' => array_values($toolItems),
             'personnel' => $personnelData['personnel'],
             'totalHours' => $personnelData['totalHours'],
             'logoBase64' => $logoBase64,
@@ -415,7 +417,7 @@ class WorkReportExcelController extends Controller
     {
         $workReport = WorkReport::with('project')->find($id);
         $projectName = $workReport?->project?->name ?? 'sin_proyecto';
-        $date = $workReport?->report_date?->format('Y-m-d') ?? now()->format('Y-m-d');
+        $date = ($workReport?->report_date instanceof \DateTimeInterface) ? $workReport->report_date->format('Y-m-d') : now()->format('Y-m-d');
 
         // Limpiar caracteres especiales del nombre
         $projectName = preg_replace('/[^a-zA-Z0-9_-]/', '_', $projectName);
@@ -498,7 +500,7 @@ class WorkReportExcelController extends Controller
     private function fillReportData($sheet, WorkReport $workReport): void
     {
         // K4 - Fecha del reporte (concatenado con "FECHA: ")
-        $reportDate = $workReport->report_date?->format('d/m/Y') ?? 'N/A';
+        $reportDate = ($workReport->report_date instanceof \DateTimeInterface) ? $workReport->report_date->format('d/m/Y') : 'N/A';
         $sheet->setCellValue('K4', 'FECHA: ' . $reportDate);
 
         // M6 - Hora de inicio del trabajo
@@ -541,11 +543,10 @@ class WorkReportExcelController extends Controller
         $sheet->setCellValue('L2', 'N° ' . str_pad($workReport->id, 6, '0', STR_PAD_LEFT));
 
 
-        // Tabla de Materiales/Herramientas
+        // Tabla de Materiales
         // Encabezados en fila 30, datos desde fila 31
-        // Primero: tools JSON [{"herramienta":"taladro","unidad":"unidad","cantidad":"2"}]
-        // Después: materials JSON [{"material":"Cemento","unidad":"sacos","cantidad":"2"}]
-        $lastRow = $this->fillToolsAndMaterialsTable($sheet, $workReport->tools ?? [], $workReport->materials ?? [], 31);
+        // JSON: [{"material":"Cemento","unidad":"sacos","cantidad":"2"}]
+        $lastRow = $this->fillMaterialsTable($sheet, $workReport->materials ?? [], 31);
 
         // Tabla de Personal
         // Encabezados en fila 44, datos desde fila 45
@@ -559,52 +560,27 @@ class WorkReportExcelController extends Controller
     }
 
     /**
-     * Llena la tabla de herramientas y materiales en el Excel
-     *
-     * Primero recorre el array de tools (herramientas) y luego
-     * continúa con el array de materials (materiales) en las siguientes filas.
-     *
-     * Columnas:
-     * - B: Materiales/Herramientas (herramienta o material)
-     * - J: Unidad (unidad)
-     * - L: Cantidad (cantidad)
+     * Llena la tabla de materiales en el Excel
      *
      * @param \PhpOffice\PhpSpreadsheet\Worksheet\Worksheet $sheet
-     * @param array $tools Array de herramientas del JSON [{"herramienta":"...","unidad":"...","cantidad":"..."}]
      * @param array $materials Array de materiales del JSON [{"material":"...","unidad":"...","cantidad":"..."}]
      * @param int $startRow Fila inicial para los datos (después de encabezados)
      * @return int Última fila utilizada
      */
-    private function fillToolsAndMaterialsTable($sheet, array $tools, array $materials, int $startRow): int
+    private function fillMaterialsTable($sheet, array $materials, int $startRow): int
     {
         $currentRow = $startRow;
 
-        // Primero: Herramientas (tools)
-        // JSON: [{"herramienta":"taladro","unidad":"unidad","cantidad":"2"}]
-        foreach ($tools as $tool) {
-            // B - Herramienta
-            $sheet->setCellValue('B' . $currentRow, $tool['herramienta'] ?? '');
-
-            // J - Unidad
-            $sheet->setCellValue('J' . $currentRow, $tool['unidad'] ?? '');
-
-            // L - Cantidad
-            $sheet->setCellValue('L' . $currentRow, $tool['cantidad'] ?? '');
-
-            $currentRow++;
-        }
-
-        // Después: Materiales (materials)
         // JSON: [{"material":"Cemento","unidad":"sacos","cantidad":"2"}]
         foreach ($materials as $material) {
             // B - Material
             $sheet->setCellValue('B' . $currentRow, $material['material'] ?? '');
 
             // J - Unidad
-            $sheet->setCellValue('J' . $currentRow, $material['unidad'] ?? '');
+            $sheet->setCellValue('J' . $currentRow, $material['unit_name'] ?? $material['unidad'] ?? '');
 
             // L - Cantidad
-            $sheet->setCellValue('L' . $currentRow, $material['cantidad'] ?? '');
+            $sheet->setCellValue('L' . $currentRow, $material['used_quantity'] ?? $material['cantidad'] ?? '');
 
             $currentRow++;
         }

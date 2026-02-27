@@ -72,37 +72,134 @@ class VisitReportForm
 
                                 Select::make('client_id')
                                     ->label('Cliente')
-                                    ->prefixIcon('heroicon-m-user-group')
-                                    ->options(Client::query()->pluck('business_name', 'id'))
-                                    ->searchable()
+                                    ->required()
+                                    ->prefixIcon('heroicon-m-briefcase')
                                     ->preload()
+                                    ->searchable()
+                                    ->options(Client::query()->pluck('business_name', 'id'))
+                                    ->getOptionLabelUsing(fn($value): ?string => Client::find($value)?->business_name)
                                     ->live()
-                                    ->dehydrated(false)
                                     ->afterStateUpdated(fn(callable $set) => $set('sub_client_id', null))
                                     ->afterStateHydrated(function ($state, callable $set, $record) {
                                         if ($record && $record->sub_client) {
                                             $set('client_id', $record->sub_client->client_id);
                                         }
+                                    })
+                                    ->helperText('Selecciona el cliente para esta visita.')
+                                    ->suffixAction(
+                                        Action::make('view_client')
+                                            ->icon('heroicon-o-eye')
+                                            ->tooltip('Ver información del cliente')
+                                            ->color('info')
+                                            ->action(function (callable $get) {
+                                                if (!$get('client_id')) {
+                                                    \Filament\Notifications\Notification::make()
+                                                        ->title('Selecciona un cliente primero')
+                                                        ->warning()
+                                                        ->send();
+                                                }
+                                            })
+                                            ->modalContent(function (callable $get) {
+                                                $clientId = $get('client_id');
+                                                if (!$clientId) return null;
+                                                $client = Client::with('subClients')->find($clientId);
+                                                if (!$client) return null;
+                                                return view('filament.components.client-info-modal', compact('client'));
+                                            })
+                                            ->modalHeading('Información del Cliente')
+                                            ->modalSubmitAction(false)
+                                            ->modalCancelActionLabel('Cerrar')
+                                            ->modalWidth('2xl')
+                                            ->visible(fn(callable $get) => !empty($get('client_id')))
+                                    )
+                                    ->createOptionForm([
+                                        \App\Forms\Components\ClientMainInfo::make()
+                                    ])
+                                    ->createOptionUsing(function (array $data): int {
+                                        $client = Client::create($data);
+                                        return $client->id;
+                                    })
+                                    ->createOptionAction(function (Action $action) {
+                                        return $action
+                                            ->modalHeading('Crear nuevo cliente')
+                                            ->modalButton('Crear cliente')
+                                            ->modalWidth('6xl');
                                     }),
 
                                 Select::make('sub_client_id')
-                                    ->label('Tienda / Sede')
-                                    ->prefixIcon('heroicon-m-building-office-2')
-                                    ->relationship(
-                                        name: 'directSubClient',
-                                        titleAttribute: 'name',
-                                        modifyQueryUsing: function (Builder $query, callable $get) {
-                                            $clientId = $get('client_id');
-                                            if ($clientId) {
-                                                return $query->where('client_id', $clientId);
-                                            }
-                                            return $query;
-                                        }
-                                    )
-                                    ->searchable()
-                                    ->preload()
+                                    ->label('Sede / Tienda')
+                                    ->required()
+                                    ->prefixIcon('heroicon-m-home-modern')
+                                    ->options(function (callable $get) {
+                                        $clientId = $get('client_id');
+                                        if (!$clientId) return [];
+                                        return SubClient::where('client_id', $clientId)
+                                            ->pluck('name', 'id')
+                                            ->toArray();
+                                    })
                                     ->live()
-                                    ->required(),
+                                    ->searchable()
+                                    ->disabled(fn($get) => !$get('client_id'))
+                                    ->helperText('Selecciona la Sede para esta visita.')
+                                    ->suffixAction(
+                                        Action::make('view_sub_client')
+                                            ->icon('heroicon-o-eye')
+                                            ->tooltip('Ver información de la tienda')
+                                            ->color('info')
+                                            ->action(function (callable $get) {
+                                                if (!$get('sub_client_id')) {
+                                                    \Filament\Notifications\Notification::make()
+                                                        ->title('Selecciona una tienda primero')
+                                                        ->warning()
+                                                        ->send();
+                                                }
+                                            })
+                                            ->modalContent(function (callable $get) {
+                                                $subClientId = $get('sub_client_id');
+                                                if (!$subClientId) return null;
+                                                $subClient = SubClient::with('client')->find($subClientId);
+                                                if (!$subClient) return null;
+                                                return view('filament.components.sub-client-info-modal', compact('subClient'));
+                                            })
+                                            ->modalHeading('Información de la Sede')
+                                            ->modalSubmitAction(false)
+                                            ->modalCancelActionLabel('Cerrar')
+                                            ->modalWidth('2xl')
+                                            ->visible(fn(callable $get) => !empty($get('sub_client_id')))
+                                    )
+                                    ->createOptionForm([
+                                        TextInput::make('name')
+                                            ->label('Nombre de la sede')
+                                            ->required()
+                                            ->maxLength(255)
+                                            ->prefixIcon('heroicon-o-user'),
+                                        TextInput::make('ceco')
+                                            ->label('CECO')
+                                            ->required()
+                                            ->maxLength(255),
+                                        TextInput::make('address')
+                                            ->label('Dirección')
+                                            ->columnSpanFull()
+                                            ->placeholder('Dirección de la sede')
+                                            ->maxLength(255)
+                                            ->prefixIcon('heroicon-o-map-pin'),
+                                        Textarea::make('description')
+                                            ->label('Descripción')
+                                            ->maxLength(500)
+                                            ->autosize()
+                                            ->columnSpanFull(),
+                                    ])
+                                    ->createOptionUsing(function (array $data, callable $get): int {
+                                        $data['client_id'] = $get('client_id');
+                                        $subClient = SubClient::create($data);
+                                        return $subClient->id;
+                                    })
+                                    ->createOptionAction(function (Action $action) {
+                                        return $action
+                                            ->modalHeading('Crear nueva sede')
+                                            ->modalButton('Crear sede')
+                                            ->modalWidth('2xl');
+                                    }),
 
                                 // Logica para filtrar unicamente los projectos que no se encuentren en estado 'Finalizado',
 

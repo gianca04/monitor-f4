@@ -20,6 +20,7 @@ use App\Http\Controllers\ClientController;
 use App\Http\Controllers\QuoteCategoryController;
 use App\Http\Controllers\Api\PricelistSearchController;
 use App\Http\Controllers\QuoteController as ControllersQuoteController;
+use App\Models\SubClient;
 use Illuminate\Support\Facades\Route;
 
 // Rutas públicas
@@ -144,7 +145,7 @@ Route::middleware(['auth:sanctum', 'CheckTokenExpiration'])->group(function () {
 
 // SubClient detail endpoint
 Route::get('/sub-clients/{id}', function ($id) {
-    $subClient = \App\Models\SubClient::select('id', 'name', 'client_id', 'ceco')->findOrFail($id);
+    $subClient = SubClient::select('id', 'name', 'client_id', 'ceco')->findOrFail($id);
     return response()->json($subClient);
 });
 Route::get('/sub-clients', [SubClientController::class, 'index']);

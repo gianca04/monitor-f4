@@ -14,7 +14,7 @@ class AddSuggestionsToWorkReports extends Migration
     public function up()
     {
         Schema::table('work_reports', function (Blueprint $table) {
-            $table->longText('suggestions')->nullable()->after('manager_signature');
+            $table->longText('suggestions')->nullable();
         });
     }
 

@@ -132,7 +132,6 @@ class Project extends Model
         // Otros
         'quote_id' => 'integer',
         'supervisor_id' => 'integer',
-        // Se eliminaron tools, personnel y materials por no estar en fillable
     ];
 
     public function visit()
@@ -329,31 +328,6 @@ class Project extends Model
     {
         return $this->hasMany(ProjectConsumption::class);
     }
-
-    /**
-     * Relación: Un proyecto tiene muchas asignaciones de herramientas.
-     */
-    public function projectTools()
-    {
-        return $this->hasMany(ProjectTool::class);
-    }
-
-    /**
-     * Relación: Un proyecto tiene muchas herramientas asignadas.
-     */
-    /**
-     * Relación: Un proyecto tiene muchas unidades de herramientas asignadas.
-     */
-    public function toolUnits()
-    {
-        return $this->belongsToMany(ToolUnit::class, 'project_tools', 'project_id', 'tool_unit_id')
-            ->withPivot(['assigned_at', 'returned_at', 'notes'])
-            ->withTimestamps();
-    }
-
-    /**
-     * Get the consumables for the project.
-     */
 
     /**
      * Relación: Un proyecto tiene muchos requerimientos de proyecto.

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Pricelist;
+use App\Models\PriceType;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 
@@ -58,7 +59,7 @@ class PricelistSearchController extends Controller
      */
     public function priceTypes(): JsonResponse
     {
-        $priceTypes = \App\Models\PriceType::all(['id', 'name']);
+        $priceTypes = PriceType::all(['id', 'name']);
         return response()->json($priceTypes);
     }
 
@@ -70,7 +71,7 @@ class PricelistSearchController extends Controller
      */
     public function initialItems(): JsonResponse
     {
-        $priceTypes = \App\Models\PriceType::all();
+        $priceTypes = PriceType::all();
 
         $result = [];
 

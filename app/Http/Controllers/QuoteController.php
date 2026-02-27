@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Quote;
 use App\Http\Requests\StoreQuoteRequest;
 use App\Http\Requests\UpdateQuoteRequest;
+use App\Models\Project;
 use App\Models\QuoteCategory;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -144,7 +145,7 @@ class QuoteController extends Controller
                 if ($request->has('project_id') && $request->input('project_id')) {
                     $validated['project_id'] = $request->input('project_id');
 
-                    $project = \App\Models\Project::with('visit')->find($validated['project_id']);
+                    $project = Project::with('visit')->find($validated['project_id']);
                     if ($project && $project->visit && $project->visit->quoted_by_id) {
                         $validated['employee_id'] = $project->visit->quoted_by_id;
                     }

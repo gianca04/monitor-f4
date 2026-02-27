@@ -390,11 +390,11 @@
         @endif
 
 
-        {{-- MATERIALES/HERRAMIENTAS TABLE --}}
+        {{-- TABLA DE CONSUMIBLES --}}
         <table class="data-table">
             <thead>
                 <tr>
-                    <th class="col-name">Materiales Consumidos</th>
+                    <th class="col-name">Consumibles</th>
                     <th class="col-unit">Unidad</th>
                     <th class="col-qty">Cantidad</th>
                 </tr>
@@ -415,7 +415,38 @@
                     @endforeach
                 @else
                     <tr>
-                        <td colspan="3" style="text-align: center;">No hay materiales consumidos registrados.</td>
+                        <td colspan="3" style="text-align: center;">No hay consumibles registrados.</td>
+                    </tr>
+                @endif
+            </tbody>
+        </table>
+
+        {{-- TABLA DE HERRAMIENTAS Y EQUIPOS --}}
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th class="col-name">Herramientas y Equipos</th>
+                    <th class="col-unit">Unidad</th>
+                    <th class="col-qty">Cantidad</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if(count($toolItems) > 0)
+                    @foreach($toolItems as $item)
+                        <tr>
+                            <td class="col-name">
+                                {{ $item['description'] }}
+                                @if(!empty($item['sat_line']))
+                                    ({{ $item['sat_line'] }})
+                                @endif
+                            </td>
+                            <td class="col-unit">{{ $item['unit'] }}</td>
+                            <td class="col-qty">{{ $item['quantity'] }}</td>
+                        </tr>
+                    @endforeach
+                @else
+                    <tr>
+                        <td colspan="3" style="text-align: center;">No hay herramientas ni equipos registrados.</td>
                     </tr>
                 @endif
             </tbody>

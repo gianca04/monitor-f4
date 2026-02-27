@@ -20,9 +20,14 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property \Illuminate\Support\Carbon|null $created_at
  * @property \Illuminate\Support\Carbon|null $updated_at
  *
+ * @property-read bool $is_reusable Indica si el requerimiento asociado es reutilizable (accessor virtual)
  * @property-read \App\Models\Project $project
  * @property-read \App\Models\QuoteWarehouseDetail $quoteWarehouseDetail
  * @property-read \App\Models\WorkReport|null $workReport
+ *
+ * @method static \Illuminate\Database\Eloquent\Builder reusable() Solo consumos de requerimientos reutilizables
+ * @method static \Illuminate\Database\Eloquent\Builder notReusable() Solo consumos de requerimientos consumibles
+ * @method static \Illuminate\Database\Eloquent\Builder withPricelist() Eager-load con pricelist y requirement
  */
 class ProjectConsumption extends Model
 {
@@ -66,16 +71,49 @@ class ProjectConsumption extends Model
 
     public function scopeWithPricelist($query)
     {
-        return $query->with('quoteWarehouseDetail.quoteDetail.pricelist');
+        return $query->with(['quoteWarehouseDetail.projectRequirement.quoteDetail.pricelist', 'quoteWarehouseDetail.projectRequirement.requirement']);
     }
-    public static function canConsume(int $quoteWarehouseDetailId, float $quantity): bool
-    {
-        $detail = QuoteWarehouseDetail::find($quoteWarehouseDetailId);
-        if (!$detail) {
-            return false;
-        }
 
-        $totalConsumed = self::where('quote_warehouse_detail_id', $quoteWarehouseDetailId)->sum('quantity');
-        return ($totalConsumed + $quantity) <= $detail->attended_quantity;
+    /**
+     * Determina si el consumo corresponde a un tipo de requerimiento reutilizable.
+     * Navega: quoteWarehouseDetail → projectRequirement → requirement → requirementType
+     */
+    public function getIsReusableAttribute(): bool
+    {
+        return (bool) $this->quoteWarehouseDetail
+            ?->projectRequirement
+            ?->requirement
+            ?->requirementType
+            ?->is_reusable;
+    }
+
+    /**
+     * Scope: solo consumos de requerimientos reutilizables.
+     */
+    public function scopeReusable($query)
+    {
+        return $query->whereHas('quoteWarehouseDetail.projectRequirement.requirement.requirementType', function ($q) {
+            $q->where('is_reusable', true);
+        });
+    }
+
+    /**
+     * Scope: solo consumos de requerimientos NO reutilizables (consumibles).
+     */
+    public function scopeNotReusable($query)
+    {
+        return $query->whereHas('quoteWarehouseDetail.projectRequirement.requirement.requirementType', function ($q) {
+            $q->where('is_reusable', false);
+        });
+    }
+
+    /**
+     * Valida si se puede consumir una cantidad de un material.
+     * Delega la lógica al ConsumptionService.
+     */
+    public static function canConsume(int $quoteWarehouseDetailId, float $quantity, ?int $projectId = null): bool
+    {
+        return app(\App\Services\ConsumptionService::class)
+            ->canConsume($quoteWarehouseDetailId, $quantity, $projectId);
     }
 }

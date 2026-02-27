@@ -14,7 +14,6 @@ class AddFieldsToProjectsTable extends Migration
     public function up()
     {
         Schema::table('work_reports', function (Blueprint $table) {
-            $table->longText('tools')->nullable();
             $table->longText('personnel')->nullable();
             $table->longText('materials')->nullable();
         });
@@ -28,7 +27,7 @@ class AddFieldsToProjectsTable extends Migration
     public function down()
     {
         Schema::table('work_reports', function (Blueprint $table) {
-            $table->dropColumn(['tools', 'personnel', 'materials']);
+            $table->dropColumn(['personnel', 'materials']);
         });
     }
 }

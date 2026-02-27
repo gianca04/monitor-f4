@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::table('work_reports', function (Blueprint $table) {
             //
-            $table->text('conclusions')->nullable()->after('tools');
+            $table->text('conclusions')->nullable()->after('materials');
         });
     }
 

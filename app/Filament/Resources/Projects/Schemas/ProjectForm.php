@@ -594,7 +594,7 @@ class ProjectForm
                                                     $project = $livewire->getRecord();
                                                 }
 
-                                                if (!$project instanceof \App\Models\Project) return null;
+                                                if (!$project instanceof Project) return null;
 
                                                 // Use the latestQuote relationship and the scopeWithTotal
                                                 $quote = $project->latestQuote()->withTotal()->first();

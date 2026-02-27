@@ -20,7 +20,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property \Illuminate\Support\Carbon|null $updated_at Fecha de última actualización del registro
  *
  * @property-read \App\Models\QuoteWarehouse $quoteWarehouse La atención de almacén asociada
- * @property-read \App\Models\QuoteDetail $quoteDetail El detalle de la cotización asociado
+ * @property-read \App\Models\ProjectRequirement $projectRequirement El requerimiento de proyecto asociado
  */
 class QuoteWarehouseDetail extends Model
 {
@@ -84,10 +84,10 @@ class QuoteWarehouseDetail extends Model
     }
 
     /**
-     * Scope para incluir el registro de pricelist a través de las relaciones.
+     * Scope para incluir el registro de requerimiento de proyecto.
      */
-    public function scopeWithPricelist($query)
+    public function scopeWithProjectRequirement($query)
     {
-        return $query->with('quoteDetail.pricelist');
+        return $query->with(['projectRequirement.quoteDetail.pricelist', 'projectRequirement.requirement']);
     }
 }

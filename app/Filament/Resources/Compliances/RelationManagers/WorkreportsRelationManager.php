@@ -158,37 +158,6 @@ class WorkreportsRelationManager extends RelationManager
                             ->icon('heroicon-o-wrench')
                             ->columns(2)
                             ->schema([
-                                Repeater::make('tools')
-                                    ->label('Herramientas')
-                                    ->helperText('Agrega las herramientas utilizadas durante el trabajo.')
-                                    ->schema([
-                                        Select::make('herramienta')
-                                            ->label('Herramienta')
-                                            ->options(function () {
-                                                $project = Project::find($this->getOwnerRecord()->project_id);
-                                                if (!$project) return [];
-                                                // Retornamos las herramientas asignadas al proyecto (nombres únicos del catálogo)
-                                                return $project->toolUnits()->with('tool')->get()->pluck('tool.name', 'tool.name');
-                                            })
-                                            ->searchable()
-                                            ->preload()
-                                            ->required(),
-                                        TextInput::make('unidad')
-                                            ->label('Unidad')
-                                            ->default('UNIDAD')
-                                            ->readOnly()
-                                            ->placeholder('Ej: Unidad'),
-                                        TextInput::make('cantidad')
-                                            ->label('Cantidad')
-                                            ->placeholder('Ej: 2'),
-                                    ])
-                                    ->columns(3)
-                                    ->columnSpanFull()
-                                    ->defaultItems(0)
-                                    ->reorderable(false)
-                                    ->addActionLabel('Agregar herramienta')
-                                    ->disabled(fn(string $operation): bool => $operation === 'view'),
-
                                 Repeater::make('materials')
                                     ->label('Materiales Utilizados')
                                     ->schema([
@@ -215,36 +184,46 @@ class WorkreportsRelationManager extends RelationManager
                                                     ->columnSpanFull()
                                                     ->afterStateUpdated(function ($state, callable $set) {
                                                         if ($state) {
-                                                            // Buscamos los datos técnicos para llenar los campos informativos
-                                                            $material = QuoteWarehouseDetail::with(['quoteDetail.pricelist.unit'])->find($state);
-                                                            if ($material && $material->quoteDetail->pricelist) {
-                                                                $pricelist = $material->quoteDetail->pricelist;
-                                                                $set('sat_line', $pricelist->sat_line);
-                                                                $set('unit_name', $pricelist->unit->name ?? 'N/A');
-                                                                // Calcular el total consumido en el proyecto actual para este material
-                                                                $totalConsumed = \App\Models\ProjectConsumption::where('project_id', $this->getOwnerRecord()->project_id)
-                                                                    ->where('quote_warehouse_detail_id', $state)
-                                                                    ->sum('quantity');
-                                                                $remaining = $material->attended_quantity - $totalConsumed;
-                                                                if ($remaining <= 0) {
-                                                                    Notification::make()->title('El almacén o los materiales entregados se han acabado. Vuelve a pedir a almacén.')->danger()->send();
-                                                                    $set('material_id', null);
-                                                                    $set('sat_line', null);
-                                                                    $set('unit_name', null);
-                                                                    $set('attended_quantity', null);
-                                                                    $set('used_quantity', null);
-                                                                } else {
-                                                                    $set('attended_quantity', $remaining);
-                                                                    $set('used_quantity', $remaining);
-                                                                }
+                                                            $service = app(\App\Services\ConsumptionService::class);
+                                                            $projectId = $this->getOwnerRecord()->project_id;
+                                                            $info = $service->getMaterialInfo($state, $projectId);
+
+                                                            $set('unit_name', $info['unit_name']);
+                                                            $set('is_reusable', $info['is_reusable']);
+                                                            $set('description', $info['description']);
+                                                            $set('sat_line', $info['sat_line']);
+
+                                                            if (!$info['is_reusable'] && $info['remaining'] <= 0) {
+                                                                // Solo los consumibles pueden agotarse
+                                                                Notification::make()->title('El almacén o los materiales entregados se han acabado. Vuelve a pedir a almacén.')->danger()->send();
+                                                                $set('material_id', null);
+                                                                $set('sat_line', null);
+                                                                $set('unit_name', null);
+                                                                $set('attended_quantity', null);
+                                                                $set('used_quantity', null);
+                                                                $set('is_reusable', false);
+                                                                $set('description', null);
+                                                            } else {
+                                                                $set('attended_quantity', $info['remaining']);
+                                                                $set('used_quantity', $info['is_reusable'] ? 1 : $info['remaining']);
                                                             }
                                                         }
                                                     }),
 
-                                                TextInput::make('sat_line')
+                                                /*TextInput::make('sat_line')
                                                     ->label('Línea SAT')
                                                     ->readOnly()
-                                                    ->columnSpan(1),
+                                                    ->columnSpan(1),*/
+
+                                                Hidden::make('is_reusable')
+                                                    ->default(false)
+                                                    ->dehydrated(),
+
+                                                Hidden::make('description')
+                                                    ->dehydrated(),
+
+                                                Hidden::make('sat_line')
+                                                    ->dehydrated(),
 
                                                 TextInput::make('unit_name')
                                                     ->label('Unidad')
@@ -255,6 +234,7 @@ class WorkreportsRelationManager extends RelationManager
                                                     ->label('En stock')
                                                     ->numeric()
                                                     ->readOnly()
+                                                    ->suffix(fn(callable $get) => $get('is_reusable') ? '♻ Reutilizable' : null)
                                                     ->extraAttributes(['class' => 'bg-gray-50 font-bold text-primary-600'])
                                                     ->columnSpan(1),
 
@@ -266,10 +246,15 @@ class WorkreportsRelationManager extends RelationManager
                                                     ->suffix(fn($get) => $get('unit_name'))
                                                     ->columnSpan(1)
                                                     ->afterStateUpdated(function ($state, callable $set, callable $get) {
-                                                        $max = (float) $get('attended_quantity');
-                                                        if ((float)$state > $max) {
-                                                            $set('used_quantity', $max);
-                                                            Notification::make()->title('Ajustado al máximo disponible')->warning()->send();
+                                                        $isReusable = (bool) $get('is_reusable');
+
+                                                        // Los reutilizables no tienen límite de cantidad
+                                                        if (!$isReusable) {
+                                                            $max = (float) $get('attended_quantity');
+                                                            if ((float) $state > $max) {
+                                                                $set('used_quantity', $max);
+                                                                Notification::make()->title('Ajustado al máximo disponible')->warning()->send();
+                                                            }
                                                         }
                                                     }),
                                             ])
@@ -632,7 +617,13 @@ class WorkreportsRelationManager extends RelationManager
             ])
             ->headerActions([
                 CreateAction::make()
-                    ->modalWidth('7xl'),
+                    ->modalWidth('7xl')
+                    ->after(function ($record) {
+                        // Sincronizar materiales del JSON a project_consumptions
+                        $materials = $record->materials ?? [];
+                        app(\App\Services\ConsumptionService::class)
+                            ->syncConsumptions($record, $materials);
+                    }),
                 //AssociateAction::make(),
             ])
             ->recordActions([
@@ -679,7 +670,13 @@ class WorkreportsRelationManager extends RelationManager
                     EditAction::make()
                         ->icon('heroicon-o-pencil-square')
                         ->color('primary')
-                        ->modalWidth('7xl'),
+                        ->modalWidth('7xl')
+                        ->after(function ($record) {
+                            // Re-sincronizar materiales al editar
+                            $materials = $record->materials ?? [];
+                            app(\App\Services\ConsumptionService::class)
+                                ->syncConsumptions($record, $materials);
+                        }),
                     DeleteAction::make()
                         ->icon('heroicon-o-trash')
                         ->color('danger'),

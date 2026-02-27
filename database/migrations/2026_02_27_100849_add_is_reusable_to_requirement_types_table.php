@@ -11,12 +11,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('units', function (Blueprint $table) {
-            $table->id();
-            $table->string('name');
-            $table->string('symbol', 50)->nullable();
-            $table->enum('category', ['FISICA', 'SERVICIO', 'TIEMPO'])->nullable();
-            $table->timestamps();
+        Schema::table('requirement_types', function (Blueprint $table) {
+            $table->boolean('is_reusable')->default(false)->after('name');
         });
     }
 
@@ -25,6 +21,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('units');
+        Schema::table('requirement_types', function (Blueprint $table) {
+            $table->dropColumn('is_reusable');
+        });
     }
 };

@@ -6,6 +6,7 @@ use App\Models\WorkReport;
 use App\Models\Employee;
 use App\Models\Position;
 use App\Jobs\GenerateWorkReportPdfJob;
+use App\Models\QuoteWarehouseDetail;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Log;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -105,46 +106,46 @@ class WorkReportPdfService
     {
         $consumedItems = [];
 
-        // 1. Procesar Herramientas (Primero)
-        $tools = $workReport->tools ?? [];
-        if (!empty($tools) && is_array($tools)) {
-            foreach ($tools as $tool) {
-                if (empty($tool['herramienta'])) continue;
-
-                $consumedItems[] = [
-                    'description' => $tool['herramienta'],
-                    'sat_line' => '',
-                    'unit' => $tool['unidad'] ?? 'Und',
-                    'quantity' => $tool['cantidad'] ?? 0,
-                    'type' => 'tool',
-                ];
-            }
-        }
-
-        // 2. Procesar Materiales (Después)
+        // 2. Procesar Materiales
         $materials = $workReport->materials ?? [];
         if (!empty($materials) && is_array($materials)) {
-            $materialIds = array_column($materials, 'material_id');
-            $details = \App\Models\QuoteWarehouseDetail::whereIn('id', $materialIds)
-                ->with(['quoteDetail.pricelist'])
-                ->get()
-                ->keyBy('id');
+            // Fallback: cargar detalles de BD solo si hay items sin description (registros antiguos)
+            $needsDbLookup = collect($materials)->contains(fn($m) => empty($m['description']));
+            $details = collect();
+
+            if ($needsDbLookup) {
+                $materialIds = array_column($materials, 'material_id');
+                $details = QuoteWarehouseDetail::whereIn('id', $materialIds)
+                    ->with(['projectRequirement.quoteDetail.pricelist', 'projectRequirement.requirement.requirementType'])
+                    ->get()
+                    ->keyBy('id');
+            }
 
             foreach ($materials as $m) {
                 if (empty($m['material_id'])) continue;
 
+                // Prioridad: datos del JSON snapshot, fallback: BD (registros antiguos)
                 $detail = $details->get($m['material_id']);
-                $description = $detail?->quoteDetail?->pricelist?->sat_description ?? 'Suministro';
+                $description = $m['description'] ?? $detail?->projectRequirement?->product_name ?? 'Suministro';
+                $satLine = $m['sat_line'] ?? ($detail?->projectRequirement?->quoteDetail?->pricelist?->sat_line ?? '');
+
+                $isReusable = isset($m['is_reusable'])
+                    ? (bool) $m['is_reusable']
+                    : (bool) $detail?->projectRequirement?->requirement?->requirementType?->is_reusable;
 
                 $consumedItems[] = [
                     'description' => $description,
-                    'sat_line' => $m['sat_line'] ?? ($detail?->quoteDetail?->pricelist?->sat_line ?? ''),
+                    'sat_line' => $satLine,
                     'unit' => $m['unit_name'] ?? '',
                     'quantity' => $m['used_quantity'] ?? 0,
-                    'type' => 'material',
+                    'is_reusable' => $isReusable,
                 ];
             }
         }
+
+        // Separar consumibles de herramientas/equipos
+        $materialItems = array_filter($consumedItems, fn($item) => !$item['is_reusable']);
+        $toolItems = array_filter($consumedItems, fn($item) => $item['is_reusable']);
 
         // Procesar personal con nombres y cargos resueltos
         $personnelData = $this->processPersonnelForPdf($workReport->personnel ?? []);
@@ -155,7 +156,8 @@ class WorkReportPdfService
             'project' => $workReport->project,
             'photos' => $workReport->photos,
             'generatedAt' => now(),
-            'consumedItems' => $consumedItems,
+            'consumedItems' => array_values($materialItems),
+            'toolItems' => array_values($toolItems),
             'personnelList' => $personnelData['personnel'],
             'totalHours' => $personnelData['totalHours'],
         ];

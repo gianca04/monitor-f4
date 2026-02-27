@@ -263,55 +263,96 @@
             border-bottom: 2px solid #00a99d;
         }
 
-        /* ===== Botones de Acción ===== */
+        /* ===== Botones Estilo Nativo Filament (Tailwind-like) ===== */
         .action-buttons {
             display: flex;
-            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 12px;
+            justify-content: center;
             align-items: center;
-            margin-bottom: 20px;
-            padding: 15px 20px;
-            background: #eee;
+            margin-bottom: 25px;
+            padding: 16px;
+            background: #ffffff;
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+        }
+
+        /* Estilo Base del Botón */
+        .fi-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 8px 16px;
+            font-size: 14px;
+            font-weight: 600;
+            line-height: 1.5;
             border-radius: 8px;
+            transition: all 0.2s ease;
+            cursor: pointer;
+            border: 1px solid transparent;
+            text-decoration: none;
+            outline: none;
         }
 
+        /* Botón Volver (Gray/Secondary) */
         .btn-back {
-            background-color: #6c757d;
-            color: white;
-            padding: 10px 20px;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            font-weight: bold;
+            background-color: #ffffff;
+            color: #374151;
+            border-color: #d1d5db;
         }
 
+        .btn-back:hover {
+            background-color: #f9fafb;
+            border-color: #9ca3af;
+        }
+
+        /* Botón PDF (Danger/Red) */
         .btn-pdf {
-            background-color: #dc3545;
-            color: white;
-            padding: 10px 20px;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            font-weight: bold;
+            background-color: #ef4444;
+            color: #ffffff;
         }
 
+        .btn-pdf:hover {
+            background-color: #dc2626;
+            box-shadow: 0 4px 6px -1px rgba(220, 38, 38, 0.2);
+        }
+
+        /* Botón Excel (Success/Green) */
         .btn-excel {
-            background-color: #28a745;
-            color: white;
-            padding: 10px 20px;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            font-weight: bold;
+            background-color: #22c55e;
+            color: #ffffff;
         }
 
+        .btn-excel:hover {
+            background-color: #16a34a;
+            box-shadow: 0 4px 6px -1px rgba(22, 163, 74, 0.2);
+        }
+
+        /* Botón Imprimir (Primary/Indigo) */
         .btn-print {
-            background-color: #007bff;
-            color: white;
-            padding: 10px 20px;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            font-weight: bold;
+            background-color: #6366f1;
+            color: #ffffff;
+        }
+
+        .btn-print:hover {
+            background-color: #4f46e5;
+            box-shadow: 0 4px 6px -1px rgba(79, 70, 229, 0.2);
+        }
+
+        /* Ajuste de Iconos SVG */
+        .fi-btn svg {
+            width: 20px;
+            height: 20px;
+            flex-shrink: 0;
+        }
+
+        /* Efecto Focus para todos (accesibilidad Filament) */
+        .fi-btn:focus {
+            ring: 2px;
+            outline: 2px solid transparent;
+            outline-offset: 2px;
         }
 
         /* ===== CORRECCIÓN DE IMPRESIÓN ===== */
@@ -365,19 +406,40 @@
 <body>
 
 
-    <!-- ===== PEVIEW BOTONES DE ACCIÓN ===== -->
     <div class="action-buttons">
-        <button class="btn-back" onclick="cerrarPestana()" title="Cerrar pestaña">
-            <span>⬅️</span> Volver
+        <button class="fi-btn btn-back" onclick="cerrarPestana()" title="Cerrar pestaña">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18" />
+            </svg>
+            Volver
         </button>
-        <button class="btn-pdf" onclick="descargarPDF()" title="Descargar como PDF">
-            <span>📄</span> Descargar PDF
+
+        <button class="fi-btn btn-pdf" onclick="descargarPDF()" title="Descargar como PDF">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round"
+                    d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m.75 12 3 3m0 0 3-3m-3 3v-6m-1.5-9H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
+            </svg>
+            Descargar PDF
         </button>
-        <button class="btn-excel" onclick="descargarExcel()" title="Descargar como Excel">
-            <span>📊</span> Descargar Excel
+
+        <button class="fi-btn btn-excel" onclick="descargarExcel()" title="Descargar como Excel">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round"
+                    d="M3.375 19.5h17.25m-17.25 0a1.125 1.125 0 0 1-1.125-1.125M3.375 19.5h7.5c.621 0 1.125-.504 1.125-1.125m-9.75 0V5.625m0 12.75v-1.5c0-.621.504-1.125 1.125-1.125m18.375 2.625V5.625m0 12.75c0 .621-.504 1.125-1.125 1.125m1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125m0 3.75h-7.5A1.125 1.125 0 0 1 12 18.375m9.75-12.75c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125m19.5 0v1.5c0 .621-.504 1.125-1.125 1.125M2.25 5.625v1.5c0 .621.504 1.125 1.125 1.125m0 0h17.25m-17.25 0h7.5c.621 0 1.125.504 1.125 1.125M3.375 8.25c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125m17.25-3.75h-7.5c-.621 0-1.125.504-1.125 1.125m8.625-1.125c.621 0 1.125.504 1.125 1.125v1.5c0 .621-.504 1.125-1.125 1.125m-17.25 0h7.5m-7.5 0c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125M12 10.875v-1.5m0 1.5c0 .621-.504 1.125-1.125 1.125M12 10.875c0 .621.504 1.125 1.125 1.125m-2.25 0c.621 0 1.125.504 1.125 1.125M13.125 12h7.5m-7.5 0c-.621 0-1.125.504-1.125 1.125M20.625 12c.621 0 1.125.504 1.125 1.125v1.5c0 .621-.504 1.125-1.125 1.125m-17.25 0h7.5M12 14.625v-1.5m0 1.5c0 .621-.504 1.125-1.125 1.125M12 14.625c0 .621.504 1.125 1.125 1.125m-2.25 0c.621 0 1.125.504 1.125 1.125m0 0v1.5c0 .621-.504 1.125-1.125 1.125M2.25 16.5c0-.621.504-1.125 1.125-1.125m17.25 0c.621 0 1.125.504 1.125 1.125" />
+            </svg>
+            Descargar Excel
         </button>
-        <button class="btn-print" onclick="imprimirDocumento()" title="Imprimir documento">
-            <span>🖨️</span> Imprimir
+
+        <button class="fi-btn btn-print" onclick="imprimirDocumento()" title="Imprimir documento">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round"
+                    d="M6.72 13.829c-.24.03-.48.062-.72.096m.72-.096a42.415 42.415 0 0 1 10.56 0m-10.56 0L6.34 18m10.94-4.171c.24.03.48.062.72.096m-.72-.096L17.66 18m0 0 .229 2.523a1.125 1.125 0 0 1-1.12 1.227H7.231c-.662 0-1.18-.568-1.12-1.227L6.34 18m11.32 0h1.715A2.625 2.625 0 0 0 21.75 15.375V9.375A2.625 2.625 0 0 0 19.125 6.75H17.25m-10.5 0H4.875A2.625 2.625 0 0 0 2.25 9.375v6A2.625 2.625 0 0 0 4.875 18H6.34m11.16-12h-1.284a3.375 3.375 0 0 0-3.375-3.375h-1.5a3.375 3.375 0 0 0-3.375 3.375H6.75" />
+            </svg>
+            Imprimir
         </button>
     </div>
 
@@ -393,8 +455,7 @@
                         $logoMime = 'image/png';
                     @endphp
                     @if ($logoData)
-                        <img src="data:{{ $logoMime }};base64,{{ $logoData }}" alt="Logo2"
-                            style="height: 80px;">
+                        <img src="data:{{ $logoMime }};base64,{{ $logoData }}" alt="Logo2" style="height: 80px;">
                     @endif
                 </td>
                 <td class="header-title">
@@ -661,7 +722,7 @@
 
             function cerrarPestana() {
                 window.close();
-                setTimeout(function() {
+                setTimeout(function () {
                     window.history.back();
                 }, 300);
             }

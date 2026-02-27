@@ -3,7 +3,9 @@
 namespace App\Filament\Resources\Projects\Pages;
 
 use App\Filament\Resources\Projects\ProjectResource;
+use App\Models\Compliance;
 use App\Models\Project;
+use App\Models\SubClient;
 use Carbon\Carbon;
 use Filament\Actions\Action;
 use Filament\Actions\CreateAction;
@@ -278,8 +280,8 @@ class ListProjects extends ListRecords
             if ($name && $subValue) {
 
                 $subClient = is_numeric($subValue)
-                    ? \App\Models\SubClient::find($subValue)
-                    : \App\Models\SubClient::where('name', $subValue)->first();
+                    ? SubClient::find($subValue)
+                    : SubClient::where('name', $subValue)->first();
 
                 if ($subClient) {
                     $subName = $subClient->name;
@@ -492,7 +494,7 @@ class ListProjects extends ListRecords
 
 
                 // CREACIÓN DEL ACTA (Compliance)
-                $acta = \App\Models\Compliance::firstOrCreate(
+                $acta = Compliance::firstOrCreate(
                     ['project_id' => $project->id],
                     [
                         'state' => 'En ejecución',
@@ -530,8 +532,8 @@ class ListProjects extends ListRecords
     ): array {
         // Buscar subcliente por ID o nombre, sin importar el cliente
         $subClient = is_numeric($subValue)
-            ? \App\Models\SubClient::find($subValue)
-            : \App\Models\SubClient::where('name', $subValue)->first();
+            ? SubClient::find($subValue)
+            : SubClient::where('name', $subValue)->first();
 
         if (!$subClient) {
             return ['action' => 'omit', 'reason' => 'Subcliente no existe'];

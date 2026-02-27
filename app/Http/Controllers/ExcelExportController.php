@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Compliance;
 use App\Models\Project;
 use App\Models\ProjectConsumption;
+use App\Models\WorkReport;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
@@ -96,8 +97,8 @@ class ExcelExportController extends Controller
             $mpdfActa->Output($actaPath, 'F');
 
             // --- PASO 2: GENERAR LOS REPORTES (DomPDF) ---
-            $compliance = \App\Models\Compliance::findOrFail($id);
-            $workReports = \App\Models\WorkReport::where('project_id', $compliance->project_id)
+            $compliance = Compliance::findOrFail($id);
+            $workReports = WorkReport::where('project_id', $compliance->project_id)
                 ->with(['employee', 'project.subClient.client', 'photos'])
                 ->get();
 
@@ -108,24 +109,11 @@ class ExcelExportController extends Controller
 
             $htmlReports = '';
             foreach ($workReports as $report) {
+                /** @var \App\Models\WorkReport $report */
                 $dataReport = app(\App\Http\Controllers\WorkReportExcelController::class)->prepareDataForBladePdf($report);
 
-                // Agregar información de consumos usando el scope withPricelist
-                $consumptions = ProjectConsumption::where('work_report_id', $report->id)->withPricelist()->get();
-                $consumedItems = [];
-                foreach ($consumptions as $consumption) {
-                    $pricelist = $consumption->quoteWarehouseDetail->quoteDetail->pricelist ?? null;
-                    if ($pricelist) {
-                        $consumedItems[] = [
-                            'sat_line' => $pricelist->sat_line ?? '',
-                            'description' => $pricelist->sat_description ?? '',
-                            'unit' => $pricelist->unit->name ?? '', // Asumiendo que unit tiene name
-                            'quantity' => $consumption->quantity,
-                            'consumed_at' => $consumption->consumed_at?->format('d/m/Y') ?? '',
-                        ];
-                    }
-                }
-                $dataReport['consumedItems'] = $consumedItems;
+                // consumedItems y toolItems ya vienen correctamente separados
+                // desde prepareDataForBladePdf (usa el JSON de materials con is_reusable)
 
                 $htmlReports .= view('reports.report-work', $dataReport)->render();
             }
@@ -335,8 +323,8 @@ class ExcelExportController extends Controller
                 'request_number' => $project?->request_number ?? '',
                 'service_code' => $project?->service_code ?? '',
                 'descripcion_servicio' => $descripcion_servicio,
-                'fecha_inicio' => $project?->start_date?->format('d/m/Y') ?? '',
-                'fecha_fin' => $project?->end_date?->format('d/m/Y') ?? '',
+                'fecha_inicio' => ($project?->start_date instanceof \DateTimeInterface) ? $project->start_date->format('d/m/Y') : '',
+                'fecha_fin' => ($project?->end_date instanceof \DateTimeInterface) ? $project->end_date->format('d/m/Y') : '',
                 'assets' => $assets,
                 'observaciones' => $compliance->maintenance_observations ?? '',
                 'firma_cliente' => $compliance->client_signature ?? null,
@@ -393,8 +381,8 @@ class ExcelExportController extends Controller
             $sheet->setCellValue('B12', $project?->work_order_number ?? '');
             $sheet->setCellValue('B14', $project?->request_number ?? '');
             $sheet->setCellValue('E12', $quote?->project_description ?? $project?->name ?? '');
-            $sheet->setCellValue('E15', $project?->start_date?->format('d/m/Y') ?? '');
-            $sheet->setCellValue('K15', $project?->end_date?->format('d/m/Y') ?? '');
+            $sheet->setCellValue('E15', ($project?->start_date instanceof \DateTimeInterface) ? $project->start_date->format('d/m/Y') : '');
+            $sheet->setCellValue('K15', ($project?->end_date instanceof \DateTimeInterface) ? $project->end_date->format('d/m/Y') : '');
 
             // 4️⃣ Activos
             $assets = $compliance->assets ?? [];

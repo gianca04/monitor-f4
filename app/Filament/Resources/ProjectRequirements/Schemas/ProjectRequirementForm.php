@@ -3,9 +3,11 @@
 namespace App\Filament\Resources\ProjectRequirements\Schemas;
 
 use App\Models\ProjectRequirement;
+use App\Models\Requirement;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Schema;
@@ -24,12 +26,13 @@ class ProjectRequirementForm
                     ->label('Requerimiento')
                     ->relationship('requirement', 'product_description')
                     ->searchable()
+                    ->columnSpanFull()
                     ->preload()
                     ->required()
                     ->live()
                     ->afterStateUpdated(function ($state, Set $set) {
                         if ($state) {
-                            $requirement = \App\Models\Requirement::find($state);
+                            $requirement = Requirement::find($state);
                             if ($requirement) {
                                 $set('unit_symbol', $requirement->unit->symbol ?? '$');
                                 $set('requirement_type', $requirement->requirementType->name ?? 'N/A');
@@ -53,6 +56,10 @@ class ProjectRequirementForm
                                 TextInput::make('name')
                                     ->label('Nombre')
                                     ->required(),
+                                Toggle::make('is_reusable')
+                                    ->label('¿Es reutilizable?')
+                                    ->helperText('Marcar si este tipo no se consume al usarse (ej: herramientas)')
+                                    ->default(false),
                             ]),
                         Select::make('unit_id')
                             ->label('Unidad de Medida')
@@ -66,7 +73,13 @@ class ProjectRequirementForm
                                     ->required(),
                                 TextInput::make('symbol')
                                     ->label('Símbolo'),
-                                TextInput::make('category')
+                                Select::make('category')
+                                    ->options([
+                                        'FISICA' => 'Física',
+                                        'SERVICIO' => 'Servicio',
+                                        'TIEMPO' => 'Tiempo',
+                                    ])
+                                    ->required()
                                     ->label('Categoría'),
                             ]),
                     ]),
