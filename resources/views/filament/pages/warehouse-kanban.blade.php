@@ -30,7 +30,7 @@
 
                     $itemsAtendidos = $quote->quoteDetails
                         ->filter(function ($detail) use ($quoteWarehouse, $projectReqs) {
-                            if ($detail->item_type !== 'SUMINISTRO')
+                            if ($detail->item_type !== \App\Enums\QuoteItemType::SUMINISTRO)
                                 return false;
 
                             $req = $projectReqs->firstWhere('quote_detail_id', $detail->id);

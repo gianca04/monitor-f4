@@ -3,6 +3,8 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
+use App\Enums\QuoteItemType;
 
 /**
  * Form Request para validar la creación de una cotización.
@@ -45,7 +47,7 @@ class StoreQuoteRequest extends FormRequest
             'items.*.description' => 'nullable|string', // Description can be optional if derived from pricelist? Let's keep nullable or required? Test sends it.
             'items.*.quantity' => 'required|numeric|min:0.01',
             'items.*.unit_price' => 'required|numeric|min:0',
-            'items.*.item_type' => 'required|string',
+            'items.*.item_type' => ['required', Rule::enum(QuoteItemType::class)],
             'items.*.comment' => 'nullable|string',
         ];
     }
@@ -83,7 +85,7 @@ class StoreQuoteRequest extends FormRequest
             'items.*.unit_price.numeric' => 'El precio unitario debe ser un número.',
             'items.*.unit_price.min' => 'El precio unitario mínimo es 0.',
             'items.*.item_type.required' => 'El tipo de ítem es obligatorio.',
-            'items.*.item_type.string' => 'El tipo de ítem debe ser texto.',
+            'items.*.item_type.enum' => 'El tipo de ítem seleccionado es inválido.',
             'items.*.comment.string' => 'El comentario debe ser texto.',
         ];
     }

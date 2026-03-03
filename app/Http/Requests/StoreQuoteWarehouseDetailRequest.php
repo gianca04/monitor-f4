@@ -25,6 +25,8 @@ class StoreQuoteWarehouseDetailRequest extends FormRequest
                 'numeric',
                 'min:0',
             ],
+            'details.*.comment' => ['nullable', 'string'],
+            'details.*.location_id' => ['nullable', 'exists:locations,id'],
             'observations' => ['nullable', 'string'], // Observations no es requerido, pero si está presente debe ser texto
         ];
     }

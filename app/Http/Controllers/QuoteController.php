@@ -396,10 +396,13 @@ class QuoteController extends Controller
         $groupedDetails = $quote->quoteDetails->groupBy('item_type');
         $formattedId = str_pad($quote->id, 5, '0', STR_PAD_LEFT);
         $sections = [
-            'VIATICOS'   => 'VIATICOS',
-            'SUMINISTRO' => 'SUMINISTRO',
+            'VIATICOS'     => 'VIATICOS',
+            'SUMINISTRO'   => 'SUMINISTRO',
             'MANO DE OBRA' => 'MANO DE OBRA',
-            'SERVICIO'   => 'SERVICIO'
+            'CONSUMIBLE'   => 'CONSUMIBLE',
+            'TRANSPORTE'   => 'TRANSPORTE',
+            'SERVICIO'     => 'SERVICIO',
+            'OTROS'        => 'OTROS',
         ];
         $itemsData = collect();
         $sectionIndex = 1;

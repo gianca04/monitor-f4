@@ -8,6 +8,7 @@ use App\Models\Project;
 use App\Models\ProjectRequirement;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
+use App\Enums\QuoteItemType;
 
 class QuoteService
 {
@@ -125,8 +126,8 @@ class QuoteService
         $quote->loadMissing('details');
 
         foreach ($quote->details as $detail) {
-            // Filter only 'SUMINISTRO' type
-            if ($detail->item_type === 'SUMINISTRO') {
+            // Filter only 'SUMINISTRO' type (or others if needed in the future)
+            if ($detail->item_type === QuoteItemType::SUMINISTRO) {
                 ProjectRequirement::updateOrCreate(
                     [
                         'quote_detail_id' => $detail->id,

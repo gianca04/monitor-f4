@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use App\Observers\QuoteDetailObserver;
+use App\Enums\QuoteItemType;
 
 /**
  * Modelo QuoteDetail - Detalle de Cotización
@@ -18,7 +19,7 @@ use App\Observers\QuoteDetailObserver;
  * @property int $quote_id ID de la cotización padre
  * @property int $line Orden de los ítems (1, 2, 3...)
  * @property string|null $budget_code Código del tarifario/preciario
- * @property string $item_type Tipo de ítem (SERVICIO, VIATICOS, SUMINISTRO, MANO DE OBRA, OTROS)
+ * @property \App\Enums\QuoteItemType $item_type Tipo de ítem
  * @property string|null $description Detalle del ítem
  * @property float $quantity Cantidad de unidades
  * @property float $unit_price Precio unitario
@@ -67,7 +68,7 @@ class QuoteDetail extends Model
      * @var array<string, string>
      */
     protected $casts = [
-        'pricelist_id' => 'integer',
+        'item_type' => QuoteItemType::class,
         'quantity' => 'decimal:2',
         'unit_price' => 'decimal:2',
         'created_at' => 'datetime',

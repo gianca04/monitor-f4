@@ -21,10 +21,13 @@ class QuoteExportController extends Controller
         $formattedId = str_pad($quote->id, 5, '0', STR_PAD_LEFT);
 
         $sections = [
-            'VIATICOS'   => 'VIATICOS',
-            'SUMINISTRO' => 'SUMINISTRO',
+            'VIATICOS'     => 'VIATICOS',
+            'SUMINISTRO'   => 'SUMINISTRO',
             'MANO DE OBRA' => 'MANO DE OBRA',
-            'SERVICIO'   => 'SERVICIO'
+            'CONSUMIBLE'   => 'CONSUMIBLE',
+            'TRANSPORTE'   => 'TRANSPORTE',
+            'SERVICIO'     => 'SERVICIO',
+            'OTROS'        => 'OTROS',
         ];
 
         $itemsData = collect();
@@ -109,10 +112,13 @@ class QuoteExportController extends Controller
         // --- ITEMS ---
         $groupedDetails = $quote->quoteDetails->groupBy('item_type');
         $sections = [
-            'VIATICOS'   => 'VIATICOS',
-            'SUMINISTRO' => 'SUMINISTRO',
+            'VIATICOS'     => 'VIATICOS',
+            'SUMINISTRO'   => 'SUMINISTRO',
             'MANO DE OBRA' => 'MANO DE OBRA',
-            'SERVICIO'   => 'SERVICIO'
+            'CONSUMIBLE'   => 'CONSUMIBLE',
+            'TRANSPORTE'   => 'TRANSPORTE',
+            'SERVICIO'     => 'SERVICIO',
+            'OTROS'        => 'OTROS',
         ];
 
         $currentRow = 9; // Comenzamos en la fila 9

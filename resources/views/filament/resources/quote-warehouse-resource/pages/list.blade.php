@@ -115,7 +115,9 @@
                     project_requirement_id: {{ $item['project_requirement_id'] }},
                     solicitado: {{ $item['quantity'] }},
                     entregado: {{ $item['entregado'] ?? 0 }},
-                    despachar: {{ $item['a_despachar'] ?? 0 }}
+                    despachar: {{ $item['a_despachar'] ?? 0 }},
+                    comment: '{{ $item['comment'] ?? '' }}',
+                    location_id: {{ $item['location_id'] ?? 'null' }}
             }, @endforeach
         ],
         observaciones: '{{ $quoteWarehouse->observations ?? '' }}',
@@ -381,7 +383,9 @@
                 .map(i => ({
                     project_requirement_id: i.project_requirement_id,
                     a_despachar: i.despachar,
-                    quantity: i.solicitado
+                    quantity: i.solicitado,
+                    comment: i.comment,
+                    location_id: i.location_id
                 }));
             const payload = {
                 quote_warehouse_id: this.quoteWarehouseId,
@@ -534,6 +538,8 @@
                                     <th class="w-24 px-4 py-4 text-center" scope="col">Solicitado</th>
                                     <th class="w-24 px-4 py-4 text-center" scope="col">Entregado</th>
                                     <th class="w-40 px-4 py-4" scope="col">A Despachar</th>
+                                    <th class="w-48 px-4 py-4" scope="col">Lugar</th>
+                                    <th class="w-64 px-4 py-4" scope="col">Comentarios</th>
                                     <th class="w-20 px-4 py-4 text-right" scope="col">Estado</th>
                                 </tr>
                             </thead>
@@ -549,9 +555,9 @@
                                     <tr
                                         class="transition-colors group hover:bg-slate-50 dark:hover:bg-slate-800/50 {{ $completado ? 'bg-slate-50/50 dark:bg-slate-800/30' : '' }}">
                                         <td :class="items[{{ $i }}].entregado + items[{{ $i }}].despachar >=
-                                                                                                                                            items[{{ $i }}].solicitado ?
-                                                                                                                                            'font-mono text-xs text-center align-middle text-slate-400 dark:text-slate-500 line-through underline' :
-                                                                                                                                            'font-mono text-xs text-center align-middle text-slate-900 dark:text-white'"
+                                                                                                                                                items[{{ $i }}].solicitado ?
+                                                                                                                                                'font-mono text-xs text-center align-middle text-slate-400 dark:text-slate-500 line-through underline' :
+                                                                                                                                                'font-mono text-xs text-center align-middle text-slate-900 dark:text-white'"
                                             class="font-mono text-xs text-center align-middle {{ $completado ? 'text-slate-400 dark:text-slate-500' : 'text-slate-900 dark:text-white' }}">
                                             {{ $item['sat_line'] ?? '-' }}
                                         </td>
@@ -559,9 +565,9 @@
                                             <div class="flex flex-col">
                                                 <span
                                                     :class="items[{{ $i }}].entregado + items[{{ $i }}]
-                                                                                                                                                        .despachar >= items[{{ $i }}].solicitado ?
-                                                                                                                                                        'line-through underline text-slate-400 dark:text-slate-500' :
-                                                                                                                                                        'text-xs font-medium leading-relaxed text-slate-900 dark:text-white'"
+                                                                                                                                                            .despachar >= items[{{ $i }}].solicitado ?
+                                                                                                                                                            'line-through underline text-slate-400 dark:text-slate-500' :
+                                                                                                                                                            'text-xs font-medium leading-relaxed text-slate-900 dark:text-white'"
                                                     class="text-xs font-medium leading-relaxed {{ $completado ? 'text-slate-400 dark:text-slate-500' : 'text-slate-900 dark:text-white' }}">
                                                     {{ $item['product_name'] ?? '-' }}
                                                 </span>
@@ -597,29 +603,44 @@
                                             </div>
                                         </td>
                                         <td class="px-4 py-4 align-top">
-                                            @if ($completado)
-                                                <div class="relative flex items-center justify-center opacity-60">
-                                                    <span
-                                                        class="inline-flex items-center px-3 py-1 text-xs font-medium text-green-700 rounded-full bg-green-50 ring-1 ring-inset ring-green-600/20 dark:bg-green-900/20 dark:text-green-400 dark:ring-green-500/30">
-                                                        <span class="material-symbols-outlined text-[14px] mr-1">check</span>
-                                                        Completado
-                                                    </span>
-                                                </div>
-                                            @else
-                                                <div class="relative flex items-center">
-                                                    <input type="number" x-model.number="items[{{ $i }}].despachar"
-                                                        :max="items[{{ $i }}].solicitado - items[{{ $i }}]
-                                                                                                                                                                                                                                                                .entregado"
-                                                        min="0"
-                                                        @input="if(items[{{ $i }}].despachar > (items[{{ $i }}].solicitado - items[{{ $i }}].entregado)) items[{{ $i }}].despachar = items[{{ $i }}].solicitado - items[{{ $i }}].entregado"
-                                                        class="block w-full rounded-md border-0 py-1.5 pl-2 pr-8 text-slate-900 ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-primary text-xs dark:bg-slate-900 dark:ring-slate-600 dark:text-white font-bold"
-                                                        :disabled="{{ $completado ? 'true' : 'false' }}" />
-                                                    <span
-                                                        class="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
-                                                        <span class="text-[10px] text-slate-400 uppercase">u.</span>
-                                                    </span>
-                                                </div>
-                                            @endif
+                                            <select x-model="items[{{ $i }}].location_id"
+                                                class="block w-full rounded-md border-0 py-1.5 text-slate-900 ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-inset focus:ring-primary text-xs dark:bg-slate-900 dark:ring-slate-600 dark:text-white"
+                                                :disabled="{{ $completado ? 'true' : 'false' }}">
+                                                <option value="">Seleccione lugar...</option>
+                                                @foreach ($locations as $loc)
+                                                    <option value="{{ $loc->id }}">{{ $loc->name }}</option>
+                                                @endforeach
+                                            </select>
+                                        </td>
+                                        <td class="px-4 py-4 align-top">
+                                            <input type="text" x-model="items[{{ $i }}].comment"
+                                                class="block w-full rounded-md border-0 py-1.5 text-slate-900 ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-primary text-xs dark:bg-slate-900 dark:ring-slate-600 dark:text-white"
+                                                placeholder="Nota opcional..."
+                                                :disabled="{{ $completado ? 'true' : 'false' }}" />
+                                        </td>
+                                        @if ($completado)
+                                            <div class="relative flex items-center justify-center opacity-60">
+                                                <span
+                                                    class="inline-flex items-center px-3 py-1 text-xs font-medium text-green-700 rounded-full bg-green-50 ring-1 ring-inset ring-green-600/20 dark:bg-green-900/20 dark:text-green-400 dark:ring-green-500/30">
+                                                    <span class="material-symbols-outlined text-[14px] mr-1">check</span>
+                                                    Completado
+                                                </span>
+                                            </div>
+                                        @else
+                                            <div class="relative flex items-center">
+                                                <input type="number" x-model.number="items[{{ $i }}].despachar"
+                                                    :max="items[{{ $i }}].solicitado - items[{{ $i }}]
+                                                                                                                                                                                                                                                                        .entregado"
+                                                    min="0"
+                                                    @input="if(items[{{ $i }}].despachar > (items[{{ $i }}].solicitado - items[{{ $i }}].entregado)) items[{{ $i }}].despachar = items[{{ $i }}].solicitado - items[{{ $i }}].entregado"
+                                                    class="block w-full rounded-md border-0 py-1.5 pl-2 pr-8 text-slate-900 ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-primary text-xs dark:bg-slate-900 dark:ring-slate-600 dark:text-white font-bold"
+                                                    :disabled="{{ $completado ? 'true' : 'false' }}" />
+                                                <span
+                                                    class="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
+                                                    <span class="text-[10px] text-slate-400 uppercase">u.</span>
+                                                </span>
+                                            </div>
+                                        @endif
                                         </td>
                                         <td class="px-4 py-4 text-right align-top">
                                             @if ($completado)
@@ -633,14 +654,14 @@
                                                     @click="items[{{ $i }}].despachar = items[{{ $i }}].solicitado - items[{{ $i }}].entregado"
                                                     class="inline-flex items-center justify-center p-1.5 transition-all rounded-full group/btn"
                                                     :class="items[{{ $i }}].despachar + items[{{ $i }}]
-                                                                                                                                                                                                                                                            .entregado >= items[{{ $i }}].solicitado ?
-                                                                                                                                                                                                                                                            'bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-500' :
-                                                                                                                                                                                                                                                            'text-slate-300 dark:text-slate-600 hover:text-green-600 dark:hover:text-green-500'"
+                                                                                                                                                                                                                                                                    .entregado >= items[{{ $i }}].solicitado ?
+                                                                                                                                                                                                                                                                    'bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-500' :
+                                                                                                                                                                                                                                                                    'text-slate-300 dark:text-slate-600 hover:text-green-600 dark:hover:text-green-500'"
                                                     type="button" title="Marcar como listo">
                                                     <span class="material-symbols-outlined text-[22px] group-hover/btn:fill-1"
                                                         :class="items[{{ $i }}].despachar + items[{{ $i }}]
-                                                                                                                                                                                                                                                                .entregado >= items[{{ $i }}].solicitado ?
-                                                                                                                                                                                                                                                                'text-green-600 dark:text-green-500' : ''">check_circle</span>
+                                                                                                                                                                                                                                                                        .entregado >= items[{{ $i }}].solicitado ?
+                                                                                                                                                                                                                                                                        'text-green-600 dark:text-green-500' : ''">check_circle</span>
                                                 </button>
                                             @endif
                                         </td>

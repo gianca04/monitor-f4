@@ -16,6 +16,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property int $quote_warehouse_id ID de la atención de almacén asociada
  * @property int $quote_detail_id ID del detalle de la cotización original
  * @property float $attended_quantity Cantidad atendida por almacén para este ítem
+ * @property string|null $comment Comentario sobre la atención
+ * @property int|null $location_id ID del lugar o estación de procedencia/destino
  * @property \Illuminate\Support\Carbon|null $created_at Fecha de creación del registro
  * @property \Illuminate\Support\Carbon|null $updated_at Fecha de última actualización del registro
  *
@@ -42,6 +44,8 @@ class QuoteWarehouseDetail extends Model
         'quote_warehouse_id',
         'project_requirement_id',
         'attended_quantity',
+        'comment',
+        'location_id',
     ];
 
     /**
@@ -73,6 +77,16 @@ class QuoteWarehouseDetail extends Model
     public function projectRequirement(): BelongsTo
     {
         return $this->belongsTo(ProjectRequirement::class, 'project_requirement_id');
+    }
+
+    /**
+     * Obtiene el lugar o estación asociado.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     */
+    public function location(): BelongsTo
+    {
+        return $this->belongsTo(Location::class, 'location_id');
     }
 
     /**

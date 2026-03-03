@@ -96,6 +96,22 @@
                     bgClass: 'bg-purple-100 dark:bg-purple-900/30',
                     iconClass: 'text-purple-600 dark:text-purple-400'
                 },
+                {
+                    key: 'consumibles',
+                    title: 'Consumibles',
+                    icon: 'shopping_cart',
+                    priceTypeId: 2,
+                    bgClass: 'bg-emerald-100 dark:bg-emerald-900/30',
+                    iconClass: 'text-emerald-600 dark:text-emerald-400'
+                },
+                {
+                    key: 'transporte',
+                    title: 'Transporte',
+                    icon: 'local_shipping',
+                    priceTypeId: 2,
+                    bgClass: 'bg-rose-100 dark:bg-rose-900/30',
+                    iconClass: 'text-rose-600 dark:text-rose-400'
+                },
                 ],
 
                 // Column Resizing
@@ -179,7 +195,9 @@
                 items: {
                     viaticos: [],
                     suministros: [],
-                    mano_obra: []
+                    mano_obra: [],
+                    consumibles: [],
+                    transporte: []
                 },
 
                 // Modal state (ahora es un drawer con multi-selección y tabs por PriceType)
@@ -311,6 +329,12 @@
                                         break;
                                     case 'MANO DE OBRA':
                                         this.items.mano_obra.push(item);
+                                        break;
+                                    case 'CONSUMIBLE':
+                                        this.items.consumibles.push(item);
+                                        break;
+                                    case 'TRANSPORTE':
+                                        this.items.transporte.push(item);
                                         break;
                                 }
                             });
@@ -756,6 +780,18 @@
                                 ...this.items.mano_obra.map(item => ({
                                     ...item,
                                     item_type: 'MANO DE OBRA',
+                                    budget_code: item.code,
+                                    pricelist_id: item.pricelist_id
+                                })),
+                                ...this.items.consumibles.map(item => ({
+                                    ...item,
+                                    item_type: 'CONSUMIBLE',
+                                    budget_code: item.code,
+                                    pricelist_id: item.pricelist_id
+                                })),
+                                ...this.items.transporte.map(item => ({
+                                    ...item,
+                                    item_type: 'TRANSPORTE',
                                     budget_code: item.code,
                                     pricelist_id: item.pricelist_id
                                 }))

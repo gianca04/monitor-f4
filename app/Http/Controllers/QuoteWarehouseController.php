@@ -12,6 +12,7 @@ use App\Models\QuoteWarehouse;
 use Illuminate\Support\Facades\Log;
 use Barryvdh\DomPDF\Facade\Pdf; // Asegúrate de tener instalado barryvdh/laravel-dompdf
 use Illuminate\Support\Facades\Auth;
+use App\Models\Location;
 
 /**
  * Controlador para manejar las operaciones CRUD de cotizaciones (Quotes).
@@ -68,6 +69,8 @@ class QuoteWarehouseController extends Controller
                 'unit_name'        => $req->unit_name,
                 'entregado'        => $attended,
                 'type_name'        => $req->consumable_type_name,
+                'comment'          => $detailsByReqId[$req->id]->comment ?? '',
+                'location_id'      => $detailsByReqId[$req->id]->location_id ?? null,
             ];
         }
 
@@ -76,6 +79,7 @@ class QuoteWarehouseController extends Controller
             'client'       => $quote->subClient->name ?? '',
             'details'      => $details,
             'quoteWarehouse' => $quoteWarehouse,
+            'locations'    => Location::where('is_active', true)->get(),
         ]);
     }
 
@@ -153,6 +157,8 @@ class QuoteWarehouseController extends Controller
                         // Si ya existe, sumamos el nuevo valor al attended_quantity existente
                         $detalleExistente->update([
                             'attended_quantity' => $detalleExistente->attended_quantity + $detail['a_despachar'],
+                            'comment'           => $detail['comment'] ?? $detalleExistente->comment,
+                            'location_id'       => $detail['location_id'] ?? $detalleExistente->location_id,
                         ]);
                     } else {
                         // Si no existe, creamos un nuevo registro
@@ -160,6 +166,8 @@ class QuoteWarehouseController extends Controller
                             'quote_warehouse_id'     => $quoteWarehouse->id,
                             'project_requirement_id' => $detail['project_requirement_id'],
                             'attended_quantity'      => $detail['a_despachar'],
+                            'comment'                => $detail['comment'] ?? null,
+                            'location_id'            => $detail['location_id'] ?? null,
                         ]);
                     }
 
@@ -220,7 +228,7 @@ class QuoteWarehouseController extends Controller
         $groupedDetails = $quote->quoteDetails->groupBy('item_type');
 
         $details = [];
-        foreach (['SUMINISTRO'] as $type) {
+        foreach ([\App\Enums\QuoteItemType::SUMINISTRO->value] as $type) {
             if ($groupedDetails->has($type)) {
                 foreach ($groupedDetails[$type] as $detail) {
                     $attended = $warehouseDetails[$detail->id]->attended_quantity ?? 0;
