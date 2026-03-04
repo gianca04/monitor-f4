@@ -36,6 +36,12 @@ class AppServiceProvider extends ServiceProvider
             'panels::body.end',
             fn(): string => Blade::render('<x-push-notification-subscriber />'),
         );
+
+        // Inyectar burbuja flotante de chat en todas las pantallas del panel
+        FilamentView::registerRenderHook(
+            'panels::body.end',
+            fn(): string => Blade::render('@livewire(\'chat-bubble\')'),
+        );
         if ($this->app->environment('production') || env('APP_URL') == 'https://superfood.sat-sistemas.uk') {
             URL::forceScheme('https');
 
