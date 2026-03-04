@@ -125,7 +125,8 @@ class DashboardPanelProvider extends PanelProvider
             ->brandLogo(asset('images/logo.svg'))
             ->brandLogoHeight('2rem')
             ->favicon(asset('images/favicon.svg'))
-            // Eliminar esta línea duplicada: ->databaseNotifications()
+            ->databaseNotifications()
+            ->databaseNotificationsPolling('30s')
         ;
     }
 }

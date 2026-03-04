@@ -15,10 +15,19 @@ use Livewire\Livewire;
 use App\Http\Controllers\WorkReportWordController;
 use App\Http\Controllers\RequestConsolidatedController;
 use App\Http\Controllers\WarehouseStatusController;
+use App\Http\Controllers\PushSubscriptionController;
 use App\Http\Controllers\WorkReportController;
 
 // Redirigir la raíz al dashboard de Filament
 Route::redirect('/', '/dashboard');
+
+// Push Notification Subscriptions
+Route::middleware('auth')->prefix('push')->group(function () {
+    Route::post('/subscribe', [PushSubscriptionController::class, 'store'])
+        ->name('push.subscribe');
+    Route::delete('/unsubscribe', [PushSubscriptionController::class, 'destroy'])
+        ->name('push.unsubscribe');
+});
 
 // Ruta para generar Informe de Evidencias (PDF con fotos)
 Route::get('/evidence-report/{workReport}/pdf', [EvidenceReportController::class, 'generateReport'])
