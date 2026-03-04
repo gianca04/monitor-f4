@@ -8,9 +8,14 @@ use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
+use Filament\Forms\Components\MorphToSelect;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Schema;
+use App\Models\ToolUnit;
+use App\Models\QuoteDetail;
+use App\Enums\RequirementType;
+use App\Enums\ToolType;
 
 class ProjectRequirementForm
 {
@@ -22,67 +27,87 @@ class ProjectRequirementForm
                     ->required()
                     ->numeric()
                     ->hidden(), // Usually handled automatically in relations
-                Select::make('requirement_id')
-                    ->label('Requerimiento')
-                    ->relationship('requirement', 'product_description')
+                MorphToSelect::make('requirementable')
+                    ->label('Origen del Requerimiento')
+                    ->types([
+                        MorphToSelect\Type::make(Requirement::class)
+                            ->label('Catálogo de Requerimientos')
+                            ->titleAttribute('product_description')
+                            ->modifyOptionsQueryUsing(fn($query) => $query->with('unit', 'requirementType')),
+                        MorphToSelect\Type::make(QuoteDetail::class)
+                            ->label('Detalle de Cotización')
+                            ->getOptionLabelFromRecordUsing(fn ($record) => ($record->pricelist->sat_description ?? 'Sin descripción') . ($record->comment ? ' - ' . $record->comment : ''))
+                            ->modifyOptionsQueryUsing(fn($query) => $query->with('pricelist.unit')),
+                        MorphToSelect\Type::make(ToolUnit::class)
+                            ->label('Herramienta / Equipo')
+                            ->getOptionLabelFromRecordUsing(fn ($record) => ($record->tool->name ?? 'Sin nombre') . ($record->internal_code ? ' - ' . $record->internal_code : ''))
+                            ->modifyOptionsQueryUsing(fn($query) => $query->available()->with('tool')),
+                    ])
                     ->searchable()
                     ->columnSpanFull()
                     ->preload()
                     ->required()
                     ->live()
-                    ->afterStateUpdated(function ($state, Set $set) {
-                        if ($state) {
-                            $requirement = Requirement::find($state);
-                            if ($requirement) {
-                                $set('unit_symbol', $requirement->unit->symbol ?? '$');
-                                $set('requirement_type', $requirement->requirementType->name ?? 'N/A');
-                                $set('unit_of_measure', $requirement->unit->name ?? 'N/A');
+                    ->afterStateUpdated(function ($state, Set $set, Get $get) {
+                        $type = $get('requirementable_type');
+                        $id = $get('requirementable_id');
+
+                        if ($type && $id) {
+                            if ($type === Requirement::class) {
+                                $requirement = Requirement::find($id);
+                                if ($requirement) {
+                                    $set('unit_symbol', $requirement->unit->symbol ?? '$');
+                                    $set('requirement_type', $requirement->requirementType->name ?? 'Suministro');
+                                    $set('unit_of_measure', $requirement->unit->name ?? 'UND');
+                                    // Set type based on requirementType
+                                    $reqTypeName = strtolower($requirement->requirementType->name ?? '');
+                                    if (str_contains($reqTypeName, 'material')) {
+                                        $set('type', \App\Enums\RequirementType::MATERIAL);
+                                    } elseif (str_contains($reqTypeName, 'consumible') || str_contains($reqTypeName, 'suministro')) {
+                                        $set('type', \App\Enums\RequirementType::CONSUMIBLE);
+                                    } elseif (str_contains($reqTypeName, 'herramienta')) {
+                                        $set('type', \App\Enums\RequirementType::HERRAMIENTA);
+                                    } elseif (str_contains($reqTypeName, 'equipo')) {
+                                        $set('type', \App\Enums\RequirementType::EQUIPO);
+                                    } else {
+                                        $set('type', \App\Enums\RequirementType::MATERIAL); // default
+                                    }
+                                }
+                            } elseif ($type === QuoteDetail::class) {
+                                $quoteDetail = QuoteDetail::find($id);
+                                if ($quoteDetail) {
+                                    $set('unit_symbol', $quoteDetail->pricelist->unit->symbol ?? '$');
+                                    $set('requirement_type', 'Suministro');
+                                    $set('unit_of_measure', $quoteDetail->pricelist->unit->name ?? 'UND');
+                                    $set('price_unit', $quoteDetail->unit_price); // Set price from QuoteDetail
+                                    $set('quantity', $quoteDetail->quantity); // Set quantity from QuoteDetail
+                                    $set('subtotal', round((float)$quoteDetail->quantity * (float)$quoteDetail->unit_price, 2)); // Calculate subtotal
+                                    $set('type', \App\Enums\RequirementType::CONSUMIBLE); // Default for quotes
+                                }
+                            } elseif ($type === ToolUnit::class) {
+                                $toolUnit = ToolUnit::find($id);
+                                if ($toolUnit) {
+                                    $set('unit_symbol', 'UND');
+                                    $set('requirement_type', 'Herramienta');
+                                    $set('unit_of_measure', 'UND');
+                                    // Set type based on tool type
+                                    if ($toolUnit->tool->type === \App\Enums\ToolType::HERRAMIENTA) {
+                                        $set('type', \App\Enums\RequirementType::HERRAMIENTA);
+                                    } elseif ($toolUnit->tool->type === \App\Enums\ToolType::EQUIPO) {
+                                        $set('type', \App\Enums\RequirementType::EQUIPO);
+                                    } else {
+                                        $set('type', \App\Enums\RequirementType::HERRAMIENTA); // default
+                                    }
+                                }
                             }
                         }
-                    })
-                    ->createOptionForm([
-                        TextInput::make('product_description')
-                            ->label('Descripción del Producto')
-                            ->maxLength(255)
-                            ->columnSpanFull()
-                            ->required(),
-                        Select::make('requirement_type_id')
-                            ->label('Tipo de requerimiento')
-                            ->relationship('requirementType', 'name')
-                            ->required()
-                            ->searchable()
-                            ->preload()
-                            ->createOptionForm([
-                                TextInput::make('name')
-                                    ->label('Nombre')
-                                    ->required(),
-                                Toggle::make('is_reusable')
-                                    ->label('¿Es reutilizable?')
-                                    ->helperText('Marcar si este tipo no se consume al usarse (ej: herramientas)')
-                                    ->default(false),
-                            ]),
-                        Select::make('unit_id')
-                            ->label('Unidad de Medida')
-                            ->relationship('unit', 'name')
-                            ->required()
-                            ->searchable()
-                            ->preload()
-                            ->createOptionForm([
-                                TextInput::make('name')
-                                    ->label('Nombre')
-                                    ->required(),
-                                TextInput::make('symbol')
-                                    ->label('Símbolo'),
-                                Select::make('category')
-                                    ->options([
-                                        'FISICA' => 'Física',
-                                        'SERVICIO' => 'Servicio',
-                                        'TIEMPO' => 'Tiempo',
-                                    ])
-                                    ->required()
-                                    ->label('Categoría'),
-                            ]),
-                    ]),
+                    }),
+
+                Select::make('type')
+                    ->label('Tipo')
+                    ->options(RequirementType::class)
+                    ->required()
+                    ->default(RequirementType::MATERIAL),
 
                 TextInput::make('requirement_type')
                     ->label('Tipo de Requisito')

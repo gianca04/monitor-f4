@@ -2,10 +2,11 @@
 
 namespace App\Filament\Resources\Requirements\Schemas;
 
-use Dom\Text;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Schema;
+use App\Models\RequirementType;
 
 class RequirementForm
 {
@@ -15,35 +16,36 @@ class RequirementForm
             ->components([
                 TextInput::make('product_description')
                     ->label('Descripción del Producto')
+                    ->placeholder('Ej: Cemento Portland Tipo I')
+                    ->required()
                     ->maxLength(255)
-                    ->columnSpanFull()
-                    ->required(),
+                    ->columnSpanFull(),
                 Select::make('requirement_type_id')
-                    ->label('Tipo de Requisito')
+                    ->label('Tipo de Requerimiento')
                     ->relationship('requirementType', 'name')
                     ->required()
                     ->searchable()
                     ->preload()
+                    ->native(false)
                     ->createOptionForm([
                         TextInput::make('name')
-                            ->label('Nombre')
-                            ->required(),
-                    ]),
+                            ->label('Nombre del Tipo')
+                            ->placeholder('Ej: Material, Consumible, EPP')
+                            ->required()
+                            ->maxLength(255),
+                        Toggle::make('is_reusable')
+                            ->label('¿Es reutilizable?')
+                            ->helperText('Ej: Herramientas no se descuentan del stock')
+                            ->default(false),
+                    ])
+                    ->createOptionUsing(fn(array $data) => RequirementType::create($data)->id),
                 Select::make('unit_id')
                     ->label('Unidad de Medida')
                     ->relationship('unit', 'name')
                     ->required()
                     ->searchable()
                     ->preload()
-                    ->createOptionForm([
-                        TextInput::make('name')
-                            ->label('Nombre')
-                            ->required(),
-                        TextInput::make('symbol')
-                            ->label('Símbolo'),
-                        TextInput::make('category')
-                            ->label('Categoría'),
-                    ]),
+                    ->native(false),
             ]);
     }
 }

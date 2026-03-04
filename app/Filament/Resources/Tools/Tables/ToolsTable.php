@@ -25,6 +25,17 @@ class ToolsTable
                     ->weight('bold')
                     ->limit(40),
 
+                TextColumn::make('type')
+                    ->label('Tipo')
+                    ->sortable()
+                    ->searchable()
+                    ->badge()
+                    ->color(fn($state): string => match ($state) {
+                        \App\Enums\ToolType::HERRAMIENTA => 'success',
+                        \App\Enums\ToolType::EQUIPO => 'warning',
+                        default => 'gray',
+                    }),
+
                 TextColumn::make('category.name')
                     ->label('Categoría')
                     ->searchable()
@@ -65,6 +76,10 @@ class ToolsTable
             ])
             ->defaultSort('name')
             ->filters([
+                SelectFilter::make('type')
+                    ->label('Tipo')
+                    ->options(\App\Enums\ToolType::class),
+
                 SelectFilter::make('tool_category_id')
                     ->label('Categoría')
                     ->relationship('category', 'name')

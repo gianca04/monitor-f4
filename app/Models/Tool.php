@@ -25,6 +25,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
  * @property \Illuminate\Support\Carbon|null $created_at
  * @property \Illuminate\Support\Carbon|null $updated_at
  *
+ * @property \App\Enums\ToolType $type
  * @property-read \App\Models\ToolBrand|null $brand
  * @property-read \App\Models\ToolCategory|null $category
  */
@@ -36,6 +37,7 @@ class Tool extends Model
 
     protected $fillable = [
         'name',
+        'type',
         'tool_brand_id',
         'tool_category_id',
         'model',
@@ -45,6 +47,7 @@ class Tool extends Model
     protected $casts = [
         'tool_brand_id' => 'integer',
         'tool_category_id' => 'integer',
+        'type' => \App\Enums\ToolType::class,
     ];
 
     protected $appends = ['units_in_stock', 'total_units'];

@@ -7,6 +7,7 @@ use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 
 class ProjectRequirementsTable
 {
@@ -19,7 +20,26 @@ class ProjectRequirementsTable
                     ->label('Producto / Descripción')
                     ->limit(50)
                     ->tooltip(fn($state): string => $state)
-                    ->searchable(['requirement.product_description', 'quoteDetail.pricelist.sat_description'])
+                    ->searchable(query: function (Builder $query, string $search): Builder {
+                        return $query->whereHasMorph(
+                            'requirementable',
+                            [\App\Models\Requirement::class, \App\Models\QuoteDetail::class, \App\Models\ToolUnit::class],
+                            function (Builder $query, string $type) use ($search) {
+                                if ($type === \App\Models\Requirement::class) {
+                                    $query->where('product_description', 'like', "%{$search}%");
+                                } elseif ($type === \App\Models\QuoteDetail::class) {
+                                    $query->whereHas('pricelist', function ($q) use ($search) {
+                                        $q->where('sat_description', 'like', "%{$search}%");
+                                    });
+                                } elseif ($type === \App\Models\ToolUnit::class) {
+                                    $query->whereHas('tool', function ($q) use ($search) {
+                                        $q->where('name', 'like', "%{$search}%")
+                                            ->orWhere('internal_code', 'like', "%{$search}%");
+                                    });
+                                }
+                            }
+                        );
+                    })
                     ->sortable(),
 
                 TextColumn::make('consumable_type_name')

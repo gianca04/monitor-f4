@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Tools\Schemas;
 
+use App\Enums\ToolType;
 use App\Models\ToolBrand;
 use App\Models\ToolCategory;
 use App\Models\ToolUnit;
@@ -41,6 +42,12 @@ class ToolForm
                                     ->label('Modelo')
                                     ->placeholder('Ej: DT-830B')
                                     ->maxLength(100),
+                                Select::make('type')
+                                    ->label('Tipo')
+                                    ->options(ToolType::class)
+                                    ->default(ToolType::HERRAMIENTA->value)
+                                    ->required()
+                                    ->native(false),
                                 Select::make('tool_category_id')
                                     ->label('Categoría')
                                     ->placeholder('Seleccionar categoría')

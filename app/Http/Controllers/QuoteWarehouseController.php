@@ -49,7 +49,6 @@ class QuoteWarehouseController extends Controller
         $details = [];
 
         foreach ($projectRequirements as $req) {
-            $quoteDetailId = $req->quote_detail_id;
             $attended = 0;
 
             // Try to find attendance
@@ -57,11 +56,17 @@ class QuoteWarehouseController extends Controller
                 $attended = $detailsByReqId[$req->id]->attended_quantity;
             }
 
+            $satLine = '-';
+            if ($req->requirementable instanceof \App\Models\QuoteDetail) {
+                $satLine = $req->requirementable->pricelist->sat_line ?? '-';
+            } elseif ($req->requirementable instanceof \App\Models\ToolUnit) {
+                $satLine = 'HERRAMIENTAS';
+            }
+
             // Usamos los accessors del modelo ProjectRequirement
             $details[] = [
                 'project_requirement_id' => $req->id, // Principal ID
-                'quote_detail_id'  => $quoteDetailId, // Mantenemos para referencia en frontend si es necesario
-                'sat_line'         => $req->quoteDetail->pricelist->sat_line ?? '-',
+                'sat_line'         => $satLine,
                 'product_name'     => $req->product_name,
                 'quantity'         => $req->quantity,
                 'unit_price'       => $req->price_unit,
@@ -220,27 +225,44 @@ class QuoteWarehouseController extends Controller
         $quote->load(['subClient', 'quoteDetails.pricelist.unit']);
         $quoteWarehouse->load('employee.employee');
 
-        // Obtener los detalles atendidos por almacén (quote_warehouse_details)
+        // Obtener los detalles atendidos por almacén (quote_warehouse_details) agrupados por project_requirement_id
         $warehouseDetails = QuoteWarehouseDetail::where('quote_warehouse_id', $quoteWarehouse->id)
             ->get()
-            ->keyBy('quote_detail_id');
+            ->keyBy('project_requirement_id');
 
-        $groupedDetails = $quote->quoteDetails->groupBy('item_type');
+        $groupedDetails = $quote->project->projectRequirements->groupBy('consumable_type_name');
 
         $details = [];
-        foreach ([\App\Enums\QuoteItemType::SUMINISTRO->value] as $type) {
+        foreach (['Suministro', 'Herramienta'] as $type) {
             if ($groupedDetails->has($type)) {
-                foreach ($groupedDetails[$type] as $detail) {
-                    $attended = $warehouseDetails[$detail->id]->attended_quantity ?? 0;
+                foreach ($groupedDetails[$type] as $req) {
+                    $attended = $warehouseDetails[$req->id]->attended_quantity ?? 0;
+
+                    $satLine = '';
+                    $satDescription = '';
+                    $unitName = '';
+
+                    if ($req->requirementable instanceof \App\Models\Requirement) {
+                        $satDescription = $req->requirementable->product_description;
+                        $unitName = $req->requirementable->unit->name ?? 'UND';
+                    } elseif ($req->requirementable instanceof \App\Models\QuoteDetail) {
+                        $satLine = $req->requirementable->pricelist->sat_line ?? '';
+                        $satDescription = $req->requirementable->pricelist->sat_description ?? '';
+                        $unitName = $req->requirementable->pricelist->unit->name ?? 'UND';
+                    } elseif ($req->requirementable instanceof \App\Models\ToolUnit) {
+                        $satLine = 'HERRAMIENTAS';
+                        $satDescription = $req->requirementable->tool->name ?? 'Herramienta';
+                        $unitName = 'UND';
+                    }
+
                     $details[] = [
                         'item_type'        => $type,
-                        'quote_detail_id'  => $detail->id,
-                        'sat_line'         => $detail->pricelist->sat_line ?? '',
-                        'sat_description'  => $detail->pricelist->sat_description ?? '',
-                        'quantity'         => $detail->quantity,
-                        'unit_price'       => $detail->unit_price,
-                        'subtotal'         => $detail->subtotal,
-                        'unit_name'        => $detail->pricelist->unit->name ?? '',
+                        'sat_line'         => $satLine,
+                        'sat_description'  => $satDescription,
+                        'quantity'         => $req->quantity,
+                        'unit_price'       => $req->price_unit,
+                        'subtotal'         => $req->subtotal,
+                        'unit_name'        => $unitName,
                         'entregado'        => $attended,
                     ];
                 }

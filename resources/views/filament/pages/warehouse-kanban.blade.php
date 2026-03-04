@@ -2,7 +2,7 @@
     @vite(['resources/css/app.css'])
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
 
-    <div x-data="warehouseKanban()">
+    <div>
         <div class="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
             @foreach ($records as $quoteWarehouse)
                 @php
@@ -108,7 +108,7 @@
                     </a>
 
                     <button type="button"
-                        @click.prevent="openPreview('{{ route('quoteswarehouse.preview', [$quoteWarehouse->id]) }}')"
+                        @click.prevent="window.location.href='{{ \App\Filament\Resources\QuoteWarehouses\QuoteWarehouseResource::getUrl('edit', ['record' => $quoteWarehouse->id]) }}'"
                         class="block w-full px-4 py-2 text-xs font-black tracking-widest text-center text-white uppercase transition-all rounded-lg shadow-sm bg-primary-600 hover:bg-primary-700">
                         Atender
                     </button>
@@ -125,105 +125,5 @@
             </div>
         </div>
 
-        <template x-teleport="body">
-            <!-- Modal para previsualización -->
-            <div x-show="showPreview" x-cloak
-                class="fixed inset-0 z-[999] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
-                x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0"
-                x-transition:enter-end="opacity-100" x-transition:leave="transition ease-in duration-200"
-                x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
-
-                <div :class="isFullscreen ? 'fixed inset-0 w-screen h-screen max-w-none max-h-none rounded-none' :
-                    'w-full max-w-6xl h-[92vh] rounded-xl'"
-                    class="relative flex flex-col overflow-hidden transition-all duration-300 bg-white border border-gray-200 shadow-2xl dark:bg-gray-900 dark:border-gray-700"
-                    {{-- @click.away="closePreview()" --}} {{-- Eliminado para que no se cierre al hacer clic fuera
-                    --}}>
-
-                    <div
-                        class="flex items-center justify-between p-4 border-b dark:border-gray-800 bg-gray-50 dark:bg-gray-800">
-                        <!-- Botón pantalla completa -->
-                        <div class="flex gap-2">
-                            <button @click="toggleFullscreen()"
-                                class="p-2 transition-colors rounded-full hover:bg-gray-200 dark:hover:bg-gray-700"
-                                title="Pantalla completa">
-                                <span class="text-gray-500 material-symbols-outlined"
-                                    x-text="isFullscreen ? 'fullscreen_exit' : 'fullscreen'"></span>
-                            </button>
-                        </div>
-                        <!-- Header centrado y estirado -->
-                        <header
-                            class="flex items-center justify-center flex-1 px-10 py-3 border-b-0 border-solid shadow-none whitespace-nowrap">
-                            <div class="flex items-center gap-4">
-                                <div class="flex items-center justify-center rounded size-8 bg-primary/10 text-primary">
-                                    <span class="text-2xl material-symbols-outlined">warehouse</span>
-                                </div>
-                                <h2
-                                    class="text-lg font-bold leading-tight tracking-[-0.015em] text-slate-900 dark:text-white">
-                                    Gestión de Almacén
-                                </h2>
-                            </div>
-                        </header>
-                        <!-- Botón cerrar -->
-                        <button @click="closePreview()"
-                            class="p-2 transition-colors rounded-full hover:bg-gray-200 dark:hover:bg-gray-700"
-                            title="Cerrar">
-                            <span class="text-gray-500 material-symbols-outlined">close</span>
-                        </button>
-                    </div>
-
-                    <div class="flex-1 bg-white">
-                        <template x-if="showPreview">
-                            <iframe :src="previewUrl" class="w-full h-full border-0"></iframe>
-                        </template>
-                    </div>
-                </div>
-            </div>
-        </template>
     </div>
-    <script>
-        document.addEventListener('alpine:init', () => {
-            Alpine.data('warehouseKanban', () => ({
-                isFullscreen: false,
-                showPreview: false,
-                previewUrl: '',
-
-                init() {
-                    this.loadSortable();
-                },
-
-                openPreview(url) {
-                    this.previewUrl = url;
-                    this.showPreview = true;
-                    document.body.style.overflow = 'hidden'; // Bloquear scroll
-                },
-
-                closePreview() {
-                    this.showPreview = false;
-                    this.previewUrl = '';
-                    this.isFullscreen = false;
-                    document.body.style.overflow = 'auto'; // Habilitar scroll
-                },
-
-                loadSortable() {
-                    if (typeof Sortable === 'undefined') {
-                        const script = document.createElement('script');
-                        script.src =
-                            'https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js';
-                        script.onload = () => this.initSortable();
-                        document.head.appendChild(script);
-                    } else {
-                        this.initSortable();
-                    }
-                },
-                toggleFullscreen() {
-                    this.isFullscreen = !this.isFullscreen;
-                },
-            }));
-        });
-    </script>
-    <style>
-        [x-cloak] {
-            display: none !important;
-        }
-    </style>
 </x-filament-panels::page>

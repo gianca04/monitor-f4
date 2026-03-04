@@ -14,8 +14,7 @@ return new class extends Migration
         Schema::create('project_requirements', function (Blueprint $table) {
             $table->id();
             $table->foreignId('project_id')->constrained()->cascadeOnDelete();
-            $table->foreignId('requirement_id')->nullable()->constrained()->cascadeOnDelete();
-            $table->foreignId('quote_detail_id')->nullable()->constrained()->cascadeOnDelete();
+            $table->morphs('requirementable', 'reqable_index');
             $table->decimal('quantity', 12, 2)->unsigned();
             $table->decimal('price_unit', 12, 2)->unsigned();
             $table->string('comments')->nullable();

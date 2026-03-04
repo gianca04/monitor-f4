@@ -130,14 +130,15 @@ class QuoteService
             if ($detail->item_type === QuoteItemType::SUMINISTRO) {
                 ProjectRequirement::updateOrCreate(
                     [
-                        'quote_detail_id' => $detail->id,
+                        'requirementable_id'   => $detail->id,
+                        'requirementable_type' => \App\Models\QuoteDetail::class,
                     ],
                     [
                         'project_id'      => $quote->project_id,
-                        'requirement_id'  => null,
                         'quantity'        => $detail->quantity,
                         'price_unit'      => $detail->unit_price,
                         'comments'        => $detail->description ?? $detail->comment,
+                        'type'            => \App\Enums\RequirementType::CONSUMIBLE,
                     ]
                 );
             }

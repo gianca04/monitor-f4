@@ -11,8 +11,9 @@ class ProjectRequirement extends Model
 
     protected $fillable = [
         'project_id',
-        'requirement_id',
-        'quote_detail_id',
+        'requirementable_id',
+        'requirementable_type',
+        'type',
         'quantity',
         'price_unit',
         'comments',
@@ -20,9 +21,10 @@ class ProjectRequirement extends Model
 
     protected $casts = [
         'project_id' => 'integer',
-        'requirement_id' => 'integer',
+        'requirementable_id' => 'integer',
         'quantity' => 'decimal:2',
         'price_unit' => 'decimal:2',
+        'type' => \App\Enums\RequirementType::class,
     ];
 
     protected $appends = ['subtotal', 'product_name', 'unit_name', 'consumable_type_name'];
@@ -32,9 +34,14 @@ class ProjectRequirement extends Model
      */
     public function getProductNameAttribute(): string
     {
-        return $this->requirement->product_description
-            ?? $this->quoteDetail->pricelist->sat_description
-            ?? 'N/A';
+        if ($this->requirementable_type === Requirement::class) {
+            return $this->requirementable->product_description ?? 'N/A';
+        } elseif ($this->requirementable_type === QuoteDetail::class) {
+            return $this->requirementable->pricelist->sat_description ?? 'N/A';
+        } elseif ($this->requirementable_type === ToolUnit::class) {
+            return $this->requirementable->tool->name ?? 'N/A';
+        }
+        return 'N/A';
     }
 
     /**
@@ -42,9 +49,14 @@ class ProjectRequirement extends Model
      */
     public function getUnitNameAttribute(): string
     {
-        return $this->requirement->unit->name
-            ?? $this->quoteDetail->pricelist->unit->name
-            ?? 'N/A';
+        if ($this->requirementable_type === Requirement::class) {
+            return $this->requirementable->unit->name ?? 'N/A';
+        } elseif ($this->requirementable_type === QuoteDetail::class) {
+            return $this->requirementable->pricelist->unit->name ?? 'N/A';
+        } elseif ($this->requirementable_type === ToolUnit::class) {
+            return 'UND'; // Default for tools
+        }
+        return 'N/A';
     }
 
     /**
@@ -52,8 +64,7 @@ class ProjectRequirement extends Model
      */
     public function getConsumableTypeNameAttribute(): string
     {
-        return $this->requirement->consumableType->name
-            ?? 'Suministro'; // Default for QuoteDetail items
+        return $this->type?->getLabel() ?? 'N/A';
     }
 
     /**
@@ -71,13 +82,8 @@ class ProjectRequirement extends Model
         return $this->belongsTo(Project::class);
     }
 
-    public function requirement(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function requirementable(): \Illuminate\Database\Eloquent\Relations\MorphTo
     {
-        return $this->belongsTo(Requirement::class);
-    }
-
-    public function quoteDetail(): \Illuminate\Database\Eloquent\Relations\BelongsTo
-    {
-        return $this->belongsTo(QuoteDetail::class);
+        return $this->morphTo();
     }
 }

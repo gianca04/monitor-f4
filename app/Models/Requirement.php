@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 
 /**
  * Modelo Requirement (Lista maestra de requerimientos y consumibles utilziados)
@@ -45,8 +46,8 @@ class Requirement extends Model
         return $this->belongsTo(Unit::class);
     }
 
-    public function projectRequirements(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function projectRequirements(): MorphMany
     {
-        return $this->hasMany(ProjectRequirement::class);
+        return $this->morphMany(ProjectRequirement::class, 'requirementable');
     }
 }

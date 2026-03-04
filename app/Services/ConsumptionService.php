@@ -140,28 +140,50 @@ class ConsumptionService
     /**
      * Obtiene los materiales disponibles para un proyecto.
      * (Centralizado desde WorkReport::getAvailableMaterials)
+     * Refactorizado para usar Eloquent y Morphs (ToolUnit, Requirement, QuoteDetail).
      */
     public function getAvailableMaterials(int $projectId): Collection
     {
-        return DB::table('quote_warehouse_details as qwd')
-            ->join('project_requirements as pr', 'qwd.project_requirement_id', '=', 'pr.id')
-            ->leftJoin('requirements as r', 'pr.requirement_id', '=', 'r.id')
-            ->leftJoin('requirement_types as rt', 'r.requirement_type_id', '=', 'rt.id')
-            ->leftJoin('quote_details as qd', 'pr.quote_detail_id', '=', 'qd.id')
-            ->leftJoin('pricelists as p', 'qd.pricelist_id', '=', 'p.id')
-            ->leftJoin('units as u_req', 'r.unit_id', '=', 'u_req.id')
-            ->leftJoin('units as u_price', 'p.unit_id', '=', 'u_price.id')
-            ->where('pr.project_id', $projectId)
-            ->where('qwd.attended_quantity', '>', 0)
-            ->select([
-                'qwd.id',
-                DB::raw("COALESCE(r.product_description, p.sat_description, pr.comments) as sat_description"),
-                DB::raw("COALESCE(p.sat_line, 'SUMINISTRO') as sat_line"),
-                DB::raw("COALESCE(u_req.name, u_price.name, 'Unid') as unit_name"),
-                'qwd.attended_quantity',
-                DB::raw("COALESCE(rt.is_reusable, 0) as is_reusable"),
-            ])
+        $warehouseDetails = QuoteWarehouseDetail::with(['projectRequirement.requirementable.unit'])
+            ->whereHas('projectRequirement', function ($query) use ($projectId) {
+                $query->where('project_id', $projectId);
+            })
+            ->where('attended_quantity', '>', 0)
             ->get();
+
+        return $warehouseDetails->map(function ($qwd) {
+            $req = $qwd->projectRequirement;
+            $type = $req->requirementable;
+
+            $isReusable = 0;
+            $satLine = 'SUMINISTRO';
+            $satDescription = $req->comments ?? 'N/A';
+            $unitName = 'Unid';
+
+            if ($type instanceof \App\Models\Requirement) {
+                $satDescription = $type->product_description;
+                $unitName = $type->unit->name ?? 'Unid';
+                $isReusable = $type->requirementType->is_reusable ? 1 : 0;
+            } elseif ($type instanceof \App\Models\QuoteDetail) {
+                $satDescription = $type->pricelist->sat_description ?? $req->comments;
+                $satLine = $type->pricelist->sat_line ?? 'SUMINISTRO';
+                $unitName = $type->pricelist->unit->name ?? 'Unid';
+            } elseif ($type instanceof \App\Models\ToolUnit) {
+                $satDescription = $type->tool->name ?? 'Herramienta';
+                $satLine = 'HERRAMIENTAS';
+                $unitName = 'UND';
+                $isReusable = 1; // Tools are always reusable
+            }
+
+            return (object) [
+                'id' => $qwd->id,
+                'sat_description' => $satDescription,
+                'sat_line' => $satLine,
+                'unit_name' => $unitName,
+                'attended_quantity' => $qwd->attended_quantity,
+                'is_reusable' => $isReusable,
+            ];
+        });
     }
 
     /**

@@ -18,14 +18,13 @@ class QuoteWarehouseForm
                     ->relationship('quote', 'id')
                     ->required(),
                 Select::make('employee_id')
-                    ->relationship('employee', 'id')
+                    ->relationship('employee', 'name')
                     ->required(),
                 TextInput::make('status')
                     ->required()
                     ->default('pending'),
                 DateTimePicker::make('attended_at'),
                 Textarea::make('observations')
-                    ->default(null)
                     ->columnSpanFull(),
             ]);
     }

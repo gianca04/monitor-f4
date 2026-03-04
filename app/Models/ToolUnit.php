@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 
 class ToolUnit extends Model
 {
@@ -35,14 +36,13 @@ class ToolUnit extends Model
         return $this->hasMany(ProjectTool::class, 'tool_unit_id');
     }
 
-    public static function generateNextInternalCode(): string
+    public function projectRequirements(): MorphMany
     {
-        $last = self::where('internal_code', 'like', 'HRR-%')
-            ->selectRaw('MAX(CAST(SUBSTRING_INDEX(internal_code, "-", -1) AS UNSIGNED)) as max_num')
-            ->first();
+        return $this->morphMany(ProjectRequirement::class, 'requirementable');
+    }
 
-        $number = ($last->max_num ?? 0) + 1;
-
-        return 'HRR-' . str_pad($number, 3, '0', STR_PAD_LEFT);
+    public function scopeAvailable($query)
+    {
+        return $query->where('status', 'Disponible');
     }
 }

@@ -17,7 +17,7 @@ class QuoteWarehousesTable
                 TextColumn::make('quote.id')
                     ->numeric()
                     ->sortable(),
-                TextColumn::make('employee.id')
+                TextColumn::make('employee.name')
                     ->numeric()
                     ->sortable(),
                 TextColumn::make('status')
