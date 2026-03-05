@@ -104,6 +104,7 @@ Route::prefix('quotes')->middleware('auth')->group(function () {
 Route::prefix('quoteswarehouse')->middleware('auth')->group(function () {
     Route::get('preview/{quoteWarehouse}', [QuoteWarehouseController::class, 'preview'])->name('quoteswarehouse.preview');
     Route::post('store', [QuoteWarehouseController::class, 'store'])->name('quoteswarehouse.store');
+    Route::post('locations', [QuoteWarehouseController::class, 'storeLocation'])->name('quoteswarehouse.locations.store');
     // Ruta para generar el PDF de atención de suministros
     Route::get('pdf/{quoteWarehouse}', [QuoteWarehouseController::class, 'generatePdf'])
         ->name('quoteswarehouse.pdf')

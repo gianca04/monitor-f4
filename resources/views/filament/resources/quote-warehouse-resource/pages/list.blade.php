@@ -117,10 +117,79 @@
                     entregado: {{ $item['entregado'] ?? 0 }},
                     despachar: {{ $item['a_despachar'] ?? 0 }},
                     comment: '{{ $item['comment'] ?? '' }}',
-                    location_id: {{ $item['location_id'] ?? 'null' }}
+                    location_origin_id: {{ $item['location_origin_id'] ?? 'null' }},
+                    location_destination_id: {{ $item['location_destination_id'] ?? 'null' }},
+                    additional_cost: {{ $item['additional_cost'] ?? 0 }},
+                    cost_description: '{{ addslashes($item['cost_description'] ?? '') }}'
             }, @endforeach
         ],
         observaciones: '{{ $quoteWarehouse->observations ?? '' }}',
+
+        // Locations Data
+        locations: [
+            @foreach ($locations as $loc)
+                { id: {{ $loc->id }}, name: '{{ addslashes($loc->name) }}' },
+            @endforeach
+        ],
+
+        // New Location Modal
+        newLocationModal: {
+            open: false,
+            name: '',
+            description: '',
+            loading: false,
+            target: null,
+            targetIndex: null,
+        },
+
+        openNewLocationModal(target, index) {
+            this.newLocationModal = {
+                open: true,
+                name: '',
+                description: '',
+                loading: false,
+                target: target,
+                targetIndex: index,
+            };
+            this.$nextTick(() => this.$refs.newLocationName?.focus());
+        },
+
+        closeNewLocationModal() {
+            this.newLocationModal.open = false;
+        },
+
+        async createLocation() {
+            if (!this.newLocationModal.name.trim()) {
+                Swal.fire({ icon: 'warning', title: 'Nombre requerido', text: 'Ingrese un nombre para el lugar.', confirmButtonColor: '#137fec' });
+                return;
+            }
+            this.newLocationModal.loading = true;
+            try {
+                const response = await fetch('{{ route("quoteswarehouse.locations.store") }}', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content, 'Accept': 'application/json' },
+                    body: JSON.stringify({ name: this.newLocationModal.name.trim(), description: this.newLocationModal.description.trim() })
+                });
+                const data = await response.json();
+                if (data.success) {
+                    this.locations.push({ id: data.data.id, name: data.data.name });
+                    const idx = this.newLocationModal.targetIndex;
+                    if (this.newLocationModal.target === 'origin') {
+                        this.items[idx].location_origin_id = data.data.id;
+                    } else {
+                        this.items[idx].location_destination_id = data.data.id;
+                    }
+                    this.closeNewLocationModal();
+                    Swal.fire({ icon: 'success', title: 'Lugar creado', text: data.message, timer: 1500, showConfirmButton: false });
+                } else {
+                    Swal.fire({ icon: 'error', title: 'Error', text: data.message, confirmButtonColor: '#137fec' });
+                }
+            } catch (error) {
+                Swal.fire({ icon: 'error', title: 'Error', text: 'No se pudo crear el lugar.', confirmButtonColor: '#137fec' });
+            } finally {
+                this.newLocationModal.loading = false;
+            }
+        },
 
         // Assigned Tools Data
         assignedTools: [],
@@ -385,7 +454,10 @@
                     a_despachar: i.despachar,
                     quantity: i.solicitado,
                     comment: i.comment,
-                    location_id: i.location_id
+                    location_origin_id: i.location_origin_id,
+                    location_destination_id: i.location_destination_id,
+                    additional_cost: i.additional_cost || 0,
+                    cost_description: i.cost_description || ''
                 }));
             const payload = {
                 quote_warehouse_id: this.quoteWarehouseId,
@@ -538,8 +610,11 @@
                                     <th class="w-24 px-4 py-4 text-center" scope="col">Solicitado</th>
                                     <th class="w-24 px-4 py-4 text-center" scope="col">Entregado</th>
                                     <th class="w-40 px-4 py-4" scope="col">A Despachar</th>
-                                    <th class="w-48 px-4 py-4" scope="col">Lugar</th>
-                                    <th class="w-64 px-4 py-4" scope="col">Comentarios</th>
+                                    <th class="min-w-[220px] px-4 py-4" scope="col">Origen</th>
+                                    <th class="min-w-[220px] px-4 py-4" scope="col">Destino</th>
+                                    <th class="min-w-[320px] px-4 py-4" scope="col">Comentarios</th>
+                                    <th class="w-32 px-4 py-4 text-right" scope="col">Costo Adic.</th>
+                                    <th class="min-w-[200px] px-4 py-4" scope="col">Desc. Costo</th>
                                     <th class="w-20 px-4 py-4 text-right" scope="col">Estado</th>
                                 </tr>
                             </thead>
@@ -603,19 +678,60 @@
                                             </div>
                                         </td>
                                         <td class="px-4 py-4 align-top">
-                                            <select x-model="items[{{ $i }}].location_id"
-                                                class="block w-full rounded-md border-0 py-1.5 text-slate-900 ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-inset focus:ring-primary text-xs dark:bg-slate-900 dark:ring-slate-600 dark:text-white"
-                                                :disabled="{{ $completado ? 'true' : 'false' }}">
-                                                <option value="">Seleccione lugar...</option>
-                                                @foreach ($locations as $loc)
-                                                    <option value="{{ $loc->id }}">{{ $loc->name }}</option>
-                                                @endforeach
-                                            </select>
+                                            <div class="flex items-center gap-1">
+                                                <select x-model="items[{{ $i }}].location_origin_id"
+                                                    class="block w-full rounded-md border-0 py-1.5 text-slate-900 ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-inset focus:ring-primary text-xs dark:bg-slate-900 dark:ring-slate-600 dark:text-white"
+                                                    :disabled="{{ $completado ? 'true' : 'false' }}">
+                                                    <option value="">Origen...</option>
+                                                    <template x-for="loc in locations" :key="loc.id">
+                                                        <option :value="loc.id" x-text="loc.name" :selected="loc.id == items[{{ $i }}].location_origin_id"></option>
+                                                    </template>
+                                                </select>
+                                                @if (!$completado)
+                                                <button type="button" @click="openNewLocationModal('origin', {{ $i }})"
+                                                    class="flex-shrink-0 inline-flex items-center justify-center w-7 h-7 rounded-md text-primary hover:bg-primary/10 transition-colors"
+                                                    title="Agregar nuevo lugar">
+                                                    <span class="material-symbols-outlined text-[18px]">add_circle</span>
+                                                </button>
+                                                @endif
+                                            </div>
                                         </td>
                                         <td class="px-4 py-4 align-top">
-                                            <input type="text" x-model="items[{{ $i }}].comment"
-                                                class="block w-full rounded-md border-0 py-1.5 text-slate-900 ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-primary text-xs dark:bg-slate-900 dark:ring-slate-600 dark:text-white"
+                                            <div class="flex items-center gap-1">
+                                                <select x-model="items[{{ $i }}].location_destination_id"
+                                                    class="block w-full rounded-md border-0 py-1.5 text-slate-900 ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-inset focus:ring-primary text-xs dark:bg-slate-900 dark:ring-slate-600 dark:text-white"
+                                                    :disabled="{{ $completado ? 'true' : 'false' }}">
+                                                    <option value="">Destino...</option>
+                                                    <template x-for="loc in locations" :key="loc.id">
+                                                        <option :value="loc.id" x-text="loc.name" :selected="loc.id == items[{{ $i }}].location_destination_id"></option>
+                                                    </template>
+                                                </select>
+                                                @if (!$completado)
+                                                <button type="button" @click="openNewLocationModal('destination', {{ $i }})"
+                                                    class="flex-shrink-0 inline-flex items-center justify-center w-7 h-7 rounded-md text-primary hover:bg-primary/10 transition-colors"
+                                                    title="Agregar nuevo lugar">
+                                                    <span class="material-symbols-outlined text-[18px]">add_circle</span>
+                                                </button>
+                                                @endif
+                                            </div>
+                                        </td>
+                                        <td class="px-8 py-4 align-top">
+                                            <textarea x-model="items[{{ $i }}].comment" rows="2"
+                                                class="block w-full rounded-md border-0 py-1.5 px-2 text-slate-900 ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-primary text-xs dark:bg-slate-900 dark:ring-slate-600 dark:text-white resize-y"
                                                 placeholder="Nota opcional..."
+                                                :disabled="{{ $completado ? 'true' : 'false' }}"></textarea>
+                                        </td>
+                                        <td class="px-4 py-4 text-right align-top">
+                                            <input type="number" x-model.number="items[{{ $i }}].additional_cost"
+                                                min="0" step="0.01"
+                                                class="block w-full rounded-md border-0 py-1.5 px-2 text-slate-900 ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-primary text-xs dark:bg-slate-900 dark:ring-slate-600 dark:text-white text-right"
+                                                placeholder="0.00"
+                                                :disabled="{{ $completado ? 'true' : 'false' }}" />
+                                        </td>
+                                        <td class="px-4 py-4 align-top">
+                                            <input type="text" x-model="items[{{ $i }}].cost_description"
+                                                class="block w-full rounded-md border-0 py-1.5 px-2 text-slate-900 ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-primary text-xs dark:bg-slate-900 dark:ring-slate-600 dark:text-white"
+                                                placeholder="Ej: Flete, transporte..."
                                                 :disabled="{{ $completado ? 'true' : 'false' }}" />
                                         </td>
                                         @if ($completado)
@@ -675,9 +791,15 @@
                 <div
                     class="flex items-center justify-between px-6 py-3 text-sm border-t bg-slate-50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400">
                     <span>Mostrando {{ count($details) }} ítems</span>
-                    <div class="flex gap-2">
-                        <span class="font-medium text-slate-700 dark:text-slate-300">Progreso Total:</span>
-                        <span class="font-bold text-primary" x-text="progresoTotal + '%'"></span>
+                    <div class="flex gap-4">
+                        <div class="flex gap-2">
+                            <span class="font-medium text-slate-700 dark:text-slate-300">Costos Adic.:</span>
+                            <span class="font-bold text-amber-600" x-text="'$' + items.reduce((sum, i) => sum + (parseFloat(i.additional_cost) || 0), 0).toFixed(2)"></span>
+                        </div>
+                        <div class="flex gap-2">
+                            <span class="font-medium text-slate-700 dark:text-slate-300">Progreso Total:</span>
+                            <span class="font-bold text-primary" x-text="progresoTotal + '%'"></span>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -699,6 +821,13 @@
                 <input type="hidden" name="progreso_total" :value="progresoTotal">
                 <div class="flex items-center justify-between pt-2">
                     <div class="flex gap-4">
+                        <!-- Botón Cancelar -->
+                        <button type="button"
+                            class="flex min-w-[150px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-12 px-6 bg-white border border-slate-300 text-slate-700 gap-2 pl-5 text-base font-semibold leading-normal hover:bg-slate-50 transition-all"
+                            @click="window.history.back()">
+                            <span class="material-symbols-outlined text-[20px]">arrow_back</span>
+                            <span class="truncate">Cancelar</span>
+                        </button>
 
                         <!-- Botón Confirmar -->
                         <button type="button"
@@ -710,6 +839,59 @@
                     </div>
                 </div>
             </form>
+
+            {{-- Modal: Nuevo Lugar --}}
+            <div x-show="newLocationModal.open" x-cloak
+                class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
+                x-transition:enter="transition ease-out duration-200"
+                x-transition:enter-start="opacity-0"
+                x-transition:enter-end="opacity-100"
+                x-transition:leave="transition ease-in duration-150"
+                x-transition:leave-start="opacity-100"
+                x-transition:leave-end="opacity-0"
+                @keydown.escape.window="closeNewLocationModal()">
+                <div class="w-full max-w-md bg-white rounded-xl shadow-xl dark:bg-gray-900 border border-slate-200 dark:border-slate-700"
+                    @click.outside="closeNewLocationModal()">
+                    <div class="flex items-center justify-between px-6 py-4 border-b border-slate-200 dark:border-slate-700">
+                        <div class="flex items-center gap-2">
+                            <span class="material-symbols-outlined text-primary text-[22px]">add_location_alt</span>
+                            <h3 class="text-base font-bold text-slate-900 dark:text-white">Nuevo Lugar</h3>
+                        </div>
+                        <button type="button" @click="closeNewLocationModal()"
+                            class="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+                            <span class="material-symbols-outlined text-slate-400 text-[20px]">close</span>
+                        </button>
+                    </div>
+                    <div class="px-6 py-4 space-y-4">
+                        <div>
+                            <label class="block mb-1.5 text-sm font-medium text-slate-700 dark:text-slate-300">Nombre <span class="text-red-500">*</span></label>
+                            <input type="text" x-model="newLocationModal.name" x-ref="newLocationName"
+                                @keydown.enter.prevent="createLocation()"
+                                class="block w-full rounded-lg border-0 py-2 px-3 text-sm text-slate-900 ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-primary dark:bg-slate-800 dark:ring-slate-600 dark:text-white"
+                                placeholder="Ej: Almacén Central, Planta 2...">
+                        </div>
+                        <div>
+                            <label class="block mb-1.5 text-sm font-medium text-slate-700 dark:text-slate-300">Descripción <span class="text-slate-400 font-normal">(opcional)</span></label>
+                            <input type="text" x-model="newLocationModal.description"
+                                class="block w-full rounded-lg border-0 py-2 px-3 text-sm text-slate-900 ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-primary dark:bg-slate-800 dark:ring-slate-600 dark:text-white"
+                                placeholder="Descripción breve del lugar...">
+                        </div>
+                    </div>
+                    <div class="flex items-center justify-end gap-3 px-6 py-4 border-t border-slate-200 dark:border-slate-700">
+                        <button type="button" @click="closeNewLocationModal()"
+                            class="px-4 py-2 text-sm font-medium rounded-lg border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
+                            Cancelar
+                        </button>
+                        <button type="button" @click="createLocation()"
+                            :disabled="newLocationModal.loading || !newLocationModal.name.trim()"
+                            class="inline-flex items-center gap-2 px-4 py-2 text-sm font-bold text-white rounded-lg bg-primary hover:bg-primary-dark disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
+                            <span x-show="newLocationModal.loading" class="material-symbols-outlined text-[16px] animate-spin">progress_activity</span>
+                            <span x-show="!newLocationModal.loading" class="material-symbols-outlined text-[16px]">add</span>
+                            <span x-text="newLocationModal.loading ? 'Creando...' : 'Crear Lugar'"></span>
+                        </button>
+                    </div>
+                </div>
+            </div>
         </div>
     </main>
 

@@ -17,7 +17,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property int $quote_detail_id ID del detalle de la cotización original
  * @property float $attended_quantity Cantidad atendida por almacén para este ítem
  * @property string|null $comment Comentario sobre la atención
- * @property int|null $location_id ID del lugar o estación de procedencia/destino
+ * @property int|null $location_origin_id ID del lugar de origen
+ * @property int|null $location_destination_id ID del lugar de destino
  * @property \Illuminate\Support\Carbon|null $created_at Fecha de creación del registro
  * @property \Illuminate\Support\Carbon|null $updated_at Fecha de última actualización del registro
  *
@@ -45,7 +46,10 @@ class QuoteWarehouseDetail extends Model
         'project_requirement_id',
         'attended_quantity',
         'comment',
-        'location_id',
+        'location_origin_id',
+        'location_destination_id',
+        'additional_cost',
+        'cost_description',
     ];
 
     /**
@@ -55,6 +59,7 @@ class QuoteWarehouseDetail extends Model
      */
     protected $casts = [
         'attended_quantity' => 'decimal:2',
+        'additional_cost' => 'decimal:2',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
     ];
@@ -80,13 +85,23 @@ class QuoteWarehouseDetail extends Model
     }
 
     /**
-     * Obtiene el lugar o estación asociado.
+     * Obtiene el lugar de origen asociado.
      *
      * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
      */
-    public function location(): BelongsTo
+    public function locationOrigin(): BelongsTo
     {
-        return $this->belongsTo(Location::class, 'location_id');
+        return $this->belongsTo(Location::class, 'location_origin_id');
+    }
+
+    /**
+     * Obtiene el lugar de destino asociado.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     */
+    public function locationDestination(): BelongsTo
+    {
+        return $this->belongsTo(Location::class, 'location_destination_id');
     }
 
     /**

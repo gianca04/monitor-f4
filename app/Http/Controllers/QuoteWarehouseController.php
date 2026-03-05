@@ -75,7 +75,10 @@ class QuoteWarehouseController extends Controller
                 'entregado'        => $attended,
                 'type_name'        => $req->consumable_type_name,
                 'comment'          => $detailsByReqId[$req->id]->comment ?? '',
-                'location_id'      => $detailsByReqId[$req->id]->location_id ?? null,
+                'location_origin_id' => $detailsByReqId[$req->id]->location_origin_id ?? null,
+                'location_destination_id' => $detailsByReqId[$req->id]->location_destination_id ?? null,
+                'additional_cost'  => $detailsByReqId[$req->id]->additional_cost ?? 0,
+                'cost_description' => $detailsByReqId[$req->id]->cost_description ?? '',
             ];
         }
 
@@ -163,7 +166,10 @@ class QuoteWarehouseController extends Controller
                         $detalleExistente->update([
                             'attended_quantity' => $detalleExistente->attended_quantity + $detail['a_despachar'],
                             'comment'           => $detail['comment'] ?? $detalleExistente->comment,
-                            'location_id'       => $detail['location_id'] ?? $detalleExistente->location_id,
+                            'location_origin_id' => $detail['location_origin_id'] ?? $detalleExistente->location_origin_id,
+                            'location_destination_id' => $detail['location_destination_id'] ?? $detalleExistente->location_destination_id,
+                            'additional_cost'    => $detail['additional_cost'] ?? $detalleExistente->additional_cost,
+                            'cost_description'   => $detail['cost_description'] ?? $detalleExistente->cost_description,
                         ]);
                     } else {
                         // Si no existe, creamos un nuevo registro
@@ -172,8 +178,20 @@ class QuoteWarehouseController extends Controller
                             'project_requirement_id' => $detail['project_requirement_id'],
                             'attended_quantity'      => $detail['a_despachar'],
                             'comment'                => $detail['comment'] ?? null,
-                            'location_id'            => $detail['location_id'] ?? null,
+                            'location_origin_id'     => $detail['location_origin_id'] ?? null,
+                            'location_destination_id' => $detail['location_destination_id'] ?? null,
+                            'additional_cost'        => $detail['additional_cost'] ?? 0,
+                            'cost_description'       => $detail['cost_description'] ?? null,
                         ]);
+                    }
+
+                    // Actualizar el estado de la herramienta a "En Uso" si es una unidad de herramienta despachada
+                    $projectReq = \App\Models\ProjectRequirement::find($detail['project_requirement_id']);
+                    if ($projectReq && $projectReq->requirementable_type === \App\Models\ToolUnit::class) {
+                        $toolUnit = $projectReq->requirementable;
+                        if ($toolUnit && $toolUnit->status !== 'En Uso') {
+                            $toolUnit->update(['status' => 'En Uso']);
+                        }
                     }
 
                     $guardados++;
@@ -222,23 +240,37 @@ class QuoteWarehouseController extends Controller
     public function generatePdf(QuoteWarehouse $quoteWarehouse)
     {
         $quote = $quoteWarehouse->quote;
-        $quote->load(['subClient', 'quoteDetails.pricelist.unit']);
-        $quoteWarehouse->load('employee.employee');
+        $quote->load(['subClient.client', 'project', 'quoteDetails.pricelist.unit']);
+        $quoteWarehouse->load(['employee.employee', 'details']);
 
-        // Obtener los detalles atendidos por almacén (quote_warehouse_details) agrupados por project_requirement_id
+        // Obtener los detalles atendidos por almacén agrupados por project_requirement_id
         $warehouseDetails = QuoteWarehouseDetail::where('quote_warehouse_id', $quoteWarehouse->id)
             ->get()
             ->keyBy('project_requirement_id');
 
+        // Pre-cargar todas las ubicaciones usadas
+        $locationIds = $warehouseDetails->pluck('location_origin_id')
+            ->merge($warehouseDetails->pluck('location_destination_id'))
+            ->filter()
+            ->unique();
+        $locationsMap = Location::whereIn('id', $locationIds)->pluck('name', 'id');
+
         $groupedDetails = $quote->project->projectRequirements->groupBy('consumable_type_name');
 
         $details = [];
+        $hasAdditionalCosts = false;
+        $totalAdditionalCost = 0;
+
         foreach (['Suministro', 'Herramienta'] as $type) {
             if ($groupedDetails->has($type)) {
                 foreach ($groupedDetails[$type] as $req) {
-                    $attended = $warehouseDetails[$req->id]->attended_quantity ?? 0;
+                    $warehouseDetail = $warehouseDetails[$req->id] ?? null;
+                    $attended = $warehouseDetail->attended_quantity ?? 0;
 
-                    $satLine = '';
+                    if ($attended <= 0) {
+                        continue;
+                    }
+
                     $satDescription = '';
                     $unitName = '';
 
@@ -246,46 +278,96 @@ class QuoteWarehouseController extends Controller
                         $satDescription = $req->requirementable->product_description;
                         $unitName = $req->requirementable->unit->name ?? 'UND';
                     } elseif ($req->requirementable instanceof \App\Models\QuoteDetail) {
-                        $satLine = $req->requirementable->pricelist->sat_line ?? '';
                         $satDescription = $req->requirementable->pricelist->sat_description ?? '';
                         $unitName = $req->requirementable->pricelist->unit->name ?? 'UND';
                     } elseif ($req->requirementable instanceof \App\Models\ToolUnit) {
-                        $satLine = 'HERRAMIENTAS';
                         $satDescription = $req->requirementable->tool->name ?? 'Herramienta';
                         $unitName = 'UND';
                     }
 
+                    $additionalCost = (float) ($warehouseDetail->additional_cost ?? 0);
+                    if ($additionalCost > 0) {
+                        $hasAdditionalCosts = true;
+                    }
+                    $totalAdditionalCost += $additionalCost;
+
                     $details[] = [
                         'item_type'        => $type,
-                        'sat_line'         => $satLine,
+                        'product_name'     => $req->product_name ?? $satDescription,
                         'sat_description'  => $satDescription,
                         'quantity'         => $req->quantity,
-                        'unit_price'       => $req->price_unit,
-                        'subtotal'         => $req->subtotal,
                         'unit_name'        => $unitName,
                         'entregado'        => $attended,
+                        'origin_name'      => $locationsMap[$warehouseDetail->location_origin_id ?? 0] ?? '',
+                        'destination_name' => $locationsMap[$warehouseDetail->location_destination_id ?? 0] ?? '',
+                        'additional_cost'  => $additionalCost,
+                        'cost_description' => $warehouseDetail->cost_description ?? '',
                     ];
                 }
             }
         }
 
-        // Obtener el logo del cliente si existe
-        $clientLogo = $quote->subClient->logo ?? null;
+        // Determinar ubicaciones predominantes para encabezado (la más frecuente)
+        $originCounts = $warehouseDetails->pluck('location_origin_id')->filter()->countBy();
+        $destCounts = $warehouseDetails->pluck('location_destination_id')->filter()->countBy();
+        $mainOriginId = $originCounts->sortDesc()->keys()->first();
+        $mainDestId = $destCounts->sortDesc()->keys()->first();
 
-        // Generar el PDF
+        // Generar el PDF con orientación portrait para acomodar en hoja A4 vertical
         $pdf = Pdf::loadView('filament.resources.quote-warehouse-resource.pages.pdf', [
-            'quoteWarehouse' => $quoteWarehouse,
-            'quote'          => $quote,
-            'clientName'     => $quote->subClient->name ?? 'Sin Cliente',
-            'quoteDate'      => $quote->quote_date ? $quote->quote_date->format('d/m/Y') : 'N/A',
-            'executionDate'  => $quote->execution_date ? $quote->execution_date->format('d/m/Y') : 'N/A',
-            'status'         => $quoteWarehouse->status,
-            'details'        => $details,
-            'clientLogo'     => $clientLogo ? public_path('storage/' . $clientLogo) : null,
-            'observations'   => $quoteWarehouse->observations, // Agregar observaciones
-            'downloadDate'   => now()->timezone('America/Lima')->format('d/m/Y H:i:s'), // Cambiar: Ajustar zona horaria a Perú
+            'quoteWarehouse'      => $quoteWarehouse,
+            'quote'               => $quote,
+            'clientName'          => $quote->subClient->client->business_name ?? ($quote->subClient->name ?? 'Sin Cliente'),
+            'clientRuc'           => $quote->subClient->client->document_number ?? '—',
+            'projectName'         => $quote->project->name ?? '—',
+            'serviceCode'         => $quote->project->service_code ?? '—',
+            'attendedBy'          => $quoteWarehouse->employee->employee->short_name ?? ($quoteWarehouse->employee->name ?? 'N/A'),
+            'transferDate'        => $quoteWarehouse->attended_at ? $quoteWarehouse->attended_at->format('d/m/Y') : ($quote->execution_date ? $quote->execution_date->format('d/m/Y') : now()->timezone('America/Lima')->format('d/m/Y')),
+            'originLocation'      => $locationsMap[$mainOriginId] ?? '',
+            'destinationLocation' => $locationsMap[$mainDestId] ?? '',
+            'details'             => $details,
+            'hasAdditionalCosts'  => $hasAdditionalCosts,
+            'totalAdditionalCost' => $totalAdditionalCost,
+            'observations'        => $quoteWarehouse->observations,
+            'downloadDate'        => now()->timezone('America/Lima')->format('d/m/Y H:i:s'),
+        ])->setPaper('a4', 'portrait');
+
+        $filename = 'Guia_Remision_' . str_pad($quoteWarehouse->id, 6, '0', STR_PAD_LEFT) . '.pdf';
+        return $pdf->stream($filename);
+    }
+
+    /**
+     * Crea un nuevo lugar/destino desde la vista de despacho.
+     */
+    public function storeLocation(Request $request)
+    {
+        $request->validate([
+            'name' => 'required|string|max:255|unique:locations,name',
+        ], [
+            'name.required' => 'El nombre del lugar es obligatorio.',
+            'name.unique' => 'Ya existe un lugar con ese nombre.',
         ]);
 
-        return $pdf->stream('Atencion_Suministros.pdf');
+        try {
+            $location = Location::create([
+                'name' => $request->input('name'),
+                'description' => $request->input('description'),
+                'is_active' => true,
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Lugar creado correctamente.',
+                'data' => [
+                    'id' => $location->id,
+                    'name' => $location->name,
+                ],
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al crear el lugar: ' . $e->getMessage(),
+            ], 500);
+        }
     }
 }

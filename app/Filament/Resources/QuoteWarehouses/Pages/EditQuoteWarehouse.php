@@ -93,7 +93,10 @@ class EditQuoteWarehouse extends EditRecord
                 'entregado'        => $attended,
                 'type_name'        => $req->consumable_type_name,
                 'comment'          => $detailsByReqId[$req->id]->comment ?? '',
-                'location_id'      => $detailsByReqId[$req->id]->location_id ?? null,
+                'location_origin_id' => $detailsByReqId[$req->id]->location_origin_id ?? null,
+                'location_destination_id' => $detailsByReqId[$req->id]->location_destination_id ?? null,
+                'additional_cost'  => $detailsByReqId[$req->id]->additional_cost ?? 0,
+                'cost_description' => $detailsByReqId[$req->id]->cost_description ?? '',
             ];
         }
 
