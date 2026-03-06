@@ -2,7 +2,7 @@ import { createEmptyBoard, ITEM_TYPE_MAP } from '../constants.js';
 
 /**
  * useBoardManager
- * Manages the boards array, quote type switching, and board initialization.
+ * Manages the boards array, active tab, section collapse, quote type switching, and board initialization.
  */
 export function useBoardManager() {
     return {
@@ -12,16 +12,77 @@ export function useBoardManager() {
         /** @type {Array<{id: string, name: string, items: object}>} */
         boards: [],
 
+        /** Index of the currently visible board (tab) */
+        activeBoardIndex: 0,
+
+        /** Track which sections are collapsed per board: { 'boardId:sectionKey': true } */
+        collapsedSections: {},
+
+        /** Tab being renamed (index), null if none */
+        renamingTabIndex: null,
+
+        // ─── Active Board Helpers ─────────────────────────
+
+        /** Get the currently active board object. */
+        get activeBoard() {
+            return this.boards[this.activeBoardIndex] || null;
+        },
+
+        setActiveBoard(index) {
+            if (index >= 0 && index < this.boards.length) {
+                this.activeBoardIndex = index;
+            }
+        },
+
+        // ─── Section Collapse (Accordion) ──────────────────
+
+        toggleSection(bIndex, sectionKey) {
+            const key = `${this.boards[bIndex]?.id}:${sectionKey}`;
+            this.collapsedSections[key] = !this.collapsedSections[key];
+        },
+
+        isSectionCollapsed(bIndex, sectionKey) {
+            const key = `${this.boards[bIndex]?.id}:${sectionKey}`;
+            return !!this.collapsedSections[key];
+        },
+
+        // ─── Tab Rename ──────────────────────────────────
+
+        startRenameTab(index) {
+            if (this.quoteType === 'Preventivo') {
+                this.renamingTabIndex = index;
+                this.$nextTick(() => {
+                    const input = this.$refs[`tabInput${index}`];
+                    if (input) {
+                        input.focus();
+                        input.select();
+                    }
+                });
+            }
+        },
+
+        finishRenameTab() {
+            this.renamingTabIndex = null;
+        },
+
         // ─── Board CRUD ───────────────────────────────────
 
         addBoard() {
             const idx = this.boards.length + 1;
             this.boards.push(createEmptyBoard(`Tablero ${idx}`));
+            // Auto-switch to the new tab
+            this.activeBoardIndex = this.boards.length - 1;
         },
 
         removeBoard(index) {
             if (this.boards.length > 1) {
                 this.boards.splice(index, 1);
+                // Adjust active index
+                if (this.activeBoardIndex >= this.boards.length) {
+                    this.activeBoardIndex = this.boards.length - 1;
+                } else if (this.activeBoardIndex > index) {
+                    this.activeBoardIndex--;
+                }
             }
         },
 
@@ -54,6 +115,8 @@ export function useBoardManager() {
                 });
                 this.boards.push(board);
             });
+
+            this.activeBoardIndex = 0;
         },
 
         /**
@@ -77,6 +140,7 @@ export function useBoardManager() {
                 });
             });
             this.boards.push(board);
+            this.activeBoardIndex = 0;
         },
 
         /** Creates a single default empty board. */
@@ -86,6 +150,7 @@ export function useBoardManager() {
                     this.quoteType === 'Preventivo' ? 'Tablero 1' : 'CORRECTIVO'
                 )
             );
+            this.activeBoardIndex = 0;
         },
 
         /**
@@ -101,6 +166,7 @@ export function useBoardManager() {
                     if (this.boards.length > 0) {
                         this.boards[0].name = 'CORRECTIVO';
                     }
+                    this.activeBoardIndex = 0;
                 } else if (value === 'Preventivo') {
                     if (this.boards.length > 0 && this.boards[0].name === 'CORRECTIVO') {
                         this.boards[0].name = 'Tablero 1';

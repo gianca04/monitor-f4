@@ -5,7 +5,6 @@
         href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
 
     {{-- Main Container with Alpine --}}
-    {{-- Pasamos los datos desde PHP directamente, eliminando llamadas API innecesarias --}}
     <div x-data="quoteManager(
         @js($quoteCategories),
         @js($clients),
@@ -18,60 +17,75 @@
         @js($projectId ?? null),
         @js($suggestedRequestNumber ?? null),
         @js($quoteType ?? 'Correctivo')
-    )" class="space-y-4">
+    )" class="quote-workspace">
 
         {{-- Collapsible Sidebar (Top Panel) --}}
         @include('filament.resources.quote-resource.components.quote-sidebar')
 
-        {{-- Main Content (Full Width) --}}
-        <main class="space-y-6">
-            <template x-for="(board, bIndex) in boards" :key="board.id">
-                <div
-                    class="relative bg-white dark:bg-gray-800 rounded-[2rem] shadow-sm border border-gray-200 dark:border-gray-700 p-6 space-y-5">
+        {{-- ═══════════════════════════════════════════════ --}}
+        {{-- TAB BAR (Excel-style board navigation) --}}
+        {{-- ═══════════════════════════════════════════════ --}}
+        <div class="quote-tab-bar">
+            <div class="quote-tab-bar__tabs">
+                <template x-for="(board, bIndex) in boards" :key="board.id">
+                    <div class="quote-tab" :class="{
+                            'quote-tab--active': activeBoardIndex === bIndex,
+                            'quote-tab--preventivo': quoteType === 'Preventivo'
+                        }" @click="setActiveBoard(bIndex)" @dblclick.stop="startRenameTab(bIndex)"
+                        @contextmenu.prevent="$event.target.closest('.quote-tab') && (quoteType === 'Preventivo' && boards.length > 1) ? removeBoard(bIndex) : null">
 
-                    {{-- Board Header --}}
-                    <div class="flex items-center justify-between mb-2">
-                        <div class="flex items-center gap-3 w-full max-w-sm">
-                            <span class="flex items-center justify-center w-10 h-10 rounded-full"
-                                :class="quoteType === 'Preventivo' ? 'bg-purple-100 text-purple-600 dark:bg-purple-900/40 dark:text-purple-400' : 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/40 dark:text-emerald-400'">
-                                <span class="material-symbols-outlined text-xl"
-                                    x-text="quoteType === 'Preventivo' ? 'calendar_month' : 'build'"></span>
-                            </span>
-                            <div class="flex-1">
-                                <input x-show="quoteType === 'Preventivo'" type="text" x-model="board.name"
-                                    class="w-full px-3 py-1.5 text-lg font-black text-gray-800 dark:text-white bg-transparent border-0 border-b-2 border-transparent hover:border-gray-300 focus:border-emerald-500 focus:ring-0 transition-all"
-                                    placeholder="Nombre del grupo..." />
-                                <h2 x-show="quoteType === 'Correctivo'"
-                                    class="text-lg font-black text-gray-800 dark:text-white uppercase tracking-tight"
-                                    x-text="board.name"></h2>
-                            </div>
-                        </div>
+                        {{-- Tab icon --}}
+                        <span class="quote-tab__icon material-symbols-outlined"
+                            x-text="quoteType === 'Preventivo' ? 'dashboard' : 'build'"></span>
 
-                        {{-- Eliminar Tarjeta Button --}}
-                        <button x-show="quoteType === 'Preventivo' && boards.length > 1" @click="removeBoard(bIndex)"
-                            class="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-all">
-                            <span class="material-symbols-outlined text-xl">delete</span>
+                        {{-- Tab label (display) --}}
+                        <span x-show="renamingTabIndex !== bIndex" class="quote-tab__label" x-text="board.name"></span>
+
+                        {{-- Tab label (inline edit) --}}
+                        <input x-show="renamingTabIndex === bIndex" x-ref="tabInput" x-model="board.name"
+                            @blur="finishRenameTab()" @keydown.enter="finishRenameTab()"
+                            @keydown.escape="finishRenameTab()" @click.stop class="quote-tab__input" type="text" />
+
+                        {{-- Item count badge --}}
+                        <span class="quote-tab__badge" x-text="getBoardItemCount(bIndex)"
+                            x-show="getBoardItemCount(bIndex) > 0"></span>
+
+                        {{-- Close button (Preventivo, >1 board) --}}
+                        <button x-show="quoteType === 'Preventivo' && boards.length > 1 && activeBoardIndex === bIndex"
+                            @click.stop="removeBoard(bIndex)" class="quote-tab__close" title="Eliminar grupo">
+                            <span class="material-symbols-outlined text-xs">close</span>
                         </button>
                     </div>
+                </template>
 
-                    {{-- Sections loop for this board --}}
-                    <div class="space-y-5">
-                        <template x-for="section in sections" :key="section.key">
-                            @include('filament.resources.quote-resource.components.section-card')
-                        </template>
-                    </div>
-
-                </div>
-            </template>
-
-            {{-- Añadir Board Múltiple --}}
-            <div x-show="quoteType === 'Preventivo'" class="flex justify-center mt-6">
-                <button @click="addBoard()"
-                    class="flex items-center gap-2 px-6 py-3 font-bold text-emerald-600 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 rounded-full shadow-sm hover:shadow-md transition-all active:scale-95">
-                    <span class="material-symbols-outlined text-xl">add_box</span>
-                    <span>Añadir Grupo</span>
+                {{-- Add Tab Button (Preventivo only) --}}
+                <button x-show="quoteType === 'Preventivo'" @click="addBoard()" class="quote-tab quote-tab--add"
+                    title="Añadir nuevo grupo">
+                    <span class="material-symbols-outlined text-base">add</span>
                 </button>
             </div>
+
+            {{-- Right side: Board info --}}
+            <div class="quote-tab-bar__info">
+                <span class="text-[10px] uppercase tracking-wider text-gray-400 font-bold" x-text="quoteType"></span>
+                <span class="text-[10px] text-gray-300">·</span>
+                <span class="text-[10px] font-mono text-gray-400"
+                    x-text="boards.length + (boards.length === 1 ? ' grupo' : ' grupos')"></span>
+            </div>
+        </div>
+
+        {{-- ═══════════════════════════════════════════════ --}}
+        {{-- ACTIVE BOARD CONTENT (single board at a time) --}}
+        {{-- ═══════════════════════════════════════════════ --}}
+        <main class="quote-board">
+            <template x-if="boards.length > 0 && boards[activeBoardIndex]">
+                <div>
+                    {{-- Sections loop for active board --}}
+                    <template x-for="section in sections" :key="section.key">
+                        @include('filament.resources.quote-resource.components.section-card')
+                    </template>
+                </div>
+            </template>
         </main>
 
         {{-- Spacer for sticky footer --}}
@@ -82,8 +96,6 @@
 
         {{-- Sticky Footer --}}
         @include('filament.resources.quote-resource.components.quote-footer')
-
-        {{-- Puedes mostrar el project_id en la vista principal si lo necesitas --}}
 
     </div>
 

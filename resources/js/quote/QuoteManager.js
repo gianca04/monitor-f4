@@ -257,6 +257,20 @@ export function quoteManager(
             );
         },
 
+        /** Subtotal for a single board (all sections). */
+        getBoardSubtotal(bIndex) {
+            let total = 0;
+            this.sections.forEach((s) => (total += this.getSectionSubtotal(bIndex, s.key)));
+            return total;
+        },
+
+        /** Item count for a single board. */
+        getBoardItemCount(bIndex) {
+            let count = 0;
+            Object.values(this.boards[bIndex].items).forEach((arr) => (count += arr.length));
+            return count;
+        },
+
         getTotalItems() {
             let total = 0;
             this.boards.forEach((board) => {
