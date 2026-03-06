@@ -33,6 +33,7 @@ class CreateQuote extends CreateRecord
     public ?object $project = null;
     public ?string $suggestedRequestNumber = null;
     public ?int $suggestedProjectId = null;
+    public ?string $quoteType = null;
 
     public function mount(): void
     {
@@ -48,6 +49,7 @@ class CreateQuote extends CreateRecord
         $this->project = $projectId ? Project::find($projectId) : null;
         $this->subClientId = request()->query('sub_client_id');
         $this->serviceCode = request()->query('service_code');
+        $this->quoteType = request()->query('quote_type', 'Correctivo');
 
         if ($projectId) {
             $this->suggestedRequestNumber = Quote::generateNextRequestNumber($projectId);

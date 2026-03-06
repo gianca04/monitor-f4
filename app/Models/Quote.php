@@ -55,7 +55,7 @@ class Quote extends Model
      * @var array<int, string>
      */
     protected $fillable = [
-        // 'service_name', // Removed as per refactor
+        
         'request_number',
         'project_id',
         'employee_id',
@@ -64,6 +64,7 @@ class Quote extends Model
         'energy_sci_manager',
         'ceco',
         'status',
+        'quote_type',
         'quote_date',
         'execution_date',
     ];
@@ -79,6 +80,7 @@ class Quote extends Model
         'energy_sci_manager' => 'string',
         'ceco' => 'string',
         'status' => 'string',
+        'quote_type' => \App\Enums\QuoteType::class,
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
     ];
@@ -163,6 +165,16 @@ class Quote extends Model
     public function visits(): HasMany
     {
         return $this->hasMany(Visit::class, 'quote_id');
+    }
+
+    /**
+     * Obtiene los grupos asociados a esta cotización.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany<\App\Models\QuoteGroup>
+     */
+    public function quoteGroups(): HasMany
+    {
+        return $this->hasMany(QuoteGroup::class, 'quote_id');
     }
 
     /**

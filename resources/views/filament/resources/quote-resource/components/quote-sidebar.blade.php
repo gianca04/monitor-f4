@@ -96,6 +96,18 @@
             {{-- Grid de campos en columnas --}}
             <div class="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
 
+                {{-- Tipo Cotización --}}
+                <div class="col-span-1">
+                    <label
+                        class="block mb-1.5 text-[11px] font-bold uppercase tracking-wider text-gray-400">Tipo</label>
+                    <select x-model="quoteType"
+                        class="w-full text-sm sidebar-input appearance-none bg-no-repeat bg-[right_0.5rem_center] cursor-pointer"
+                        :class="quoteType === 'Preventivo' ? 'text-purple-700 font-bold bg-purple-50 ring-purple-500' : 'text-emerald-700 font-bold bg-emerald-50 ring-emerald-500'">
+                        <option value="Correctivo">Correctivo</option>
+                        <option value="Preventivo">Preventivo</option>
+                    </select>
+                </div>
+
                 {{-- Categoría --}}
                 <div>
                     <label

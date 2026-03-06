@@ -162,8 +162,8 @@ class QuoteController extends Controller
                 // Crear la cotización (y el proyecto si es necesario)
                 $quote = Quote::createWithProject($validated);
 
-                // 3. Procesar los detalles (items)
-                $this->processQuoteItems($quote, $request->input('items', []));
+                // 3. Procesar los detalles (groups o items para compatibilidad)
+                $this->processQuoteData($quote, $request);
 
                 if ($quote->project && $quote->execution_date) {
                     $quote->project->update([
@@ -201,11 +201,35 @@ class QuoteController extends Controller
     /**
      * Método auxiliar para procesar items de cotización
      */
-    private function processQuoteItems(Quote $quote, array $items): void
+    private function processQuoteData(Quote $quote, Request $request): void
     {
-        // Eliminar items existentes primero
+        // Limpiar items y grupos existentes primero
         $quote->details()->delete();
+        $quote->quoteGroups()->delete();
 
+        if ($request->has('groups') && is_array($request->input('groups'))) {
+            $order = 1;
+            foreach ($request->input('groups') as $groupData) {
+                $group = $quote->quoteGroups()->create([
+                    'name' => $groupData['name'] ?? ('GRUPO ' . $order),
+                    'order' => $order++
+                ]);
+
+                $this->saveItemsToGroup($quote, $group, $groupData['items'] ?? []);
+            }
+        } elseif ($request->has('items') && is_array($request->input('items'))) {
+            // Compatibilidad con formato flat items (o tipo Correctivo sin grupos especificados)
+            $group = $quote->quoteGroups()->create([
+                'name' => 'CORRECTIVO',
+                'order' => 1
+            ]);
+            
+            $this->saveItemsToGroup($quote, $group, $request->input('items'));
+        }
+    }
+
+    private function saveItemsToGroup(Quote $quote, \App\Models\QuoteGroup $group, array $items): void
+    {
         $line = 1;
         foreach ($items as $item) {
             $quantity = (float) $item['quantity'];
@@ -213,6 +237,7 @@ class QuoteController extends Controller
             $subtotal = round($quantity * $unitPrice, 2);
 
             $quote->details()->create([
+                'quote_group_id' => $group->id,
                 'pricelist_id' => $item['pricelist_id'],
                 'item_type' => $item['item_type'],
                 'quantity' => $quantity,
@@ -260,8 +285,8 @@ class QuoteController extends Controller
         }
 
         // Si se envían items, actualizar los detalles
-        if ($request->has('items')) {
-            $this->processQuoteItems($quote, $request->input('items', []));
+        if ($request->has('groups') || $request->has('items')) {
+            $this->processQuoteData($quote, $request);
         }
 
 

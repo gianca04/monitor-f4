@@ -16,11 +16,11 @@
         </div>
         <div class="flex items-center gap-3">
             <span class="text-[10px] uppercase font-bold text-gray-400"
-                x-text="items[section.key].length + ' items'"></span>
+                x-text="board.items[section.key].length + ' items'"></span>
             <div
                 class="bg-emerald-50 dark:bg-emerald-900/40 px-3 py-1 rounded-xl border border-emerald-100 dark:border-emerald-800 shadow-sm">
                 <span class="text-xs font-black text-emerald-700 dark:text-emerald-400"
-                    x-text="'S/ ' + getSectionSubtotal(section.key).toLocaleString('es-PE', {minimumFractionDigits: 2})"></span>
+                    x-text="'S/ ' + getSectionSubtotal(bIndex, section.key).toLocaleString('es-PE', {minimumFractionDigits: 2})"></span>
             </div>
         </div>
     </div>
@@ -101,11 +101,11 @@
                 </tr>
             </thead>
             <tbody class="divide-y divide-gray-100 dark:divide-gray-700/50">
-                <template x-for="(item, index) in items[section.key]" :key="item._uid">
+                <template x-for="(item, index) in board.items[section.key]" :key="item._uid">
                     <tr class="hover:bg-gray-50/50 dark:hover:bg-gray-800/50 group transition-all" draggable="true"
-                        @dragstart="dragStart(section.key, index)" @dragover.prevent="dragOver($event)"
-                        @drop="dragDrop(section.key, index)"
-                        :class="{ 'opacity-25 bg-emerald-50': draggingItem === item && draggingSection === section.key }">
+                        @dragstart="dragStart(bIndex, section.key, index)" @dragover.prevent="dragOver($event)"
+                        @drop="dragDrop(bIndex, section.key, index)"
+                        :class="{ 'opacity-25 bg-emerald-50': draggingItem === item && draggingSection === section.key && draggingBoard === bIndex }">
 
                         {{-- # --}}
                         {{-- # / Drag Handle --}}
@@ -161,7 +161,7 @@
 
                         {{-- Actions --}}
                         <td class="px-1 py-1 text-center align-top">
-                            <button @click="removeItem(section.key, index)"
+                            <button @click="removeItem(bIndex, section.key, index)"
                                 class="p-1 text-gray-400 rounded opacity-0 group-hover:opacity-100 hover:text-red-500 hover:bg-red-50">
                                 <span class="text-sm material-symbols-outlined">close</span>
                             </button>
@@ -172,7 +172,7 @@
         </table>
 
         {{-- Empty State --}}
-        <div x-show="items[section.key].length === 0" class="py-6 text-center text-gray-400">
+        <div x-show="board.items[section.key].length === 0" class="py-6 text-center text-gray-400">
             <span class="block mb-1 text-3xl opacity-50 material-symbols-outlined">inventory_2</span>
             <p class="text-xs">No hay items</p>
         </div>
@@ -180,7 +180,7 @@
 
     {{-- Add Button --}}
     <div class="px-4 py-3 border-t border-gray-100 dark:border-gray-700 bg-gray-50/30">
-        <button @click="openSearchModal(section.key)"
+        <button @click="openSearchModal(section.key, bIndex)"
             class="group flex items-center justify-center w-full sm:w-auto gap-2 px-4 py-2 text-xs font-bold text-gray-500 transition-all hover:text-emerald-600 hover:bg-emerald-50 dark:text-gray-400 dark:hover:text-emerald-400 dark:hover:bg-emerald-900/20 rounded-xl border border-dashed border-gray-300 dark:border-gray-700 hover:border-emerald-300">
             <span class="text-sm material-symbols-outlined transition-transform group-hover:scale-110">add_circle</span>
             <span>Agregar nuevo item</span>
