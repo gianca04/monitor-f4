@@ -1,4 +1,4 @@
-import { createEmptyBoard, ITEM_TYPE_MAP } from '../constants.js';
+import { createEmptyBoard, ITEM_TYPE_MAP, GLOBAL_SECTIONS, REGULAR_SECTIONS, createEmptyItems } from '../constants.js';
 
 /**
  * useBoardManager
@@ -75,9 +75,11 @@ export function useBoardManager() {
         },
 
         removeBoard(index) {
+            // Prevent removing the GLOBAL tab (index 0) in Preventivo mode
+            if (this.quoteType === 'Preventivo' && index === 0) return;
+
             if (this.boards.length > 1) {
                 this.boards.splice(index, 1);
-                // Adjust active index
                 if (this.activeBoardIndex >= this.boards.length) {
                     this.activeBoardIndex = this.boards.length - 1;
                 } else if (this.activeBoardIndex > index) {
@@ -116,6 +118,15 @@ export function useBoardManager() {
                 this.boards.push(board);
             });
 
+            // Ensure GLOBAL tab is at index 0 and named GLOBAL if Preventivo
+            if (!isCorrectivo) {
+                if (this.boards.length === 0 || this.boards[0].name.toUpperCase() !== 'GLOBAL') {
+                    this.boards.unshift(createEmptyBoard('GLOBAL'));
+                } else {
+                    this.boards[0].name = 'GLOBAL';
+                }
+            }
+
             this.activeBoardIndex = 0;
         },
 
@@ -140,39 +151,96 @@ export function useBoardManager() {
                 });
             });
             this.boards.push(board);
-            this.activeBoardIndex = 0;
+
+            // If Preventivo, ensure GLOBAL tab is at index 0 and data is split
+            if (this.quoteType === 'Preventivo') {
+                this._splitToPreventivo();
+                this.activeBoardIndex = 1; // Focus the first equipment tab
+            } else {
+                this.activeBoardIndex = 0;
+            }
         },
 
-        /** Creates a single default empty board. */
+        /** Creates a default empty board structure based on quoteType. */
         initDefaultBoard() {
-            this.boards.push(
-                createEmptyBoard(
-                    this.quoteType === 'Preventivo' ? 'Tablero 1' : 'CORRECTIVO'
-                )
-            );
-            this.activeBoardIndex = 0;
+            if (this.quoteType === 'Preventivo') {
+                this.boards.push(createEmptyBoard('GLOBAL'));
+                this.boards.push(createEmptyBoard('Tablero 1'));
+                this.activeBoardIndex = 1;
+            } else {
+                this.boards.push(createEmptyBoard('CORRECTIVO'));
+                this.activeBoardIndex = 0;
+            }
         },
 
         /**
          * Sets up the Alpine watcher for quoteType changes.
-         * Must be called inside init() with access to `this.$watch`.
+         * Handles merging/splitting logic when transitioning.
          */
         setupQuoteTypeWatcher() {
-            this.$watch('quoteType', (value) => {
+            this.$watch('quoteType', (value, oldValue) => {
+                if (value === oldValue) return;
+
                 if (value === 'Correctivo') {
-                    if (this.boards.length > 1) {
-                        this.boards = this.boards.slice(0, 1);
-                    }
-                    if (this.boards.length > 0) {
-                        this.boards[0].name = 'CORRECTIVO';
-                    }
-                    this.activeBoardIndex = 0;
+                    this._mergeToCorrectivo();
                 } else if (value === 'Preventivo') {
-                    if (this.boards.length > 0 && this.boards[0].name === 'CORRECTIVO') {
-                        this.boards[0].name = 'Tablero 1';
-                    }
+                    this._splitToPreventivo();
                 }
             });
+        },
+
+        // ─── Data Splitting & Merging ─────────────────────
+
+        /** Merges all boards into a single CORRECTIVO board */
+        _mergeToCorrectivo() {
+            const mergedBoard = createEmptyBoard('CORRECTIVO');
+
+            this.boards.forEach((board) => {
+                Object.keys(mergedBoard.items).forEach(sectionKey => {
+                    if (board.items[sectionKey] && board.items[sectionKey].length > 0) {
+                        mergedBoard.items[sectionKey].push(...board.items[sectionKey]);
+                    }
+                });
+            });
+
+            this.boards = [mergedBoard];
+            this.activeBoardIndex = 0;
+        },
+
+        /** Splits a CORRECTIVO board into GLOBAL and equipment tabs */
+        _splitToPreventivo() {
+            const globalBoard = createEmptyBoard('GLOBAL');
+            const equipmentBoards = [];
+
+            this.boards.forEach((board) => {
+                // If it's already named GLOBAL, just use it (shouldn't happen on transition though)
+                if (board.name.toUpperCase() === 'GLOBAL') {
+                    Object.keys(globalBoard.items).forEach(sk => globalBoard.items[sk].push(...(board.items[sk] || [])));
+                    return;
+                }
+
+                const newEquipmentBoard = createEmptyBoard(board.name === 'CORRECTIVO' ? 'Tablero 1' : board.name);
+
+                Object.keys(board.items).forEach(sectionKey => {
+                    const items = board.items[sectionKey] || [];
+                    if (items.length === 0) return;
+
+                    if (GLOBAL_SECTIONS.includes(sectionKey)) {
+                        globalBoard.items[sectionKey].push(...items);
+                    } else {
+                        newEquipmentBoard.items[sectionKey].push(...items);
+                    }
+                });
+
+                equipmentBoards.push(newEquipmentBoard);
+            });
+
+            if (equipmentBoards.length === 0) {
+                equipmentBoards.push(createEmptyBoard('Tablero 1'));
+            }
+
+            this.boards = [globalBoard, ...equipmentBoards];
+            this.activeBoardIndex = 1; // Focus the first equipment tab instead of global
         },
     };
 }

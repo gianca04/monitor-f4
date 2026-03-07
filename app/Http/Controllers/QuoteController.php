@@ -11,6 +11,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 
 /**
  * Controlador para manejar las operaciones CRUD de cotizaciones (Quotes).
@@ -42,6 +43,9 @@ class QuoteController extends Controller
         }
         if ($request->filled('status')) {
             $query->where('status', $request->status);
+        }
+        if ($request->filled('quote_type')) {
+            $query->where('quote_type', $request->quote_type);
         }
         if ($request->has('employee_id')) {
             $query->where('employee_id', $request->employee_id);
@@ -182,7 +186,7 @@ class QuoteController extends Controller
                 ]);
 
                 Cache::forget($lockKey);
-                return response()->json($quote->load(['employee', 'subClient', 'quoteCategory', 'details', 'project']), 201);
+                return response()->json($quote->load(['employee', 'subClient', 'quoteCategory', 'quoteGroups.quoteDetails.pricelist.unit', 'details', 'project']), 201);
             });
         } catch (\Exception $e) {
             Cache::forget($lockKey);
@@ -223,7 +227,7 @@ class QuoteController extends Controller
                 'name' => 'CORRECTIVO',
                 'order' => 1
             ]);
-            
+
             $this->saveItemsToGroup($quote, $group, $request->input('items'));
         }
     }
@@ -269,6 +273,14 @@ class QuoteController extends Controller
         // IMPORTANTE: Mantener el request_number original, NO regenerarlo
         unset($validated['request_number']);
 
+        // Asegurar que quote_category_id y quote_type se incluyan si vienen en el request
+        if ($request->has('quote_category_id')) {
+            $validated['quote_category_id'] = $request->input('quote_category_id');
+        }
+        if ($request->has('quote_type')) {
+            $validated['quote_type'] = $request->input('quote_type');
+        }
+
         // Actualizar la cotización
         $quote->update($validated);
 
@@ -299,7 +311,7 @@ class QuoteController extends Controller
             'showConfirmButton' => false,
         ]);
 
-        return response()->json($quote->load(['employee', 'subClient', 'quoteCategory', 'details', 'project']));
+        return response()->json($quote->load(['employee', 'subClient', 'quoteCategory', 'quoteGroups.quoteDetails.pricelist.unit', 'details', 'project']));
     }
 
     /**
@@ -310,7 +322,7 @@ class QuoteController extends Controller
      */
     public function show(Quote $quote): JsonResponse
     {
-        return response()->json($quote->load(['employee', 'subClient', 'quoteCategory', 'details', 'project']));
+        return response()->json($quote->load(['employee', 'subClient', 'quoteCategory', 'quoteGroups.quoteDetails.pricelist.unit', 'details', 'project']));
     }
 
     /**
@@ -325,7 +337,7 @@ class QuoteController extends Controller
         $validated = $request->validated();
 
         try {
-            return \Illuminate\Support\Facades\DB::transaction(function () use ($validated, $request, $quote) {
+            return DB::transaction(function () use ($validated, $request, $quote) {
                 return $this->performUpdate($quote, $validated, $request);
             });
         } catch (\Exception $e) {

@@ -42,6 +42,7 @@ class StoreQuoteRequest extends FormRequest
             'quote_date' => 'nullable|date',
             'execution_date' => 'nullable|date',
             'status' => 'nullable|string|in:Pendiente,Enviado,Aprobado,Anulado',
+            'quote_type' => ['nullable', Rule::enum(\App\Enums\QuoteType::class)],
             'items.*.pricelist_id' => 'required|exists:pricelists,id',
             'items.*.budget_code' => 'nullable|string|max:50',
             'items.*.description' => 'nullable|string', // Description can be optional if derived from pricelist? Let's keep nullable or required? Test sends it.

@@ -27,7 +27,6 @@ class QuoteExportController extends Controller
             'CONSUMIBLE'   => 'CONSUMIBLE',
             'TRANSPORTE'   => 'TRANSPORTE',
             'SERVICIO'     => 'SERVICIO',
-            'OTROS'        => 'OTROS',
         ];
 
         $itemsData = collect();
@@ -118,7 +117,6 @@ class QuoteExportController extends Controller
             'CONSUMIBLE'   => 'CONSUMIBLE',
             'TRANSPORTE'   => 'TRANSPORTE',
             'SERVICIO'     => 'SERVICIO',
-            'OTROS'        => 'OTROS',
         ];
 
         $currentRow = 9; // Comenzamos en la fila 9

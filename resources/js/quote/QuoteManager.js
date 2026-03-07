@@ -1,4 +1,4 @@
-import { SECTIONS, SECTION_TO_ITEM_TYPE, createEmptyBoard, createDefaultQuote } from './constants.js';
+import { SECTIONS, SECTION_TO_ITEM_TYPE, createEmptyBoard, createDefaultQuote, GLOBAL_SECTIONS, REGULAR_SECTIONS } from './constants.js';
 import { clientService } from './services/ClientService.js';
 import { useBoardManager } from './composables/useBoardManager.js';
 import { useSearchModal } from './composables/useSearchModal.js';
@@ -250,6 +250,25 @@ export function quoteManager(
 
         // ─── Calculations ───────────────────────────────────
 
+        /**
+         * Returns only the sections allowed for the given board index.
+         * Logic:
+         * - If Correctivo: All sections are visible on the single board.
+         * - If Preventivo and index === 0 (GLOBAL): Only GLOBAL_SECTIONS.
+         * - If Preventivo and index > 0 (Equipment): Only REGULAR_SECTIONS.
+         */
+        getVisibleSections(bIndex) {
+            if (this.quoteType === 'Correctivo') {
+                return this.sections;
+            }
+
+            if (bIndex === 0) {
+                return this.sections.filter(s => GLOBAL_SECTIONS.includes(s.key));
+            }
+
+            return this.sections.filter(s => REGULAR_SECTIONS.includes(s.key));
+        },
+
         getSectionSubtotal(bIndex, sectionKey) {
             return this.boards[bIndex].items[sectionKey].reduce(
                 (sum, item) => sum + (parseFloat(item.quantity) || 0) * (parseFloat(item.unit_price) || 0),
@@ -318,12 +337,13 @@ export function quoteManager(
                     employee_id: this.quote.employee_id,
                     project_name: this.quote.project_name,
                     sub_client_id: this.quote.sub_client_id,
-                    quote_category_id: this.quote.quote_category_id,
+                    quote_category_id: this.quote.quote_category_id ? parseInt(this.quote.quote_category_id) : null,
                     energy_sci_manager: this.quote.energy_sci_manager,
                     ceco: this.quote.ceco,
                     status: this.quote.status,
                     quote_date: this.quote.quote_date,
                     execution_date: this.quote.execution_date,
+                    quote_type: this.quoteType,
                     groups: groupsData,
                 };
 

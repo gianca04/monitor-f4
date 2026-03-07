@@ -65,6 +65,12 @@ export const SECTION_TO_ITEM_TYPE = {
     transporte: 'TRANSPORTE',
 };
 
+/** Sections that belong ONLY in the GLOBAL tab (Preventivo) */
+export const GLOBAL_SECTIONS = ['viaticos', 'consumibles', 'transporte'];
+
+/** Sections that belong ONLY in the REGULAR equipment tabs (Preventivo) */
+export const REGULAR_SECTIONS = ['suministros', 'mano_obra'];
+
 /** Creates a fresh empty items object matching all section keys. */
 export function createEmptyItems() {
     return {

@@ -18,7 +18,7 @@ return new class extends Migration
                 ->cascadeOnDelete();
             $table->integer('line')->default(1);
             $table->string('budget_code')->nullable();
-            $table->enum('item_type', ['SERVICIO', 'VIATICOS', 'SUMINISTRO', 'MANO DE OBRA', 'OTROS'])
+            $table->enum('item_type', ['SERVICIO', 'VIATICOS', 'SUMINISTRO', 'MANO DE OBRA'])
                 ->default('SERVICIO');
             $table->text('description')->nullable();
             $table->decimal('quantity', 10, 2)->default(0);

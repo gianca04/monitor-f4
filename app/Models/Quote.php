@@ -55,7 +55,7 @@ class Quote extends Model
      * @var array<int, string>
      */
     protected $fillable = [
-        
+
         'request_number',
         'project_id',
         'employee_id',

@@ -38,6 +38,7 @@ class UpdateQuoteRequest extends FormRequest
             'ceco' => 'sometimes|nullable|string|max:255',
             'project_name' => 'sometimes|required|string|max:255',
             'status' => 'sometimes|required|string|in:Pendiente,Enviado,Aprobado,Anulado',
+            'quote_type' => ['sometimes', 'nullable', Rule::enum(\App\Enums\QuoteType::class)],
             'quote_date' => 'sometimes|nullable|date',
             'execution_date' => 'sometimes|nullable|date|after_or_equal:quote_date',
             'items.*.pricelist_id' => 'required|exists:pricelists,id',

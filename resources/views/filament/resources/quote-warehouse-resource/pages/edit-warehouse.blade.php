@@ -42,6 +42,31 @@
         },
         closeNewLocationModal() { this.newLocationModal.open = false; },
 
+        historyModal: {
+            open: false, productName: '', loading: false, transactions: []
+        },
+
+        async openHistoryModal(requirementId, productName) {
+            this.historyModal = { open: true, productName, loading: true, transactions: [] };
+            try {
+                const response = await fetch(`{{ url('quoteswarehouse/transactions') }}/${requirementId}`);
+                const data = await response.json();
+                if (data.success) {
+                    this.historyModal.transactions = data.data;
+                } else {
+                    Swal.fire({ icon: 'error', title: 'Error', text: data.message });
+                    this.closeHistoryModal();
+                }
+            } catch (e) {
+                Swal.fire({ icon: 'error', title: 'Error', text: 'Error de red al cargar el historial' });
+                this.closeHistoryModal();
+            } finally {
+                this.historyModal.loading = false;
+            }
+        },
+        
+        closeHistoryModal() { this.historyModal.open = false; },
+
         async createLocation() {
             if (!this.newLocationModal.name.trim()) {
                 Swal.fire({ icon: 'warning', title: 'Requerido', text: 'Ingrese un nombre', confirmButtonColor: '#059669' });
@@ -199,11 +224,19 @@
                                 </td>
 
                                 {{-- Previo (Entregado) --}}
-                                <td class="px-3 py-2 text-center align-middle border-r border-gray-100 dark:border-gray-800/50">
-                                    <div class="flex flex-col items-center gap-1">
-                                        <span class="text-[11px] font-mono font-bold {{ $completado ? 'text-emerald-600 dark:text-emerald-400' : 'text-gray-700 dark:text-gray-300' }}">
-                                            {{ $item['entregado'] ?? 0 }}
-                                        </span>
+                                <td class="px-3 py-2 text-center align-middle border-r border-gray-100 dark:border-gray-800/50 group">
+                                    <div class="flex flex-col items-center gap-1 relative">
+                                        <div class="flex items-center justify-center relative w-full">
+                                            <span class="text-[11px] font-mono font-bold {{ $completado ? 'text-emerald-600 dark:text-emerald-400' : 'text-gray-700 dark:text-gray-300' }}">
+                                                {{ $item['entregado'] ?? 0 }}
+                                            </span>
+                                            @if (($item['entregado'] ?? 0) > 0)
+                                                <button type="button" @click="openHistoryModal({{ $item['project_requirement_id'] }}, '{{ addslashes($item['product_name']) }}')" 
+                                                    class="absolute -right-1 opacity-0 group-hover:opacity-100 transition-opacity text-blue-500 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded p-0.5 flex items-center justify-center" title="Ver historial">
+                                                    <span class="material-symbols-outlined text-[14px]">history</span>
+                                                </button>
+                                            @endif
+                                        </div>
                                         <div class="w-10 h-1 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
                                             <div class="h-full {{ $completado ? 'bg-emerald-500' : 'bg-gray-400' }} rounded-full" style="width: {{ $porcentaje }}%"></div>
                                         </div>
@@ -372,9 +405,110 @@
                         <span x-show="!newLocationModal.loading" class="material-symbols-outlined text-[16px]">save</span>
                         <span x-text="newLocationModal.loading ? 'Guardando...' : 'Guardar'"></span>
                     </button>
+        {{-- ═══════════════════════════════════════════════ --}}
+        {{-- MODAL: Historial de Despachos (Timeline)        --}}
+        {{-- ═══════════════════════════════════════════════ --}}
+        <div x-show="historyModal.open" x-cloak
+            class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/50 backdrop-blur-sm"
+            x-transition.opacity duration.200ms
+            @keydown.escape.window="closeHistoryModal()">
+            <div class="w-full max-w-lg bg-white rounded-xl shadow-2xl dark:bg-gray-900 border border-gray-200 dark:border-gray-800 flex flex-col max-h-[90vh]"
+                @click.outside="closeHistoryModal()"
+                x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95" x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100">
+                
+                {{-- Modal Header --}}
+                <div class="px-5 py-4 flex items-center justify-between border-b border-gray-100 dark:border-gray-800 shrink-0">
+                    <div class="flex items-center gap-3">
+                        <div class="w-8 h-8 rounded bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center text-blue-600 dark:text-blue-400">
+                            <span class="material-symbols-outlined text-[18px]">history</span>
+                        </div>
+                        <div>
+                            <h3 class="text-sm font-bold text-gray-900 dark:text-white">Historial de Despachos</h3>
+                            <p class="text-[11px] text-gray-500 dark:text-gray-400 font-medium truncate max-w-[250px]" x-text="historyModal.productName"></p>
+                        </div>
+                    </div>
+                    <button type="button" @click="closeHistoryModal()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition">
+                        <span class="material-symbols-outlined text-[20px]">close</span>
+                    </button>
+                </div>
+
+                {{-- Modal Body (Timeline) --}}
+                <div class="p-5 overflow-y-auto custom-scrollbar bg-gray-50/50 dark:bg-gray-800/20 flex-1 relative">
+                    {{-- Loader --}}
+                    <div x-show="historyModal.loading" class="absolute inset-0 bg-gray-50/80 dark:bg-gray-900/80 flex flex-col items-center justify-center z-10 backdrop-blur-sm">
+                        <span class="material-symbols-outlined text-3xl animate-spin text-blue-500 mb-2">sync</span>
+                        <span class="text-xs font-semibold text-gray-500">Cargando transacciones...</span>
+                    </div>
+
+                    {{-- Empty State --}}
+                    <div x-show="!historyModal.loading && historyModal.transactions.length === 0" class="text-center py-8">
+                        <span class="material-symbols-outlined text-4xl text-gray-300 dark:text-gray-600 mb-2">inbox</span>
+                        <p class="text-sm text-gray-500 font-medium">No hay despachos registrados para este ítem.</p>
+                    </div>
+
+                    {{-- Timeline --}}
+                    <div x-show="!historyModal.loading && historyModal.transactions.length > 0" class="relative pl-4 space-y-6 before:absolute before:inset-0 before:ml-[23px] before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-gray-200 dark:before:via-gray-700 before:to-transparent">
+                        <template x-for="(tx, index) in historyModal.transactions" :key="index">
+                            <div class="relative flex items-start gap-4">
+                                {{-- Timeline Point --}}
+                                <div class="absolute left-[-1.3rem] mt-1.5 w-3 h-3 rounded-full bg-blue-500 ring-4 ring-white dark:ring-gray-900 shrink-0 shadow-sm z-10 text-[0px]">.</div>
+                                
+                                {{-- Content Card --}}
+                                <div class="flex-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-3 shadow-sm hover:border-blue-300 dark:hover:border-blue-700 transition-colors">
+                                    <div class="flex items-center justify-between mb-1">
+                                        <div class="flex items-center gap-1.5">
+                                            <span class="material-symbols-outlined text-[14px] text-gray-400">person</span>
+                                            <span class="text-xs font-bold text-gray-700 dark:text-gray-300" x-text="tx.employee"></span>
+                                        </div>
+                                        <div class="text-[10px] font-medium text-gray-400 flex items-center gap-1">
+                                            <span class="material-symbols-outlined text-[12px]">schedule</span>
+                                            <span x-text="tx.date"></span>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="my-2 p-2 bg-blue-50 dark:bg-blue-900/20 rounded border border-blue-100 dark:border-blue-900/50 flex items-center gap-2">
+                                        <span class="material-symbols-outlined text-blue-600 dark:text-blue-400 text-[18px]">outbound</span>
+                                        <span class="text-xs text-gray-700 dark:text-gray-300">
+                                            Despachó <strong class="text-blue-700 dark:text-blue-400 font-mono text-sm" x-text="tx.quantity"></strong> unidades
+                                        </span>
+                                    </div>
+
+                                    <div class="grid grid-cols-2 gap-2 mt-2">
+                                        <div class="text-[10px] text-gray-500 flex items-start gap-1">
+                                            <span class="material-symbols-outlined text-[12px] text-gray-400 shrink-0 mt-0.5">location_on</span>
+                                            <div>
+                                                <span class="block text-gray-400 uppercase tracking-widest text-[8px] font-bold">Desde</span>
+                                                <span class="font-medium text-gray-700 dark:text-gray-300" x-text="tx.origin"></span>
+                                            </div>
+                                        </div>
+                                        <div class="text-[10px] text-gray-500 flex items-start gap-1 border-l border-gray-100 dark:border-gray-700 pl-2">
+                                            <span class="material-symbols-outlined text-[12px] text-gray-400 shrink-0 mt-0.5">flag</span>
+                                            <div>
+                                                <span class="block text-gray-400 uppercase tracking-widest text-[8px] font-bold">Hacia</span>
+                                                <span class="font-medium text-gray-700 dark:text-gray-300" x-text="tx.destination"></span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div x-show="tx.comment !== '-'" class="mt-2 pt-2 border-t border-gray-100 dark:border-gray-700 text-[10px] flex gap-1.5 items-start">
+                                        <span class="material-symbols-outlined text-[12px] text-amber-500 shrink-0">edit_note</span>
+                                        <span class="text-gray-600 dark:text-gray-400 italic" x-text="tx.comment"></span>
+                                    </div>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+
+                {{-- Modal Footer --}}
+                <div class="px-5 py-3 border-t border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 flex justify-end shrink-0 rounded-b-xl">
+                    <button type="button" @click="closeHistoryModal()" class="px-4 py-2 text-xs font-bold text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition">
+                        Cerrar
+                    </button>
                 </div>
             </div>
         </div>
+
     </div>
 
     <style>

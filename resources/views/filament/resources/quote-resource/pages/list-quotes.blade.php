@@ -194,6 +194,13 @@
                         <option value="Anulado">Anulado</option>
                     </select>
 
+                    <select x-model="filterQuoteType" @change="fetchQuotes()"
+                        class="min-w-[140px] sidebar-input appearance-none font-medium text-gray-700 cursor-pointer dark:text-gray-200">
+                        <option value="">Tipo: Todos</option>
+                        <option value="Preventivo">Preventivo</option>
+                        <option value="Correctivo">Correctivo</option>
+                    </select>
+
                     <select x-model="filterEmployeeId" @change="fetchQuotes()"
                         class="min-w-[160px] sidebar-input appearance-none font-medium text-gray-700 cursor-pointer dark:text-gray-200">
                         <option value="">Cotizador: Todos</option>
@@ -409,6 +416,7 @@
                 loading: true,
                 search: '',
                 filterStatus: '',
+                filterQuoteType: '',
                 filterEmployeeId: '',
                 filterMinTotal: null,
                 filterMaxTotal: null,
@@ -446,6 +454,7 @@
                 resetFilters() {
                     this.search = '';
                     this.filterStatus = '';
+                    this.filterQuoteType = '';
                     this.filterEmployeeId = '';
                     this.filterCategoryId = '';
                     this.filterMinTotal = null;
@@ -468,6 +477,7 @@
                         const params = new URLSearchParams({
                             q: this.search,
                             status: this.filterStatus,
+                            quote_type: this.filterQuoteType,
                             page: this.currentPage
                         });
                         if (this.filterEmployeeId) params.append('employee_id', this.filterEmployeeId);

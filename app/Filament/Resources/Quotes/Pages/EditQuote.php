@@ -40,6 +40,9 @@ class EditQuote extends EditRecord
         // Pero necesitamos cargar las relaciones específicas que usas en tu vista
         $this->record->load([
             'subClient',
+            'quoteGroups.quoteDetails' => fn($query) => $query->orderBy('line', 'asc'),
+            'quoteGroups.quoteDetails.pricelist.unit',
+            'quoteGroups.quoteDetails.pricelist.priceType',
             'quoteDetails' => fn($query) => $query->orderBy('line', 'asc'),
             'quoteDetails.pricelist.unit',
             'quoteDetails.pricelist.priceType',

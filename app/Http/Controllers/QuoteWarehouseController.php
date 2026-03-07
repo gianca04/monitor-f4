@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use App\Http\Requests\StoreQuoteWarehouseDetailRequest;
+use App\Models\DispatchTransaction;
 use App\Models\QuoteWarehouse;
 use Illuminate\Support\Facades\Log;
 use Barryvdh\DomPDF\Facade\Pdf; // Asegúrate de tener instalado barryvdh/laravel-dompdf
@@ -184,6 +185,20 @@ class QuoteWarehouseController extends Controller
                             'cost_description'       => $detail['cost_description'] ?? null,
                         ]);
                     }
+
+                    // ====== NUEVO: Registrar la Transacción de Auditoría ======
+                    DispatchTransaction::create([
+                        'quote_warehouse_id'      => $quoteWarehouse->id,
+                        'project_requirement_id'  => $detail['project_requirement_id'],
+                        'employee_id'             => Auth::id(),
+                        'quantity'                => $detail['a_despachar'],
+                        'location_origin_id'      => $detail['location_origin_id'] ?? null,
+                        'location_destination_id' => $detail['location_destination_id'] ?? null,
+                        'additional_cost'         => $detail['additional_cost'] ?? 0,
+                        'cost_description'        => $detail['cost_description'] ?? null,
+                        'comment'                 => $detail['comment'] ?? null,
+                    ]);
+                    // ==========================================================
 
                     // Actualizar el estado de la herramienta a "En Uso" si es una unidad de herramienta despachada
                     $projectReq = \App\Models\ProjectRequirement::find($detail['project_requirement_id']);
@@ -367,6 +382,40 @@ class QuoteWarehouseController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Error al crear el lugar: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * Obtener el historial de despachos (transacciones) para un requerimiento específico.
+     */
+    public function getTransactions($requirementId)
+    {
+        try {
+            $transactions = \App\Models\DispatchTransaction::with(['employee.employee', 'originLocation', 'destinationLocation'])
+                ->where('project_requirement_id', $requirementId)
+                ->orderBy('created_at', 'desc')
+                ->get();
+
+            return response()->json([
+                'success' => true,
+                'data' => $transactions->map(function ($t) {
+                    return [
+                        'id' => $t->id,
+                        'date' => $t->created_at->format('d/m/Y h:i A'),
+                        'employee' => $t->employee->employee->short_name ?? ($t->employee->name ?? 'Usuario'),
+                        'quantity' => (float) $t->quantity,
+                        'origin' => $t->originLocation->name ?? '-',
+                        'destination' => $t->destinationLocation->name ?? '-',
+                        'cost' => (float) $t->additional_cost,
+                        'comment' => $t->comment ?: '-',
+                    ];
+                })
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al cargar el historial: ' . $e->getMessage()
             ], 500);
         }
     }

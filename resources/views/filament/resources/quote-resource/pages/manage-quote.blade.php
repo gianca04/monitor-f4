@@ -31,12 +31,13 @@
                     <div class="quote-tab" :class="{
                             'quote-tab--active': activeBoardIndex === bIndex,
                             'quote-tab--preventivo': quoteType === 'Preventivo'
-                        }" @click="setActiveBoard(bIndex)" @dblclick.stop="startRenameTab(bIndex)"
-                        @contextmenu.prevent="$event.target.closest('.quote-tab') && (quoteType === 'Preventivo' && boards.length > 1) ? removeBoard(bIndex) : null">
+                        }" @click="setActiveBoard(bIndex)"
+                        @dblclick.stop="if(quoteType !== 'Preventivo' || bIndex !== 0) startRenameTab(bIndex)"
+                        @contextmenu.prevent="if($event.target.closest('.quote-tab') && quoteType === 'Preventivo' && boards.length > 1 && bIndex !== 0) removeBoard(bIndex)">
 
                         {{-- Tab icon --}}
                         <span class="quote-tab__icon material-symbols-outlined"
-                            x-text="quoteType === 'Preventivo' ? 'dashboard' : 'build'"></span>
+                            x-text="quoteType === 'Preventivo' && bIndex === 0 ? 'public' : (quoteType === 'Preventivo' ? 'dashboard' : 'build')"></span>
 
                         {{-- Tab label (display) --}}
                         <span x-show="renamingTabIndex !== bIndex" class="quote-tab__label" x-text="board.name"></span>
@@ -50,8 +51,9 @@
                         <span class="quote-tab__badge" x-text="getBoardItemCount(bIndex)"
                             x-show="getBoardItemCount(bIndex) > 0"></span>
 
-                        {{-- Close button (Preventivo, >1 board) --}}
-                        <button x-show="quoteType === 'Preventivo' && boards.length > 1 && activeBoardIndex === bIndex"
+                        {{-- Close button (Preventivo, >1 board, NOT Global tab) --}}
+                        <button
+                            x-show="quoteType === 'Preventivo' && boards.length > 1 && activeBoardIndex === bIndex && bIndex !== 0"
                             @click.stop="removeBoard(bIndex)" class="quote-tab__close" title="Eliminar grupo">
                             <span class="material-symbols-outlined text-xs">close</span>
                         </button>
@@ -81,7 +83,7 @@
             <template x-if="boards.length > 0 && boards[activeBoardIndex]">
                 <div>
                     {{-- Sections loop for active board --}}
-                    <template x-for="section in sections" :key="section.key">
+                    <template x-for="section in getVisibleSections(activeBoardIndex)" :key="section.key">
                         @include('filament.resources.quote-resource.components.section-card')
                     </template>
                 </div>
