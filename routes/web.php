@@ -105,7 +105,7 @@ Route::prefix('quoteswarehouse')->middleware('auth')->group(function () {
     Route::get('preview/{quoteWarehouse}', [QuoteWarehouseController::class, 'preview'])->name('quoteswarehouse.preview');
     Route::post('store', [QuoteWarehouseController::class, 'store'])->name('quoteswarehouse.store');
     Route::post('locations', [QuoteWarehouseController::class, 'storeLocation'])->name('quoteswarehouse.locations.store');
-    Route::get('transactions/{requirementId}', [QuoteWarehouseController::class, 'getTransactions'])->name('quoteswarehouse.transactions');
+    Route::get('transactions/{requirementId}', [\App\Http\Controllers\DispatchTransactionController::class, 'index'])->name('quoteswarehouse.transactions');
     // Ruta para generar el PDF de atención de suministros
     Route::get('pdf/{quoteWarehouse}', [QuoteWarehouseController::class, 'generatePdf'])
         ->name('quoteswarehouse.pdf')

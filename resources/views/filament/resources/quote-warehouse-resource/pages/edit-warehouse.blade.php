@@ -182,6 +182,7 @@
                             <th class="quote-table__th" style="min-width: 160px;">Ubic. Origen</th>
                             <th class="quote-table__th" style="min-width: 160px;">Ubic. Destino</th>
                             <th class="quote-table__th" style="min-width: 180px;">Nota / Serie</th>
+                            <th class="quote-table__th text-center" style="width: 40px;"></th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-200 dark:divide-gray-800">
@@ -230,12 +231,7 @@
                                             <span class="text-[11px] font-mono font-bold {{ $completado ? 'text-emerald-600 dark:text-emerald-400' : 'text-gray-700 dark:text-gray-300' }}">
                                                 {{ $item['entregado'] ?? 0 }}
                                             </span>
-                                            @if (($item['entregado'] ?? 0) > 0)
-                                                <button type="button" @click="openHistoryModal({{ $item['project_requirement_id'] }}, '{{ addslashes($item['product_name']) }}')" 
-                                                    class="absolute -right-1 opacity-0 group-hover:opacity-100 transition-opacity text-blue-500 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded p-0.5 flex items-center justify-center" title="Ver historial">
-                                                    <span class="material-symbols-outlined text-[14px]">history</span>
-                                                </button>
-                                            @endif
+
                                         </div>
                                         <div class="w-10 h-1 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
                                             <div class="h-full {{ $completado ? 'bg-emerald-500' : 'bg-gray-400' }} rounded-full" style="width: {{ $porcentaje }}%"></div>
@@ -303,6 +299,14 @@
                                         class="w-full text-[11px] border-transparent hover:border-gray-300 focus:border-blue-500 focus:ring-blue-500 bg-transparent hover:bg-white dark:hover:bg-gray-800 rounded py-1 px-2 dark:text-gray-300 transition-colors {{ $completado ? 'opacity-50' : '' }}"
                                         placeholder="Núm. serie, nota..."
                                         :disabled="{{ $completado ? 'true' : 'false' }}" />
+                                </td>
+
+                                {{-- Historial --}}
+                                <td class="px-1 py-1.5 text-center align-middle">
+                                    <button type="button" @click="openHistoryModal({{ $item['project_requirement_id'] }}, '{{ addslashes($item['product_name']) }}')"
+                                        class="inline-flex items-center justify-center text-gray-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded p-1 transition" title="Ver historial de despachos">
+                                        <span class="material-symbols-outlined text-[16px]">history</span>
+                                    </button>
                                 </td>
                             </tr>
                         @endforeach

@@ -198,6 +198,13 @@
         font-weight: bold;
     }
 
+    .row-group {
+        background-color: #FFC000 !important;
+        font-weight: bold;
+        font-size: 13px;
+        text-align: center;
+    }
+
     .center {
         text-align: center;
     }
@@ -263,8 +270,8 @@
     </style>
 @endif
 
-<div class="quotation-container"
-    @if (isset($isPdf)) style="width: 100%; max-width: 287mm; margin: 0 auto; min-height: auto; padding: 0;" @endif>
+<div class="quotation-container" @if (isset($isPdf))
+style="width: 100%; max-width: 287mm; margin: 0 auto; min-height: auto; padding: 0;" @endif>
     {{-- Header Principal --}}
     <div class="q-title-section">
         <table class="q-title-table">
@@ -340,14 +347,18 @@
         </thead>
         <tbody>
             @foreach ($items as $item)
-                @if ($item['tipo'] == 'header')
+                @if ($item['tipo'] == 'group')
+                    <tr class="row-group">
+                        <td colspan="8" style="padding: 6px 10px;">{{ $item['nombre'] }}</td>
+                    </tr>
+                @elseif ($item['tipo'] == 'header')
                     <tr class="row-category">
                         <td class="center">{{ $item['numero'] }}</td>
                         <td colspan="7" style="padding-left: 10px;">{{ $item['nombre'] }}</td>
                     </tr>
                 @else
                     <tr>
-                        <td class="center">{{ $item['line'] }}</td> <!-- Cambiado para mostrar el número de línea -->
+                        <td class="center">{{ $item['line'] }}</td>
                         <td class="center"><strong>{{ $item['linea'] }}</strong></td>
                         <td style="padding: 5px;">{{ $item['descripcion'] }}</td>
                         <td style="padding: 5px;">{{ $item['comentario'] }}</td>

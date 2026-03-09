@@ -427,10 +427,9 @@ class QuoteController extends Controller
             'quoteCategory',
             'quoteDetails.pricelist.unit',
             'project',
+            'quoteGroups.quoteDetails.pricelist.unit',
         ]);
         $ceco = $quote->subClient->ceco ?? $quote->ceco ?? '----------';
-        // 1. Agrupamos los detalles por el tipo de ítem
-        $groupedDetails = $quote->quoteDetails->groupBy('item_type');
         $formattedId = str_pad($quote->id, 5, '0', STR_PAD_LEFT);
         $sections = [
             'VIATICOS'     => 'VIATICOS',
@@ -444,34 +443,49 @@ class QuoteController extends Controller
         $itemsData = collect();
         $sectionIndex = 1;
 
-        foreach ($sections as $type => $label) {
-            if ($groupedDetails->has($type)) {
-                // Añadimos fila de encabezado de sección
-                $itemsData->push([
-                    'tipo' => 'header',
-                    'numero' => $sectionIndex++,
-                    'nombre' => $label
-                ]);
+        // Iterar por grupos ordenados por 'order'
+        $groups = $quote->quoteGroups->sortBy('order');
 
-                // Ordenar los detalles por 'line' antes de añadirlos
-                $sortedDetails = $groupedDetails->get($type)->sortBy('line');
+        foreach ($groups as $group) {
+            // Encabezado de grupo (solo si NO es Correctivo)
+            if ($quote->quote_type !== \App\Enums\QuoteType::CORRECTIVO) {
+                $itemsData->push(['tipo' => 'group', 'nombre' => $group->name]);
+            }
 
-                // Añadimos los ítems de esta sección ordenados por line
-                foreach ($sortedDetails as $detail) {
+            // Obtener detalles del grupo y agrupar por item_type
+            $groupedDetails = $group->quoteDetails->groupBy(function ($detail) {
+                return $detail->item_type instanceof \BackedEnum ? $detail->item_type->value : $detail->item_type;
+            });
+
+            foreach ($sections as $type => $label) {
+                if ($groupedDetails->has($type)) {
                     $itemsData->push([
-                        'tipo'        => 'item',
-                        'line'        => $detail->line,  // Añadido para pasar el número de línea
-                        'linea'       => $detail->pricelist->sat_line ?? '-',
-                        'descripcion' => $detail->pricelist->sat_description ?? 'Sin descripción',
-                        'comentario'  => $detail->comment ?? '-',
-                        'unidad'      => $detail->pricelist->unit->name ?? 'UND',
-                        'cantidad'    => $detail->quantity,
-                        'pu'          => $detail->unit_price,
-                        'subtotal'    => $detail->subtotal,
+                        'tipo' => 'header',
+                        'numero' => $sectionIndex,
+                        'nombre' => $label
                     ]);
+
+                    $sortedDetails = $groupedDetails->get($type)->sortBy('line');
+                    $itemSubIndex = 1;
+                    foreach ($sortedDetails as $detail) {
+                        $itemsData->push([
+                            'tipo'        => 'item',
+                            'line'        => $sectionIndex . '.' . $itemSubIndex,
+                            'linea'       => $detail->pricelist->sat_line ?? '-',
+                            'descripcion' => $detail->pricelist->sat_description ?? 'Sin descripción',
+                            'comentario'  => $detail->comment ?? '-',
+                            'unidad'      => $detail->pricelist->unit->name ?? 'UND',
+                            'cantidad'    => $detail->quantity,
+                            'pu'          => $detail->unit_price,
+                            'subtotal'    => $detail->subtotal,
+                        ]);
+                        $itemSubIndex++;
+                    }
+                    $sectionIndex++;
                 }
             }
         }
+
         return view('filament.resources.quote-resource.pages.preview', [
             'original_id'       => $quote->id,
             'quote_id'          => $formattedId,
@@ -480,7 +494,7 @@ class QuoteController extends Controller
             'ruc_empresa'       => '20539249640',
             'empresa_nombre'    => 'SAT INDUSTRIALES',
             'cotizado_por'      => $quote->employee ? $quote->employee->short_name : 'No asignado',
-            'n_solicitud'       => $quote->project && $quote->project->request_number ? $quote->project->request_number : '-',  // Ajustado para mostrar '-' si no hay request_number
+            'n_solicitud'       => $quote->project && $quote->project->request_number ? $quote->project->request_number : '-',
             'cliente'           => $quote->subClient->name ?? 'Sin cliente',
             'jefe_energia'      => $quote->energy_sci_manager ?? '-',
             'fecha_cotizacion'  => $quote->quote_date ? $quote->quote_date->format('d/m/Y') : '-',
@@ -489,7 +503,6 @@ class QuoteController extends Controller
             'fecha_ejecucion'   => $quote->execution_date ? $quote->execution_date->format('d/m/Y') : '-',
             'total_general'     => number_format($quote->total_amount, 2),
             'items'             => $itemsData,
-            // 'categories'   => QuoteCategory::select('id', 'name')->get(),
         ]);
     }
     public function getStats()

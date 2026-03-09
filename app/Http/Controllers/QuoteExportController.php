@@ -12,12 +12,11 @@ class QuoteExportController extends Controller
 {
     public function exportPdf(Quote $quote)
     {
-        // 1. Cargar relaciones
-        $quote->load(['employee', 'subClient', 'quoteCategory', 'quoteDetails.pricelist.unit',  'project']);
+        // 1. Cargar relaciones (incluye quoteGroups con sus detalles)
+        $quote->load(['employee', 'subClient', 'quoteCategory', 'quoteDetails.pricelist.unit', 'project', 'quoteGroups.quoteDetails.pricelist.unit']);
 
         // 2. Preparar datos (misma lógica que el preview)
         $ceco = $quote->subClient->ceco ?? $quote->ceco ?? '----------';
-        $groupedDetails = $quote->quoteDetails->groupBy('item_type');
         $formattedId = str_pad($quote->id, 5, '0', STR_PAD_LEFT);
 
         $sections = [
@@ -32,23 +31,41 @@ class QuoteExportController extends Controller
         $itemsData = collect();
         $sectionIndex = 1;
 
-        foreach ($sections as $type => $label) {
-            if ($groupedDetails->has($type)) {
-                $itemsData->push(['tipo' => 'header', 'numero' => $sectionIndex++, 'nombre' => $label]);
-                // Ordenar los detalles por 'line' antes de añadirlos
-                $sortedDetails = $groupedDetails->get($type)->sortBy('line');
-                foreach ($sortedDetails as $detail) {
-                    $itemsData->push([
-                        'tipo'        => 'item',
-                        'line'        => $detail->line,  // Añadido para incluir el número de línea
-                        'linea'       => $detail->pricelist->sat_line ?? '-',
-                        'descripcion' => $detail->pricelist->sat_description ?? 'Sin descripción',
-                        'comentario'  => $detail->comment ?? '-',
-                        'unidad'      => $detail->pricelist->unit->name ?? 'UND',
-                        'cantidad'    => $detail->quantity,
-                        'pu'          => $detail->unit_price,
-                        'subtotal'    => $detail->subtotal,
-                    ]);
+        // Iterar por grupos ordenados por 'order'
+        $groups = $quote->quoteGroups->sortBy('order');
+
+        foreach ($groups as $group) {
+            // Encabezado de grupo (solo si NO es Correctivo)
+            if ($quote->quote_type !== \App\Enums\QuoteType::CORRECTIVO) {
+                $itemsData->push(['tipo' => 'group', 'nombre' => $group->name]);
+            }
+
+            // Obtener detalles del grupo y agrupar por item_type
+            $groupedDetails = $group->quoteDetails->groupBy(function ($detail) {
+                return $detail->item_type instanceof \BackedEnum ? $detail->item_type->value : $detail->item_type;
+            });
+
+            foreach ($sections as $type => $label) {
+                if ($groupedDetails->has($type)) {
+                    $itemsData->push(['tipo' => 'header', 'numero' => $sectionIndex, 'nombre' => $label]);
+                    // Ordenar los detalles por 'line' antes de añadirlos
+                    $sortedDetails = $groupedDetails->get($type)->sortBy('line');
+                    $itemSubIndex = 1;
+                    foreach ($sortedDetails as $detail) {
+                        $itemsData->push([
+                            'tipo'        => 'item',
+                            'line'        => $sectionIndex . '.' . $itemSubIndex,
+                            'linea'       => $detail->pricelist->sat_line ?? '-',
+                            'descripcion' => $detail->pricelist->sat_description ?? 'Sin descripción',
+                            'comentario'  => $detail->comment ?? '-',
+                            'unidad'      => $detail->pricelist->unit->name ?? 'UND',
+                            'cantidad'    => $detail->quantity,
+                            'pu'          => $detail->unit_price,
+                            'subtotal'    => $detail->subtotal,
+                        ]);
+                        $itemSubIndex++;
+                    }
+                    $sectionIndex++;
                 }
             }
         }
@@ -61,7 +78,7 @@ class QuoteExportController extends Controller
             'ruc_empresa'       => '20539249640',
             'empresa_nombre'    => 'SAT INDUSTRIALES',
             'cotizado_por'      => $quote->employee ? $quote->employee->short_name : 'No asignado',
-            'n_solicitud'       => $quote->project && $quote->project->request_number ? $quote->project->request_number : '-',  // Ajustado para mostrar '-' si no hay request_number
+            'n_solicitud'       => $quote->project && $quote->project->request_number ? $quote->project->request_number : '-',
             'cliente'           => $quote->subClient->name ?? 'Sin cliente',
             'jefe_energia'      => $quote->energy_sci_manager ?? '-',
             'fecha_cotizacion'  => $quote->quote_date ? $quote->quote_date->format('d/m/Y') : '-',
@@ -70,7 +87,7 @@ class QuoteExportController extends Controller
             'fecha_ejecucion'   => $quote->execution_date ? $quote->execution_date->format('d/m/Y') : '-',
             'total_general'     => number_format($quote->total_amount, 2),
             'items'             => $itemsData,
-            'isPdf'             => true, // Marcador para la vista
+            'isPdf'             => true,
         ];
         $html = view('filament.resources.quote-resource.pages.preview', $data)->render();
 
@@ -85,8 +102,8 @@ class QuoteExportController extends Controller
         $spreadsheet = IOFactory::load($templatePath);
         $sheet = $spreadsheet->getActiveSheet();
 
-        // Cargar relaciones necesarias
-        $quote->load(['employee', 'subClient', 'quoteCategory', 'quoteDetails.pricelist.unit', 'project']);
+        // Cargar relaciones necesarias (incluye quoteGroups con sus detalles)
+        $quote->load(['employee', 'subClient', 'quoteCategory', 'quoteDetails.pricelist.unit', 'project', 'quoteGroups.quoteDetails.pricelist.unit']);
 
         // Formatear el ID
         $formattedId = str_pad($quote->id, 5, '0', STR_PAD_LEFT);
@@ -94,7 +111,7 @@ class QuoteExportController extends Controller
         // Asignar datos a celdas principales
         $sheet->setCellValue('H1', $formattedId);
         $sheet->setCellValue('C3', $quote->project->name ?? ($quote->quoteCategory->name ?? ''));
-        $sheet->setCellValue('E3', $quote->request_number ?? '');
+        $sheet->setCellValue('E3', $quote->project->request_number ?? '');
         $sheet->setCellValue('E4', $quote->subClient->name ?? '');
         $sheet->setCellValue('H3', $quote->quoteCategory->name ?? '');
         $sheet->setCellValue('H4', $quote->subClient->ceco ?? $quote->ceco ?? '');
@@ -108,8 +125,7 @@ class QuoteExportController extends Controller
         });
         $sheet->setCellValue('H6', 'S/ ' . number_format($total, 2));
 
-        // --- ITEMS ---
-        $groupedDetails = $quote->quoteDetails->groupBy('item_type');
+        // --- ITEMS AGRUPADOS POR QuoteGroup ---
         $sections = [
             'VIATICOS'     => 'VIATICOS',
             'SUMINISTRO'   => 'SUMINISTRO',
@@ -123,54 +139,86 @@ class QuoteExportController extends Controller
         $sectionIndex = 1;
         $spreadsheet->getDefaultStyle()->getFont()->setName('Calibri');
 
-        foreach ($sections as $type => $label) {
-            if ($groupedDetails->has($type)) {
-                // Encabezado de sección con número y nombre
-                $sheet->setCellValue('A' . $currentRow, $sectionIndex);
-                $sheet->mergeCells("B{$currentRow}:H{$currentRow}");
-                $sheet->setCellValue("B{$currentRow}", $label);
-                // Color de fondo
+        // Obtener grupos ordenados por 'order'
+        $groups = $quote->quoteGroups->sortBy('order');
+
+        foreach ($groups as $group) {
+            // === Fila de encabezado del GRUPO (solo si NO es Correctivo) ===
+            if ($quote->quote_type !== \App\Enums\QuoteType::CORRECTIVO) {
+                $sheet->mergeCells("A{$currentRow}:H{$currentRow}");
+                $sheet->setCellValue("A{$currentRow}", $group->name);
+                // Estilo del encabezado de grupo (fondo ámbar, texto negro, negrita)
                 $sheet->getStyle("A{$currentRow}:H{$currentRow}")->getFill()
                     ->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)
-                    ->getStartColor()->setRGB('C6E0B4');
-                $sheet->getStyle("A{$currentRow}:H{$currentRow}")->getFont()->setBold(true)->setName('Calibri')->setSize(11);
-
+                    ->getStartColor()->setRGB('FFC000');
+                $sheet->getStyle("A{$currentRow}:H{$currentRow}")->getFont()
+                    ->setBold(true)->setName('Calibri')->setSize(12)->getColor()->setRGB('000000');
+                $sheet->getStyle("A{$currentRow}:H{$currentRow}")->getAlignment()
+                    ->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER)
+                    ->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER);
+                $sheet->getRowDimension($currentRow)->setRowHeight(22);
                 $currentRow++;
-                // Ordenar los detalles por 'line' antes de añadirlos
-                $sortedDetails = $groupedDetails->get($type)->sortBy('line');
-                foreach ($sortedDetails as $detail) {
-                    // A: line, B: línea, C: descripción, D: comentario, E: unidad, F: cantidad, G: P.U., H: subtotal
-                    $sheet->setCellValue("A{$currentRow}", $detail->line);
-                    $sheet->setCellValue("B{$currentRow}", $detail->pricelist->sat_line ?? '');
-                    $sheet->setCellValue("C{$currentRow}", $detail->pricelist->sat_description ?? '');
-                    $sheet->setCellValue("D{$currentRow}", $detail->comment ?? '');
-                    $sheet->setCellValue("E{$currentRow}", $detail->pricelist->unit->name ?? 'UND');
-                    $sheet->setCellValue("F{$currentRow}", $detail->quantity);
-                    $sheet->setCellValue("G{$currentRow}", 'S/ ' . number_format($detail->unit_price, 2));
-                    $sheet->setCellValue("H{$currentRow}", 'S/ ' . number_format($detail->subtotal, 2));
-                    // Estilo Calibri 11 y ajuste de texto
-                    $sheet->getStyle("A{$currentRow}:H{$currentRow}")->getFont()->setName('Calibri')->setSize(11);
-                    $sheet->getStyle("A{$currentRow}:H{$currentRow}")->getAlignment()->setWrapText(true);
-                    // Ajustar altura de fila para que se estire según el contenido
-                    $sheet->getRowDimension($currentRow)->setRowHeight(-1);
+            }
+
+            // Obtener los detalles de este grupo y agrupar por item_type
+            $groupDetails = $group->quoteDetails;
+            $groupedDetails = $groupDetails->groupBy(function ($detail) {
+                return $detail->item_type instanceof \BackedEnum ? $detail->item_type->value : $detail->item_type;
+            });
+
+            foreach ($sections as $type => $label) {
+                if ($groupedDetails->has($type)) {
+                    // Encabezado de sección con número y nombre
+                    $sheet->setCellValue('A' . $currentRow, $sectionIndex);
+                    $sheet->mergeCells("B{$currentRow}:H{$currentRow}");
+                    $sheet->setCellValue("B{$currentRow}", $label);
+                    // Color de fondo
+                    $sheet->getStyle("A{$currentRow}:H{$currentRow}")->getFill()
+                        ->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)
+                        ->getStartColor()->setRGB('C6E0B4');
+                    $sheet->getStyle("A{$currentRow}:H{$currentRow}")->getFont()->setBold(true)->setName('Calibri')->setSize(11);
+
                     $currentRow++;
+                    // Ordenar los detalles por 'line' antes de añadirlos
+                    $sortedDetails = $groupedDetails->get($type)->sortBy('line');
+                    $itemSubIndex = 1;
+                    foreach ($sortedDetails as $detail) {
+                        // A: numeración jerárquica (ej: 1.1, 1.2), B: línea, C: descripción, D: comentario, E: unidad, F: cantidad, G: P.U., H: subtotal
+                        $sheet->setCellValue("A{$currentRow}", $sectionIndex . '.' . $itemSubIndex);
+                        $sheet->setCellValue("B{$currentRow}", $detail->pricelist->sat_line ?? '');
+                        $sheet->setCellValue("C{$currentRow}", $detail->pricelist->sat_description ?? '');
+                        $sheet->setCellValue("D{$currentRow}", $detail->comment ?? '');
+                        $sheet->setCellValue("E{$currentRow}", $detail->pricelist->unit->name ?? 'UND');
+                        $sheet->setCellValue("F{$currentRow}", $detail->quantity);
+                        $sheet->setCellValue("G{$currentRow}", 'S/ ' . number_format($detail->unit_price, 2));
+                        $sheet->setCellValue("H{$currentRow}", 'S/ ' . number_format($detail->subtotal, 2));
+                        // Estilo Calibri 11 y ajuste de texto
+                        $sheet->getStyle("A{$currentRow}:H{$currentRow}")->getFont()->setName('Calibri')->setSize(11);
+                        $sheet->getStyle("A{$currentRow}:H{$currentRow}")->getAlignment()->setWrapText(true);
+                        // Ajustar altura de fila para que se estire según el contenido
+                        $sheet->getRowDimension($currentRow)->setRowHeight(-1);
+                        $currentRow++;
+                        $itemSubIndex++;
+                    }
+                    $sectionIndex++;
                 }
-                $sectionIndex++;
             }
         }
 
         // Pintar bordes de la tabla hasta la última fila de datos llenados
         $lastRow = $currentRow - 1;
-        $tableRange = "A9:H{$lastRow}";
-        $styleArray = [
-            'borders' => [
-                'allBorders' => [
-                    'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN,
-                    'color' => ['argb' => 'FF000000'],
+        if ($lastRow >= 9) {
+            $tableRange = "A9:H{$lastRow}";
+            $styleArray = [
+                'borders' => [
+                    'allBorders' => [
+                        'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN,
+                        'color' => ['argb' => 'FF000000'],
+                    ],
                 ],
-            ],
-        ];
-        $sheet->getStyle($tableRange)->applyFromArray($styleArray);
+            ];
+            $sheet->getStyle($tableRange)->applyFromArray($styleArray);
+        }
 
         // Ajustar ancho de columnas para mejor visualización general (excepto descripción y comentario)
         foreach (['A', 'B', 'E', 'F', 'G', 'H'] as $col) {

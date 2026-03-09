@@ -385,38 +385,4 @@ class QuoteWarehouseController extends Controller
             ], 500);
         }
     }
-
-    /**
-     * Obtener el historial de despachos (transacciones) para un requerimiento específico.
-     */
-    public function getTransactions($requirementId)
-    {
-        try {
-            $transactions = \App\Models\DispatchTransaction::with(['employee.employee', 'originLocation', 'destinationLocation'])
-                ->where('project_requirement_id', $requirementId)
-                ->orderBy('created_at', 'desc')
-                ->get();
-
-            return response()->json([
-                'success' => true,
-                'data' => $transactions->map(function ($t) {
-                    return [
-                        'id' => $t->id,
-                        'date' => $t->created_at->format('d/m/Y h:i A'),
-                        'employee' => $t->employee->employee->short_name ?? ($t->employee->name ?? 'Usuario'),
-                        'quantity' => (float) $t->quantity,
-                        'origin' => $t->originLocation->name ?? '-',
-                        'destination' => $t->destinationLocation->name ?? '-',
-                        'cost' => (float) $t->additional_cost,
-                        'comment' => $t->comment ?: '-',
-                    ];
-                })
-            ]);
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Error al cargar el historial: ' . $e->getMessage()
-            ], 500);
-        }
-    }
 }
