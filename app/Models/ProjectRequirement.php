@@ -34,12 +34,12 @@ class ProjectRequirement extends Model
      */
     public function getProductNameAttribute(): string
     {
-        if ($this->requirementable_type === Requirement::class) {
+        if ($this->requirementable instanceof Requirement) {
             return $this->requirementable->product_description ?? 'N/A';
-        } elseif ($this->requirementable_type === QuoteDetail::class) {
+        } elseif ($this->requirementable instanceof QuoteDetail) {
             return $this->requirementable->pricelist->sat_description ?? 'N/A';
-        } elseif ($this->requirementable_type === ToolUnit::class) {
-            return $this->requirementable->tool->name ?? 'N/A';
+        } elseif ($this->requirementable instanceof Tool) {
+            return $this->requirementable->name ?? 'N/A';
         }
         return 'N/A';
     }
@@ -49,11 +49,11 @@ class ProjectRequirement extends Model
      */
     public function getUnitNameAttribute(): string
     {
-        if ($this->requirementable_type === Requirement::class) {
+        if ($this->requirementable instanceof Requirement) {
             return $this->requirementable->unit->name ?? 'N/A';
-        } elseif ($this->requirementable_type === QuoteDetail::class) {
+        } elseif ($this->requirementable instanceof QuoteDetail) {
             return $this->requirementable->pricelist->unit->name ?? 'N/A';
-        } elseif ($this->requirementable_type === ToolUnit::class) {
+        } elseif ($this->requirementable instanceof Tool) {
             return 'UND'; // Default for tools
         }
         return 'N/A';

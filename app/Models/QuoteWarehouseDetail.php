@@ -50,6 +50,7 @@ class QuoteWarehouseDetail extends Model
         'location_destination_id',
         'additional_cost',
         'cost_description',
+        'tool_unit_id',
     ];
 
     /**
@@ -118,5 +119,10 @@ class QuoteWarehouseDetail extends Model
     public function scopeWithProjectRequirement($query)
     {
         return $query->with(['projectRequirement.quoteDetail.pricelist', 'projectRequirement.requirement']);
+    }
+
+    public function toolUnit(): BelongsTo
+    {
+        return $this->belongsTo(ToolUnit::class, 'tool_unit_id');
     }
 }

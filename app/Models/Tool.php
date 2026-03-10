@@ -76,6 +76,14 @@ class Tool extends Model
         return $this->hasMany(ToolUnit::class);
     }
 
+    /**
+     * Relación: Una herramienta puede ser parte de muchos requerimientos de proyecto.
+     */
+    public function projectRequirements(): \Illuminate\Database\Eloquent\Relations\MorphMany
+    {
+        return $this->morphMany(ProjectRequirement::class, 'requirementable');
+    }
+
     public function getTotalUnitsAttribute(): int
     {
         return $this->units()->count();

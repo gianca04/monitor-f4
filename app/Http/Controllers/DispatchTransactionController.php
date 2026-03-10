@@ -18,7 +18,7 @@ class DispatchTransactionController extends Controller
     public function index(int $requirementId)
     {
         try {
-            $transactions = DispatchTransaction::with(['employee.employee', 'originLocation', 'destinationLocation'])
+            $transactions = DispatchTransaction::with(['employee.employee', 'originLocation', 'destinationLocation', 'toolUnit'])
                 ->where('project_requirement_id', $requirementId)
                 ->orderBy('created_at', 'desc')
                 ->get();
@@ -34,6 +34,7 @@ class DispatchTransactionController extends Controller
                     'destination' => $t->destinationLocation->name ?? '-',
                     'cost'        => (float) $t->additional_cost,
                     'comment'     => $t->comment ?: '-',
+                    'tool_unit'   => $t->toolUnit ? ($t->toolUnit->internal_code . ' (' . $t->toolUnit->serial_number . ')') : null,
                 ]),
             ]);
         } catch (\Exception $e) {

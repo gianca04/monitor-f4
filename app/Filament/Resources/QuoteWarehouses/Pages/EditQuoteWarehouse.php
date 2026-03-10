@@ -75,11 +75,21 @@ class EditQuoteWarehouse extends EditRecord
                 $attended = $detailsByReqId[$req->id]->attended_quantity;
             }
 
+            $isTool = false;
+            $toolId = null;
+            $availableUnits = [];
             $satLine = '-';
+
             if ($req->requirementable instanceof \App\Models\QuoteDetail) {
                 $satLine = $req->requirementable->pricelist->sat_line ?? '-';
-            } elseif ($req->requirementable instanceof \App\Models\ToolUnit) {
+            } elseif ($req->requirementable instanceof \App\Models\Tool) {
                 $satLine = 'HERRAMIENTAS';
+                $isTool = true;
+                $toolId = $req->requirementable->id;
+                $availableUnits = \App\Models\ToolUnit::where('tool_id', $toolId)
+                    ->where('status', 'Disponible')
+                    ->get(['id', 'internal_code', 'serial_number'])
+                    ->toArray();
             }
 
             $details[] = [
@@ -97,6 +107,9 @@ class EditQuoteWarehouse extends EditRecord
                 'location_destination_id' => $detailsByReqId[$req->id]->location_destination_id ?? null,
                 'additional_cost'  => $detailsByReqId[$req->id]->additional_cost ?? 0,
                 'cost_description' => $detailsByReqId[$req->id]->cost_description ?? '',
+                'tool_unit_id'     => $detailsByReqId[$req->id]->tool_unit_id ?? null,
+                'is_tool'          => $isTool,
+                'available_units'  => $availableUnits,
             ];
         }
 

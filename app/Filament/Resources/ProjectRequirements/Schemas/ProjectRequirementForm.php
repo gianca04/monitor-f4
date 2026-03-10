@@ -13,6 +13,7 @@ use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Schema;
 use App\Models\ToolUnit;
+use App\Models\Tool;
 use App\Models\QuoteDetail;
 use App\Enums\RequirementType;
 use App\Enums\ToolType;
@@ -36,12 +37,12 @@ class ProjectRequirementForm
                             ->modifyOptionsQueryUsing(fn($query) => $query->with('unit', 'requirementType')),
                         MorphToSelect\Type::make(QuoteDetail::class)
                             ->label('Detalle de Cotización')
-                            ->getOptionLabelFromRecordUsing(fn ($record) => ($record->pricelist->sat_description ?? 'Sin descripción') . ($record->comment ? ' - ' . $record->comment : ''))
+                            ->getOptionLabelFromRecordUsing(fn($record) => ($record->pricelist->sat_description ?? 'Sin descripción') . ($record->comment ? ' - ' . $record->comment : ''))
                             ->modifyOptionsQueryUsing(fn($query) => $query->with('pricelist.unit')),
-                        MorphToSelect\Type::make(ToolUnit::class)
+                        MorphToSelect\Type::make(Tool::class)
                             ->label('Herramienta / Equipo')
-                            ->getOptionLabelFromRecordUsing(fn ($record) => ($record->tool->name ?? 'Sin nombre') . ($record->internal_code ? ' - ' . $record->internal_code : ''))
-                            ->modifyOptionsQueryUsing(fn($query) => $query->available()->with('tool')),
+                            ->getOptionLabelFromRecordUsing(fn($record) => $record->name ?? 'Sin nombre')
+                            ->modifyOptionsQueryUsing(fn($query) => $query),
                     ])
                     ->searchable()
                     ->columnSpanFull()
@@ -84,16 +85,16 @@ class ProjectRequirementForm
                                     $set('subtotal', round((float)$quoteDetail->quantity * (float)$quoteDetail->unit_price, 2)); // Calculate subtotal
                                     $set('type', \App\Enums\RequirementType::CONSUMIBLE); // Default for quotes
                                 }
-                            } elseif ($type === ToolUnit::class) {
-                                $toolUnit = ToolUnit::find($id);
-                                if ($toolUnit) {
+                            } elseif ($type === Tool::class) {
+                                $tool = Tool::find($id);
+                                if ($tool) {
                                     $set('unit_symbol', 'UND');
                                     $set('requirement_type', 'Herramienta');
                                     $set('unit_of_measure', 'UND');
                                     // Set type based on tool type
-                                    if ($toolUnit->tool->type === \App\Enums\ToolType::HERRAMIENTA) {
+                                    if ($tool->type === \App\Enums\ToolType::HERRAMIENTA) {
                                         $set('type', \App\Enums\RequirementType::HERRAMIENTA);
-                                    } elseif ($toolUnit->tool->type === \App\Enums\ToolType::EQUIPO) {
+                                    } elseif ($tool->type === \App\Enums\ToolType::EQUIPO) {
                                         $set('type', \App\Enums\RequirementType::EQUIPO);
                                     } else {
                                         $set('type', \App\Enums\RequirementType::HERRAMIENTA); // default

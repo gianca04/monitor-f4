@@ -23,7 +23,7 @@ class ProjectRequirementsTable
                     ->searchable(query: function (Builder $query, string $search): Builder {
                         return $query->whereHasMorph(
                             'requirementable',
-                            [\App\Models\Requirement::class, \App\Models\QuoteDetail::class, \App\Models\ToolUnit::class],
+                            [\App\Models\Requirement::class, \App\Models\QuoteDetail::class, \App\Models\Tool::class],
                             function (Builder $query, string $type) use ($search) {
                                 if ($type === \App\Models\Requirement::class) {
                                     $query->where('product_description', 'like', "%{$search}%");
@@ -31,11 +31,8 @@ class ProjectRequirementsTable
                                     $query->whereHas('pricelist', function ($q) use ($search) {
                                         $q->where('sat_description', 'like', "%{$search}%");
                                     });
-                                } elseif ($type === \App\Models\ToolUnit::class) {
-                                    $query->whereHas('tool', function ($q) use ($search) {
-                                        $q->where('name', 'like', "%{$search}%")
-                                            ->orWhere('internal_code', 'like', "%{$search}%");
-                                    });
+                                } elseif ($type === \App\Models\Tool::class) {
+                                    $query->where('name', 'like', "%{$search}%");
                                 }
                             }
                         );

@@ -20,6 +20,7 @@ class DispatchTransaction extends Model
         'additional_cost',
         'cost_description',
         'comment',
+        'tool_unit_id',
     ];
 
     protected $casts = [
@@ -50,5 +51,10 @@ class DispatchTransaction extends Model
     public function destinationLocation(): BelongsTo
     {
         return $this->belongsTo(Location::class, 'location_destination_id');
+    }
+
+    public function toolUnit(): BelongsTo
+    {
+        return $this->belongsTo(ToolUnit::class, 'tool_unit_id');
     }
 }

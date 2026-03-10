@@ -14,6 +14,9 @@ use Illuminate\Support\Facades\Log;
 use Barryvdh\DomPDF\Facade\Pdf; // Asegúrate de tener instalado barryvdh/laravel-dompdf
 use Illuminate\Support\Facades\Auth;
 use App\Models\Location;
+use App\Models\QuoteDetail;
+use App\Models\Requirement;
+use App\Models\Tool;
 
 /**
  * Controlador para manejar las operaciones CRUD de cotizaciones (Quotes).
@@ -60,7 +63,7 @@ class QuoteWarehouseController extends Controller
             $satLine = '-';
             if ($req->requirementable instanceof \App\Models\QuoteDetail) {
                 $satLine = $req->requirementable->pricelist->sat_line ?? '-';
-            } elseif ($req->requirementable instanceof \App\Models\ToolUnit) {
+            } elseif ($req->requirementable instanceof \App\Models\Tool) {
                 $satLine = 'HERRAMIENTAS';
             }
 
@@ -171,6 +174,7 @@ class QuoteWarehouseController extends Controller
                             'location_destination_id' => $detail['location_destination_id'] ?? $detalleExistente->location_destination_id,
                             'additional_cost'    => $detail['additional_cost'] ?? $detalleExistente->additional_cost,
                             'cost_description'   => $detail['cost_description'] ?? $detalleExistente->cost_description,
+                            'tool_unit_id'       => $detail['tool_unit_id'] ?? $detalleExistente->tool_unit_id,
                         ]);
                     } else {
                         // Si no existe, creamos un nuevo registro
@@ -183,6 +187,7 @@ class QuoteWarehouseController extends Controller
                             'location_destination_id' => $detail['location_destination_id'] ?? null,
                             'additional_cost'        => $detail['additional_cost'] ?? 0,
                             'cost_description'       => $detail['cost_description'] ?? null,
+                            'tool_unit_id'           => $detail['tool_unit_id'] ?? null,
                         ]);
                     }
 
@@ -197,13 +202,13 @@ class QuoteWarehouseController extends Controller
                         'additional_cost'         => $detail['additional_cost'] ?? 0,
                         'cost_description'        => $detail['cost_description'] ?? null,
                         'comment'                 => $detail['comment'] ?? null,
+                        'tool_unit_id'            => $detail['tool_unit_id'] ?? null,
                     ]);
                     // ==========================================================
 
-                    // Actualizar el estado de la herramienta a "En Uso" si es una unidad de herramienta despachada
-                    $projectReq = \App\Models\ProjectRequirement::find($detail['project_requirement_id']);
-                    if ($projectReq && $projectReq->requirementable_type === \App\Models\ToolUnit::class) {
-                        $toolUnit = $projectReq->requirementable;
+                    // Actualizar el estado de la herramienta a "En Uso" si se despachó una unidad
+                    if (isset($detail['tool_unit_id']) && $detail['tool_unit_id']) {
+                        $toolUnit = \App\Models\ToolUnit::find($detail['tool_unit_id']);
                         if ($toolUnit && $toolUnit->status !== 'En Uso') {
                             $toolUnit->update(['status' => 'En Uso']);
                         }
@@ -270,56 +275,52 @@ class QuoteWarehouseController extends Controller
             ->unique();
         $locationsMap = Location::whereIn('id', $locationIds)->pluck('name', 'id');
 
-        $groupedDetails = $quote->project->projectRequirements->groupBy('consumable_type_name');
+        $projectRequirements = $quote->project->projectRequirements ?? collect();
 
         $details = [];
         $hasAdditionalCosts = false;
         $totalAdditionalCost = 0;
 
-        foreach (['Suministro', 'Herramienta'] as $type) {
-            if ($groupedDetails->has($type)) {
-                foreach ($groupedDetails[$type] as $req) {
-                    $warehouseDetail = $warehouseDetails[$req->id] ?? null;
-                    $attended = $warehouseDetail->attended_quantity ?? 0;
+        foreach ($projectRequirements as $req) {
+            $warehouseDetail = $warehouseDetails[$req->id] ?? null;
+            $attended = $warehouseDetail->attended_quantity ?? 0;
 
-                    if ($attended <= 0) {
-                        continue;
-                    }
-
-                    $satDescription = '';
-                    $unitName = '';
-
-                    if ($req->requirementable instanceof \App\Models\Requirement) {
-                        $satDescription = $req->requirementable->product_description;
-                        $unitName = $req->requirementable->unit->name ?? 'UND';
-                    } elseif ($req->requirementable instanceof \App\Models\QuoteDetail) {
-                        $satDescription = $req->requirementable->pricelist->sat_description ?? '';
-                        $unitName = $req->requirementable->pricelist->unit->name ?? 'UND';
-                    } elseif ($req->requirementable instanceof \App\Models\ToolUnit) {
-                        $satDescription = $req->requirementable->tool->name ?? 'Herramienta';
-                        $unitName = 'UND';
-                    }
-
-                    $additionalCost = (float) ($warehouseDetail->additional_cost ?? 0);
-                    if ($additionalCost > 0) {
-                        $hasAdditionalCosts = true;
-                    }
-                    $totalAdditionalCost += $additionalCost;
-
-                    $details[] = [
-                        'item_type'        => $type,
-                        'product_name'     => $req->product_name ?? $satDescription,
-                        'sat_description'  => $satDescription,
-                        'quantity'         => $req->quantity,
-                        'unit_name'        => $unitName,
-                        'entregado'        => $attended,
-                        'origin_name'      => $locationsMap[$warehouseDetail->location_origin_id ?? 0] ?? '',
-                        'destination_name' => $locationsMap[$warehouseDetail->location_destination_id ?? 0] ?? '',
-                        'additional_cost'  => $additionalCost,
-                        'cost_description' => $warehouseDetail->cost_description ?? '',
-                    ];
-                }
+            if ($attended <= 0) {
+                continue;
             }
+
+            $satDescription = '';
+            $unitName = '';
+
+            if ($req->requirementable instanceof Requirement) {
+                $satDescription = $req->requirementable->product_description;
+                $unitName = $req->requirementable->unit->name ?? 'UND';
+            } elseif ($req->requirementable instanceof QuoteDetail) {
+                $satDescription = $req->requirementable->pricelist->sat_description ?? '';
+                $unitName = $req->requirementable->pricelist->unit->name ?? 'UND';
+            } elseif ($req->requirementable instanceof Tool) {
+                $satDescription = $req->requirementable->name ?? 'Herramienta';
+                $unitName = 'UND';
+            }
+
+            $additionalCost = (float) ($warehouseDetail->additional_cost ?? 0);
+            if ($additionalCost > 0) {
+                $hasAdditionalCosts = true;
+            }
+            $totalAdditionalCost += $additionalCost;
+
+            $details[] = [
+                'item_type'        => $req->consumable_type_name ?? 'Suministro',
+                'product_name'     => $req->product_name ?? '—',
+                'sat_description'  => $req->product_name ?? '—',
+                'quantity'         => $req->quantity,
+                'unit_name'        => $req->unit_name ?? 'UND',
+                'entregado'        => $attended,
+                'origin_name'      => $locationsMap[$warehouseDetail->location_origin_id ?? 0] ?? '',
+                'destination_name' => $locationsMap[$warehouseDetail->location_destination_id ?? 0] ?? '',
+                'additional_cost'  => $additionalCost,
+                'cost_description' => $warehouseDetail->cost_description ?? '',
+            ];
         }
 
         // Determinar ubicaciones predominantes para encabezado (la más frecuente)
