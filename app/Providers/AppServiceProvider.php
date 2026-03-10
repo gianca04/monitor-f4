@@ -8,6 +8,8 @@ use Filament\Support\Facades\FilamentView;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
+use App\Models\QuoteWarehouse;
+use App\Observers\QuoteWarehouseObserver;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -24,6 +26,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        QuoteWarehouse::observe(QuoteWarehouseObserver::class);
+
         $this->configureOpenSsl();
 
         FilamentView::registerRenderHook(
