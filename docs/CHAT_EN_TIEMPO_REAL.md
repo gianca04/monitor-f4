@@ -182,6 +182,7 @@ composer require laravel/reverb
 ```
 
 Esto instala automáticamente:
+
 - `laravel/reverb` — servidor WebSocket
 - `pusher/pusher-php-server` — driver de broadcast compatible
 
@@ -293,7 +294,7 @@ public function chatBubbleSendMessage(): void
     ]);
 
     // Broadcast a los demás participantes (excluye al emisor)
-    broadcast(new MessageSent($message))->toOthers();
+    broadcast(new MessageSent($message));
 
     // Refresca la vista local
     unset($this->messages);
@@ -432,6 +433,7 @@ php artisan reverb:start --hostname=tu-dominio.com --port=443
 ```
 
 Asegurarse de que:
+
 - `BROADCAST_CONNECTION=reverb` en `.env`.
 - `REVERB_SCHEME=https` y puertos correctos.
 - El servidor Reverb esté detrás de un proxy con TLS (Nginx, Cloudflare, etc.).
@@ -478,6 +480,7 @@ El sistema está diseñado para escalar. La tabla `conversations` incluye:
 - **`last_read_at`** en pivot: base para indicadores de lectura por participante.
 
 Posibles ampliaciones:
+
 - Conversaciones grupales.
 - Indicadores de "escribiendo..." (typing indicators vía Whisper).
 - Adjuntos y archivos.

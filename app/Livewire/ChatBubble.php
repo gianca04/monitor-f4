@@ -197,7 +197,7 @@ class ChatBubble extends Component
         $this->messageBody = '';
 
         // Broadcast en tiempo real a los demás participantes.
-        broadcast(new MessageSent($message))->toOthers();
+        broadcast(new MessageSent($message));
 
         // Refrescar mensajes localmente.
         unset($this->messages);
