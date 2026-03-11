@@ -58,7 +58,9 @@ class ProjectRequirementsTable
                     ->sortable(),
                 TextColumn::make('comments')
                     ->label('Comentarios')
-                    ->searchable(),
+                    ->searchable()
+                    ->limit(50)
+                    ->tooltip(fn($state): string => $state),
                 TextColumn::make('created_at')
                     ->dateTime()
                     ->label('Fecha de Creación')
@@ -74,7 +76,7 @@ class ProjectRequirementsTable
                 //
             ])
             ->recordActions([
-                EditAction::make(),
+                EditAction::make()->modalWidth('xl'),
             ])
             ->toolbarActions([
                 BulkActionGroup::make([

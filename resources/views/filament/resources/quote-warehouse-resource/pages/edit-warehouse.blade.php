@@ -233,7 +233,7 @@
                                 {{-- Total Solicitado --}}
                                 <td
                                     class="px-3 py-2 text-center align-middle border-r border-gray-100 dark:border-gray-800/50">
-                                    <span class="text-[11px] font-mono font-bold text-gray-600 dark:text-gray-400">
+                                    <span class="text-[11px] font-bold text-gray-600 dark:text-gray-400">
                                         {{ $item['quantity'] }}
                                     </span>
                                 </td>
@@ -244,7 +244,7 @@
                                     <div class="flex flex-col items-center gap-1 relative">
                                         <div class="flex items-center justify-center relative w-full">
                                             <span
-                                                class="text-[11px] font-mono font-bold {{ $completado ? 'text-emerald-600 dark:text-emerald-400' : 'text-gray-700 dark:text-gray-300' }}">
+                                                class="text-[11px] font-bold {{ $completado ? 'text-emerald-600 dark:text-emerald-400' : 'text-gray-700 dark:text-gray-300' }}">
                                                 {{ $item['entregado'] ?? 0 }}
                                             </span>
 
@@ -268,7 +268,7 @@
                                         <input type="number" x-model.number="items[{{ $i }}].despachar"
                                             :max="items[{{ $i }}].solicitado - items[{{ $i }}].entregado" min="0"
                                             @input="if(items[{{ $i }}].despachar > (items[{{ $i }}].solicitado - items[{{ $i }}].entregado)) items[{{ $i }}].despachar = items[{{ $i }}].solicitado - items[{{ $i }}].entregado"
-                                            class="w-full text-center text-xs font-mono font-bold border-gray-300 dark:border-gray-600 focus:border-blue-500 focus:ring-blue-500 rounded text-blue-700 dark:text-blue-300 bg-white dark:bg-gray-800 py-1.5 shadow-sm" />
+                                            class="w-full text-center text-xs font-bold border-gray-300 dark:border-gray-600 focus:border-blue-500 focus:ring-blue-500 rounded text-blue-700 dark:text-blue-300 bg-white dark:bg-gray-800 py-1.5 shadow-sm" />
                                     @endif
                                 </td>
 
@@ -369,7 +369,7 @@
                                 <div class="h-full bg-blue-500 rounded-full transition-all duration-500"
                                     :style="`width: ${progresoTotal}%`"></div>
                             </div>
-                            <span class="text-xs font-bold font-mono text-blue-600 dark:text-blue-400"
+                            <span class="text-xs font-bold text-blue-600 dark:text-blue-400"
                                 x-text="progresoTotal + '%'"></span>
                         </div>
                     </div>
@@ -551,7 +551,7 @@
                                         <span
                                             class="material-symbols-outlined text-blue-600 dark:text-blue-400 text-[18px]">outbound</span>
                                         <span class="text-xs text-gray-700 dark:text-gray-300">
-                                            Despachó <strong class="text-blue-700 dark:text-blue-400 font-mono text-sm"
+                                            Despachó <strong class="text-blue-700 dark:text-blue-400 text-sm"
                                                 x-text="tx.quantity"></strong> unidades
                                         </span>
                                     </div>
@@ -595,7 +595,7 @@
                                         <span class="font-bold text-gray-700 dark:text-gray-300">Unidad despachada:
                                         </span>
                                         <span
-                                            class="font-mono text-emerald-700 dark:text-emerald-400 font-bold bg-emerald-50 dark:bg-emerald-900/30 px-2 py-0.5 rounded border border-emerald-100 dark:border-emerald-800"
+                                            class="text-emerald-700 dark:text-emerald-400 font-bold bg-emerald-50 dark:bg-emerald-900/30 px-2 py-0.5 rounded border border-emerald-100 dark:border-emerald-800"
                                             x-text="tx.tool_unit"></span>
                                     </div>
                                 </div>

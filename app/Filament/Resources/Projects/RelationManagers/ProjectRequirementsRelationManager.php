@@ -27,7 +27,7 @@ class ProjectRequirementsRelationManager extends RelationManager
     public function table(Table $table): Table
     {
         return ProjectRequirementsTable::configure($table)->headerActions([
-            CreateAction::make(),
+            CreateAction::make()->slideOver(),
         ]);
     }
 }

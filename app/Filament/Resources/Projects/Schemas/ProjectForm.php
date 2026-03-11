@@ -574,16 +574,21 @@ class ProjectForm
                                                     ->label('Fecha de la visita'),
 
                                                 TimePicker::make('entry_time')
-                                                    ->label('Hora de ingreso'),
+                                                    ->label('Hora de ingreso')
+                                                    ->seconds(false)
+                                                    ->displayFormat('H:i'),
 
                                                 TimePicker::make('exit_time')
-                                                    ->label('Hora de salida'),
+                                                    ->label('Hora de salida')
+                                                    ->seconds(false)
+                                                    ->displayFormat('H:i'),
 
                                             ]),
                                         TextInput::make('amount')
                                             ->numeric()
                                             ->prefix('S/ ')
                                             ->label('Monto del Proyecto')
+                                            ->readOnly()
                                             ->formatStateUsing(function ($state, $livewire) {
                                                 if ($state) return $state;
 
