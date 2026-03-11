@@ -3,7 +3,8 @@
     POST_MAX_SIZE = '100M'
 
 [phases.setup]
+    nixPkgs = ['...', 'python311Packages.supervisor']
     cmds = ['UPLOAD_INI_PATH=$(find /nix/store/*-php-*/lib -name php.ini -print0 | tail -z -n 1 | rev | cut -c 9- | rev)/upload.ini; echo "upload_max_filesize=${UPLOAD_MAX_FILESIZE};" >> $UPLOAD_INI_PATH; echo "post_max_size=${POST_MAX_SIZE};" >> $UPLOAD_INI_PATH']
 
 [start]
-    prestart = "php artisan queue:work & php artisan reverb:start --host=0.0.0.0 --port=8080 &"
+    cmd = "node /assets/scripts/prestart.mjs /app/nginx.template.conf /nginx.conf && supervisord -c /app/supervisord.conf"
