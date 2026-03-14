@@ -1,13 +1,13 @@
 <?php
 
-namespace App\Filament\Resources\RequirementLists\Schemas;
+namespace App\Filament\Resources\DispatchGuides\Schemas;
 
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Schema;
 
-class RequirementListForm
+class DispatchGuideForm
 {
     public static function configure(Schema $schema): Schema
     {

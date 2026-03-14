@@ -7,29 +7,47 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
- * Modelo QuoteWarehouseDetail - Detalles de Atención de Almacén
+ * Modelo QuoteWarehouseDetail - Detalles de Atención de Almacén (REFACTORIZADO)
  *
- * Representa el detalle de los ítems atendidos en una solicitud de almacén.
- * Vincula el registro de atención de almacén (QuoteWarehouse) con el requerimiento del proyecto.
+ * IMPORTANTE: Este modelo ha sido refactorizado para actuar como REGISTRO CONSOLIDADO
+ * de la atención del almacén. Los detalles granulares de CADA entrega individual
+ * se registran ahora en DispatchTransaction.
+ *
+ * Estructura anterior (problemática):
+ * - Un QuoteWarehouseDetail = una atención completa
+ * - Imposible manejar entregas parciales de múltiples fuentes
+ * - Dificultad para rastrear costos específicos
+ *
+ * Nueva estructura (actual):
+ * - QuoteWarehouseDetail = Referencia a la solicitud de almacén
+ * - DispatchTransaction = Cada transacción de entrega individual
+ * - ProjectRequirement → DispatchTransactions (1 → *)
+ *
+ * Relación: Un requerimiento puede tener múltiples entregas desde almacén,
+ * y potencialmente desde otras fuentes (proveedor, externo).
  *
  * @property int $id Identificador único del detalle
- * @property int $quote_warehouse_id ID de la atención de almacén (DEPRECATED: Se eliminará en el futuro)
  * @property int $project_requirement_id ID del requerimiento de proyecto asociado
- * @property float $attended_quantity Cantidad atendida por almacén para este ítem
- * @property float|null $additional_cost Costo adicional asociado a la atención
- * @property string|null $cost_description Descripción del costo adicional
+ * @property int|null $quote_warehouse_id ID de la atención de almacén
+ * @property float|null $attended_quantity Cantidad total atendida por almacén para este ítem
+ * @property float|null $additional_cost Costo adicional de atención (DEPRECATED: usar DispatchTransaction)
+ * @property string|null $cost_description Descripción del costo (DEPRECATED: usar DispatchTransaction)
  * @property string|null $comment Comentario sobre la atención
  * @property int|null $location_origin_id ID del lugar de origen
  * @property int|null $location_destination_id ID del lugar de destino
- * @property int|null $tool_unit_id ID de la unidad de herramienta (si aplica)
+ * @property int|null $tool_unit_id ID de la unidad de herramienta
  * @property \Illuminate\Support\Carbon|null $created_at Fecha de creación del registro
  * @property \Illuminate\Support\Carbon|null $updated_at Fecha de última actualización del registro
  *
- * @property-read \App\Models\QuoteWarehouse $quoteWarehouse La atención de almacén asociada (Legacy)
+ * @property-read \App\Models\QuoteWarehouse $quoteWarehouse La atención de almacén asociada
  * @property-read \App\Models\ProjectRequirement $projectRequirement El requerimiento de proyecto asociado
  * @property-read \App\Models\Location|null $locationOrigin Lugar de origen
  * @property-read \App\Models\Location|null $locationDestination Lugar de destino
  * @property-read \App\Models\ToolUnit|null $toolUnit Unidad de herramienta vinculada
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\DispatchTransaction> $dispatchTransactions Las transacciones de entrega desde almacén
+ *
+ * DEPRECACIÓN: Se recomienda migrar a usar directamente DispatchTransaction
+ * para nuevas funcionalidades. Este modelo se mantiene por compatibilidad hacia atrás.
  */
 class QuoteWarehouseDetail extends Model
 {
@@ -109,6 +127,25 @@ class QuoteWarehouseDetail extends Model
     public function locationDestination(): BelongsTo
     {
         return $this->belongsTo(Location::class, 'location_destination_id');
+    }
+
+    /**
+     * Obtiene las transacciones de entrega desde almacén.
+     *
+     * Helper que filtra las transacciones de entrega de este requerimiento cuando
+     * la fuente es almacén. Use DispatchTransaction directamente para nuevas funcionalidades.
+     *
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function dispatchTransactions()
+    {
+        if (!$this->projectRequirement) {
+            return DispatchTransaction::whereNull('id'); // Empty query
+        }
+        
+        return $this->projectRequirement
+            ->dispatchTransactions()
+            ->where('source_type', 'warehouse');
     }
 
     /**

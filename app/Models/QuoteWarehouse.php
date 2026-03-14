@@ -7,14 +7,26 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
- * Modelo QuoteWarehouse - Cotización Almacén
+ * Modelo QuoteWarehouse - Cotización Almacén (DEPRECADO)
  *
- * Representa el registro de atención de una cotización por parte del almacén.
+ * Representa el registro LEGACY de atención de una cotización por parte del almacén.
  * Gestiona el estado de despacho o preparación de los materiales solicitados en una cotización.
+ *
+ * ⚠️ NOTA DE DEPRECACIÓN:
+ * - Este modelo se mantiene por compatibilidad hacia atrás
+ * - Las nuevas funcionalidades de entrega deben usar DispatchTransaction
+ * - Los detalles granulares se registran ahora en DispatchTransaction (source_type, dispatch_date, etc.)
+ * - Para nuevos desarrollos, usar ProjectRequirement → DispatchTransaction
+ *
+ * Relación Legacy (antigua):
+ * Quote → QuoteWarehouse → QuoteWarehouseDetail
+ *
+ * Relación Nueva (recomendada):
+ * Quote → Quote Details → Project Requirements → DispatchTransaction
  *
  * @property int $id Identificador único del registro
  * @property int $quote_id ID de la cotización asociada
- * @property int $user_id ID del usuario de almacén que atendió la solicitud
+ * @property int $employee_id ID del usuario de almacén que atendió la solicitud (renamed from user_id)
  * @property string $status Estado de la atención (attended, partial, pending)
  * @property \Illuminate\Support\Carbon|null $attended_at Fecha y hora en que se realizó la atención
  * @property string|null $observations Observaciones o notas adicionales sobre la atención
@@ -22,7 +34,10 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property \Illuminate\Support\Carbon|null $updated_at Fecha de última actualización del registro
  *
  * @property-read \App\Models\Quote $quote La cotización asociada
- * @property-read \App\Models\User $user El usuario que atendió la solicitud
+ * @property-read \App\Models\User $employee El empleado que atendió la solicitud
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\QuoteWarehouseDetail> $details Los detalles de la atención (Legacy)
+ *
+ * DEPRECACIÓN: Migrar a DispatchTransaction para nuevas funcionalidades
  */
 class QuoteWarehouse extends Model
 {

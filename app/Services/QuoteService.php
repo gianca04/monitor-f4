@@ -127,17 +127,18 @@ class QuoteService
             return;
         }
 
-        // Create the Requirement List
+        // Create the Dispatch Guide
         $subClientName = $project->subClient->name ?? 'N/A';
-        $listName = "Guia #01 - {$project->name} - {$subClientName}";
+        $listName = "Guía #01 - {$project->name} - {$subClientName}";
 
-        $requirementList = \App\Models\RequirementList::firstOrCreate(
+        $dispatchGuide = \App\Models\DispatchGuide::firstOrCreate(
             [
                 'project_id' => $project->id,
                 'name' => $listName,
             ],
             [
-                'tracking_number' => null, // Or define logic if needed
+                'status' => 'pending',
+                'tracking_number' => null,
                 'required_shipping_date' => null,
             ]
         );
@@ -152,7 +153,7 @@ class QuoteService
                     ],
                     [
                         'project_id'          => $quote->project_id,
-                        'requirement_list_id' => $requirementList->id,
+                        'dispatch_guide_id'   => $dispatchGuide->id,
                         'quantity'            => $detail->quantity,
                         'price_unit'          => $detail->unit_price,
                         'comments'            => $detail->description ?? $detail->comment,
@@ -174,7 +175,7 @@ class QuoteService
         // Delete requirements associated with this project
         ProjectRequirement::where('project_id', $quote->project_id)->delete();
 
-        // Also delete the requirement lists associated with this project
-        \App\Models\RequirementList::where('project_id', $quote->project_id)->delete();
+        // Also delete the dispatch guides associated with this project
+        \App\Models\DispatchGuide::where('project_id', $quote->project_id)->delete();
     }
 }

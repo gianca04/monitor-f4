@@ -24,9 +24,9 @@ use Filament\Tables\Table;
 use App\Filament\Resources\ProjectRequirements\Schemas\ProjectRequirementForm;
 use Illuminate\Support\Str;
 
-class RequirementListRelationManager extends RelationManager
+class DispatchGuideRelationManager extends RelationManager
 {
-    protected static string $relationship = 'requirementLists';
+    protected static string $relationship = 'dispatchGuides';
 
     public function form(Schema $schema): Schema
     {

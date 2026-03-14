@@ -9,9 +9,26 @@ use Illuminate\Support\Facades\Auth;
 
 
 /**
- * Model Project
+ * Modelo Project - Proyectos
  *
- * Represents a project entity with location and scheduling data.
+ * Representa un proyecto con todos sus detalles, solicitudes, cotizaciones y entregas.
+ * Centraliza toda la información del proyecto incluyendo requerimientos y auditoría de despachos.
+ *
+ * Arquitectura de Entregas (NEW):
+ * Project (1) → ProjectRequirement (*) → DispatchTransaction (*)
+ *   - Cada requisito puede tener múltiples entregas desde diferentes fuentes
+ *   - Cada entrega está documentada independientemente con fecha, empleado, ubicaciones
+ *   - Los costos y observaciones se registran a nivel de transacción
+ *
+ * Relaciones principales:
+ * - proyecto → múltiples requerimientos proyecto
+ * - requerimiento → múltiples transacciones de entrega
+ * - transacción → detalles de ubicación, empleado, costo
+ *
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\ProjectRequirement> $projectRequirements Los requerimientos del proyecto
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\DispatchGuide> $dispatchGuides Las guías de despacho del proyecto
+ *
+ * NOTA: Las entregas individuales se encuentran en ProjectRequirement → dispatchTransactions()
  */
 class Project extends Model
 {
@@ -338,10 +355,10 @@ class Project extends Model
     }
 
     /**
-     * Relación: Un proyecto tiene muchas listas de requerimientos.
+     * Relación: Un proyecto tiene muchas guías de despacho.
      */
-    public function requirementLists()
+    public function dispatchGuides()
     {
-        return $this->hasMany(RequirementList::class);
+        return $this->hasMany(DispatchGuide::class);
     }
 }

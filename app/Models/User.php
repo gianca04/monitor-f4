@@ -13,7 +13,18 @@ use Illuminate\Notifications\Notifiable;
 use NotificationChannels\WebPush\HasPushSubscriptions;
 use Spatie\Permission\Traits\HasRoles;
 
-
+/**
+ * Modelo User - Usuarios del Sistema
+ *
+ * Representa un usuario del sistema con permisos, roles y relaciones de seguimiento.
+ * Los usuarios (empleados) registran y ejecutan transacciones de entrega de materiales.
+ *
+ * Relación con DispatchTransaction:
+ * - employee_id en DispatchTransaction señala el usuario que ejecutó la entrega
+ * - Permite auditar quién, cuándo y cómo se despachó cada material
+ *
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\DispatchTransaction> $dispatchTransactions Las transacciones de entrega ejecutadas por este usuario
+ */
 class User extends Authenticatable
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
@@ -67,5 +78,15 @@ class User extends Authenticatable
         return $this->belongsToMany(Conversation::class)
             ->withPivot('last_read_at')
             ->withTimestamps();
+    }
+
+    /**
+     * Obtiene todas las transacciones de entrega ejecutadas por este usuario.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function dispatchTransactions()
+    {
+        return $this->hasMany(DispatchTransaction::class, 'employee_id');
     }
 }
