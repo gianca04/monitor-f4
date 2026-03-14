@@ -119,11 +119,28 @@ class QuoteService
             return;
         }
 
-        // Optional: Clear existing requirements for this quote to avoid duplicates or stale data
-        // $this->clearProjectRequirements($quote); 
+        // Load project and subClient for the name
+        $quote->loadMissing(['project.subClient', 'details']);
+        $project = $quote->project;
 
-        // Load details if not already loaded
-        $quote->loadMissing('details');
+        if (!$project) {
+            return;
+        }
+
+        // Create the Requirement List
+        $subClientName = $project->subClient->name ?? 'N/A';
+        $listName = "Guia #01 - {$project->name} - {$subClientName}";
+
+        $requirementList = \App\Models\RequirementList::firstOrCreate(
+            [
+                'project_id' => $project->id,
+                'name' => $listName,
+            ],
+            [
+                'tracking_number' => null, // Or define logic if needed
+                'required_shipping_date' => null,
+            ]
+        );
 
         foreach ($quote->details as $detail) {
             // Filter only 'SUMINISTRO' type (or others if needed in the future)
@@ -134,11 +151,12 @@ class QuoteService
                         'requirementable_type' => \App\Models\QuoteDetail::class,
                     ],
                     [
-                        'project_id'      => $quote->project_id,
-                        'quantity'        => $detail->quantity,
-                        'price_unit'      => $detail->unit_price,
-                        'comments'        => $detail->description ?? $detail->comment,
-                        'type'            => \App\Enums\RequirementType::CONSUMIBLE,
+                        'project_id'          => $quote->project_id,
+                        'requirement_list_id' => $requirementList->id,
+                        'quantity'            => $detail->quantity,
+                        'price_unit'          => $detail->unit_price,
+                        'comments'            => $detail->description ?? $detail->comment,
+                        'type'                => \App\Enums\RequirementType::CONSUMIBLE,
                     ]
                 );
             }
@@ -151,9 +169,12 @@ class QuoteService
      * @param Quote $quote
      * @return void
      */
-    public function clearProjectRequirements(Quote $quote): void
+     public function clearProjectRequirements(Quote $quote): void
     {
         // Delete requirements associated with this project
         ProjectRequirement::where('project_id', $quote->project_id)->delete();
+
+        // Also delete the requirement lists associated with this project
+        \App\Models\RequirementList::where('project_id', $quote->project_id)->delete();
     }
 }

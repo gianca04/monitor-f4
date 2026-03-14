@@ -7,8 +7,10 @@ use App\Filament\Resources\Projects\Pages\EditProject;
 use App\Filament\Resources\Projects\Pages\ListProjects;
 use App\Filament\Resources\Projects\RelationManagers\ProjectRequirementsRelationManager;
 use App\Filament\Resources\Projects\RelationManagers\QuotesRelationManager;
+use App\Filament\Resources\Projects\RelationManagers\RequirementListRelationManager;
 use App\Filament\Resources\Projects\Schemas\ProjectForm;
 use App\Filament\Resources\Projects\Tables\ProjectsTable;
+use App\Filament\Resources\RequirementLists\Pages\ListRequirementLists;
 use App\Models\Project;
 use BackedEnum;
 use Filament\Resources\Resource;
@@ -52,7 +54,7 @@ class ProjectResource extends Resource
         return [
             //
             QuotesRelationManager::class,
-            ProjectRequirementsRelationManager::class,
+            RequirementListRelationManager::class,
         ];
     }
 

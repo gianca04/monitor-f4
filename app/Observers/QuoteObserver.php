@@ -48,7 +48,9 @@ class QuoteObserver
      */
     public function deleted(Quote $quote): void
     {
-        // Add cleanup logic here if needed via service
+        $this->quoteService->syncProjectStatus($quote);
+        $this->quoteService->handleWarehouseLogic($quote);
+        $this->quoteService->clearProjectRequirements($quote);
     }
 
     /**

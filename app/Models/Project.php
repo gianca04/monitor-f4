@@ -336,4 +336,12 @@ class Project extends Model
     {
         return $this->hasMany(ProjectRequirement::class);
     }
+
+    /**
+     * Relación: Un proyecto tiene muchas listas de requerimientos.
+     */
+    public function requirementLists()
+    {
+        return $this->hasMany(RequirementList::class);
+    }
 }

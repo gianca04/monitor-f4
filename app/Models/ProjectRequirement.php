@@ -13,26 +13,59 @@ class ProjectRequirement extends Model
         'project_id',
         'requirementable_id',
         'requirementable_type',
+        'requirement_list_id',
         'type',
         'quantity',
         'price_unit',
+        'product_name',
+        'unit_name',
+        'requirement_type',
         'comments',
     ];
 
     protected $casts = [
         'project_id' => 'integer',
         'requirementable_id' => 'integer',
+        'requirement_list_id' => 'integer',
         'quantity' => 'decimal:2',
         'price_unit' => 'decimal:2',
         'type' => \App\Enums\RequirementType::class,
     ];
 
-    protected $appends = ['subtotal', 'product_name', 'unit_name', 'consumable_type_name'];
+    protected $appends = ['subtotal', 'consumable_type_name'];
+
+    protected static function booted()
+    {
+        static::creating(function ($projectRequirement) {
+            // Capture snapshots from requirementable relation if they are not already set
+            if ($projectRequirement->requirementable) {
+                if (empty($projectRequirement->product_name)) {
+                    $projectRequirement->product_name = $projectRequirement->product_name_calculated;
+                }
+                if (empty($projectRequirement->unit_name)) {
+                    $projectRequirement->unit_name = $projectRequirement->unit_name_calculated;
+                }
+                if (empty($projectRequirement->requirement_type)) {
+                    $projectRequirement->requirement_type = $projectRequirement->requirement_type_calculated;
+                }
+            }
+        });
+    }
+
+
 
     /**
-     * Get the consolidated product name.
+     * Get the consolidated product name (Snapshot or Calculated).
      */
     public function getProductNameAttribute(): string
+    {
+        return $this->attributes['product_name'] ?? $this->product_name_calculated;
+    }
+
+    /**
+     * Internal logic for calculating product name from relationships.
+     */
+    public function getProductNameCalculatedAttribute(): string
     {
         if ($this->requirementable instanceof Requirement) {
             return $this->requirementable->product_description ?? 'N/A';
@@ -45,9 +78,17 @@ class ProjectRequirement extends Model
     }
 
     /**
-     * Get the consolidated unit name.
+     * Get the consolidated unit name (Snapshot or Calculated).
      */
     public function getUnitNameAttribute(): string
+    {
+        return $this->attributes['unit_name'] ?? $this->unit_name_calculated;
+    }
+
+    /**
+     * Internal logic for calculating unit name from relationships.
+     */
+    public function getUnitNameCalculatedAttribute(): string
     {
         if ($this->requirementable instanceof Requirement) {
             return $this->requirementable->unit->name ?? 'N/A';
@@ -57,6 +98,21 @@ class ProjectRequirement extends Model
             return 'UND'; // Default for tools
         }
         return 'N/A';
+    }
+
+    /**
+     * Internal logic for calculating requirement type from relationships.
+     */
+    public function getRequirementTypeCalculatedAttribute(): string
+    {
+        if ($this->requirementable instanceof Requirement) {
+            return $this->requirementable->requirementType->name ?? 'Suministro';
+        } elseif ($this->requirementable instanceof QuoteDetail) {
+            return 'Suministro';
+        } elseif ($this->requirementable instanceof Tool) {
+            return $this->requirementable->type?->value ?? 'Herramienta';
+        }
+        return 'Suministro';
     }
 
     /**
@@ -85,5 +141,10 @@ class ProjectRequirement extends Model
     public function requirementable(): \Illuminate\Database\Eloquent\Relations\MorphTo
     {
         return $this->morphTo();
+    }
+
+    public function requirementList(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(RequirementList::class);
     }
 }

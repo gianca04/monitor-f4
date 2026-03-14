@@ -10,20 +10,26 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * Modelo QuoteWarehouseDetail - Detalles de Atención de Almacén
  *
  * Representa el detalle de los ítems atendidos en una solicitud de almacén.
- * Vincula el registro de atención de almacén (QuoteWarehouse) con el detalle de la cotización (QuoteDetail).
+ * Vincula el registro de atención de almacén (QuoteWarehouse) con el requerimiento del proyecto.
  *
  * @property int $id Identificador único del detalle
- * @property int $quote_warehouse_id ID de la atención de almacén asociada
- * @property int $quote_detail_id ID del detalle de la cotización original
+ * @property int $quote_warehouse_id ID de la atención de almacén (DEPRECATED: Se eliminará en el futuro)
+ * @property int $project_requirement_id ID del requerimiento de proyecto asociado
  * @property float $attended_quantity Cantidad atendida por almacén para este ítem
+ * @property float|null $additional_cost Costo adicional asociado a la atención
+ * @property string|null $cost_description Descripción del costo adicional
  * @property string|null $comment Comentario sobre la atención
  * @property int|null $location_origin_id ID del lugar de origen
  * @property int|null $location_destination_id ID del lugar de destino
+ * @property int|null $tool_unit_id ID de la unidad de herramienta (si aplica)
  * @property \Illuminate\Support\Carbon|null $created_at Fecha de creación del registro
  * @property \Illuminate\Support\Carbon|null $updated_at Fecha de última actualización del registro
  *
- * @property-read \App\Models\QuoteWarehouse $quoteWarehouse La atención de almacén asociada
+ * @property-read \App\Models\QuoteWarehouse $quoteWarehouse La atención de almacén asociada (Legacy)
  * @property-read \App\Models\ProjectRequirement $projectRequirement El requerimiento de proyecto asociado
+ * @property-read \App\Models\Location|null $locationOrigin Lugar de origen
+ * @property-read \App\Models\Location|null $locationDestination Lugar de destino
+ * @property-read \App\Models\ToolUnit|null $toolUnit Unidad de herramienta vinculada
  */
 class QuoteWarehouseDetail extends Model
 {
