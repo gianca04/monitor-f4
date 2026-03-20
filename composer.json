@@ -20,6 +20,7 @@
         "marcelweidum/filament-expiration-notice": "^1.0",
         "mpdf/mpdf": "^8.2",
         "phpoffice/phpword": "^1.4",
+        "predis/predis": "^3.4",
         "saade/filament-autograph": "^4.0"
     },
     "require-dev": {
