@@ -3,8 +3,9 @@
     POST_MAX_SIZE = '100M'
 
 [phases.setup]
-    nixPkgs = ['...', 'python311Packages.supervisor']
+    nixPkgs = ['...', 'python311Packages.supervisor', 'php82Extensions.redis', 'php82Extensions.pdo_mysql']
     cmds = ['UPLOAD_INI_PATH=$(find /nix/store/*-php-*/lib -name php.ini -print0 | tail -z -n 1 | rev | cut -c 9- | rev)/upload.ini; echo "upload_max_filesize=${UPLOAD_MAX_FILESIZE};" >> $UPLOAD_INI_PATH; echo "post_max_size=${POST_MAX_SIZE};" >> $UPLOAD_INI_PATH']
 
 [start]
-    cmd = "node /assets/scripts/prestart.mjs /app/nginx.template.conf /nginx.conf && supervisord -c /app/supervisord.conf"
+    # Añadimos pkill para liberar el puerto 9000 y el socket antes de lanzar supervisord
+    cmd = "pkill -f php-fpm || true && node /assets/scripts/prestart.mjs /app/nginx.template.conf /nginx.conf && supervisord -c /app/supervisord.conf"
