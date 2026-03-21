@@ -27,45 +27,7 @@ class ProjectRequirement extends Model
         'type' => \App\Enums\RequirementType::class,
     ];
 
-    protected $appends = ['subtotal', 'product_name', 'unit_name', 'consumable_type_name'];
-
-    /**
-     * Get the consolidated product name.
-     */
-    public function getProductNameAttribute(): string
-    {
-        if ($this->requirementable instanceof Requirement) {
-            return $this->requirementable->product_description ?? 'N/A';
-        } elseif ($this->requirementable instanceof QuoteDetail) {
-            return $this->requirementable->pricelist->sat_description ?? 'N/A';
-        } elseif ($this->requirementable instanceof Tool) {
-            return $this->requirementable->name ?? 'N/A';
-        }
-        return 'N/A';
-    }
-
-    /**
-     * Get the consolidated unit name.
-     */
-    public function getUnitNameAttribute(): string
-    {
-        if ($this->requirementable instanceof Requirement) {
-            return $this->requirementable->unit->name ?? 'N/A';
-        } elseif ($this->requirementable instanceof QuoteDetail) {
-            return $this->requirementable->pricelist->unit->name ?? 'N/A';
-        } elseif ($this->requirementable instanceof Tool) {
-            return 'UND'; // Default for tools
-        }
-        return 'N/A';
-    }
-
-    /**
-     * Get the consolidated consumable type name.
-     */
-    public function getConsumableTypeNameAttribute(): string
-    {
-        return $this->type?->getLabel() ?? 'N/A';
-    }
+    protected $appends = ['subtotal'];
 
     /**
      * Calculate the subtotal attribute.

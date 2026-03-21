@@ -31,90 +31,45 @@ class ProjectRequirementForm
                     ->numeric()
                     ->hidden(),
 
-                Section::make('Origen del Requerimiento')
-                    ->description('Seleccione el item de donde proviene este requerimiento')
-                    ->icon('heroicon-o-arrow-path')
-                    ->compact()
-                    ->schema([
-                        MorphToSelect::make('requirementable')
-                            ->label('Referencia')
-                            ->types([
-                                MorphToSelect\Type::make(Requirement::class)
-                                    ->label('Catálogo de Requerimientos')
-                                    ->titleAttribute('product_description')
-                                    ->modifyOptionsQueryUsing(fn($query) => $query->with('unit', 'requirementType')),
-                                MorphToSelect\Type::make(QuoteDetail::class)
-                                    ->label('Detalle de Cotización')
-                                    ->getOptionLabelFromRecordUsing(fn($record) => ($record->pricelist->sat_description ?? 'Sin descripción') . ($record->comment ? ' - ' . $record->comment : ''))
-                                    ->modifyOptionsQueryUsing(fn($query) => $query->with('pricelist.unit')),
-                                MorphToSelect\Type::make(Tool::class)
-                                    ->label('Herramienta / Equipo')
-                                    ->getOptionLabelFromRecordUsing(fn($record) => $record->name ?? 'Sin nombre')
-                                    ->modifyOptionsQueryUsing(fn($query) => $query),
-                            ])
-                            ->searchable()
-                            ->preload()
-                            ->required()
-                            ->live()
-                            ->afterStateUpdated(function ($state, Set $set, Get $get) {
-                                $type = $get('requirementable_type');
-                                $id = $get('requirementable_id');
+                MorphToSelect::make('requirementable')
+                    ->label('Referencia')
+                    ->native(false)
+                    ->types([
+                        MorphToSelect\Type::make(Requirement::class)
+                            ->label('Catálogo de Requerimientos')
+                            ->titleAttribute('product_description')
+                            ->modifyOptionsQueryUsing(fn($query) => $query->with('unit', 'requirementType')),
+                        MorphToSelect\Type::make(QuoteDetail::class)
+                            ->label('Detalle de Cotización')
+                            ->getOptionLabelFromRecordUsing(fn($record) => ($record->pricelist->sat_description ?? 'Sin descripción') . ($record->comment ? ' - ' . $record->comment : ''))
+                            ->modifyOptionsQueryUsing(fn($query) => $query->with('pricelist.unit')),
+                        MorphToSelect\Type::make(Tool::class)
+                            ->label('Herramienta / Equipo')
+                            ->getOptionLabelFromRecordUsing(fn($record) => $record->name ?? 'Sin nombre')
+                            ->modifyOptionsQueryUsing(fn($query) => $query),
+                    ])
+                    ->searchable()
+                    ->preload()
+                    ->required()
+                    ->columnSpanFull()
+                    ->live()
+                    ->afterStateUpdated(function ($state, Set $set, Get $get) {
+                        $type = $get('requirementable_type');
+                        $id = $get('requirementable_id');
 
-                                if ($type && $id) {
-                                    if ($type === Requirement::class) {
-                                        $requirement = Requirement::find($id);
-                                        if ($requirement) {
-                                            $set('unit_symbol', $requirement->unit->symbol ?? 'S/');
-                                            $set('requirement_type', $requirement->requirementType->name ?? 'Suministro');
-                                            $set('unit_of_measure', $requirement->unit->name ?? 'UND');
+                        if ($type && $id) {
+                            $service = app(\App\Services\ProjectRequirementService::class);
+                            $data = $service->mapFromRequirementable($type, $id);
+                            foreach ($data as $key => $value) {
+                                $set($key, $value);
+                            }
+                        }
+                    }),
 
-                                            $reqTypeName = strtolower($requirement->requirementType->name ?? '');
-                                            if (str_contains($reqTypeName, 'material')) {
-                                                $set('type', \App\Enums\RequirementType::MATERIAL);
-                                            } elseif (str_contains($reqTypeName, 'consumible') || str_contains($reqTypeName, 'suministro')) {
-                                                $set('type', \App\Enums\RequirementType::CONSUMIBLE);
-                                            } elseif (str_contains($reqTypeName, 'herramienta')) {
-                                                $set('type', \App\Enums\RequirementType::HERRAMIENTA);
-                                            } elseif (str_contains($reqTypeName, 'equipo')) {
-                                                $set('type', \App\Enums\RequirementType::EQUIPO);
-                                            } else {
-                                                $set('type', \App\Enums\RequirementType::MATERIAL);
-                                            }
-                                        }
-                                    } elseif ($type === QuoteDetail::class) {
-                                        $quoteDetail = QuoteDetail::find($id);
-                                        if ($quoteDetail) {
-                                            $set('unit_symbol', $quoteDetail->pricelist->unit->symbol ?? 'S/');
-                                            $set('requirement_type', 'Suministro');
-                                            $set('unit_of_measure', $quoteDetail->pricelist->unit->name ?? 'UND');
-                                            $set('price_unit', $quoteDetail->unit_price);
-                                            $set('quantity', $quoteDetail->quantity);
-                                            $set('subtotal', round((float)$quoteDetail->quantity * (float)$quoteDetail->unit_price, 2));
-                                            $set('type', \App\Enums\RequirementType::CONSUMIBLE);
-                                        }
-                                    } elseif ($type === Tool::class) {
-                                        $tool = Tool::find($id);
-                                        if ($tool) {
-                                            $set('unit_symbol', 'UND');
-                                            $set('requirement_type', 'Herramienta');
-                                            $set('unit_of_measure', 'UND');
-
-                                            if ($tool->type === \App\Enums\ToolType::HERRAMIENTA) {
-                                                $set('type', \App\Enums\RequirementType::HERRAMIENTA);
-                                            } elseif ($tool->type === \App\Enums\ToolType::EQUIPO) {
-                                                $set('type', \App\Enums\RequirementType::EQUIPO);
-                                            } else {
-                                                $set('type', \App\Enums\RequirementType::HERRAMIENTA);
-                                            }
-                                        }
-                                    }
-                                }
-                            }),
-                    ]),
 
                 Section::make('Detalles y Clasificación')
                     ->icon('heroicon-o-document-text')
-                    ->compact()
+                    ->columnSpanFull()
                     ->schema([
                         Grid::make(3)
                             ->schema([
@@ -129,21 +84,19 @@ class ProjectRequirementForm
                                     ->label('Tipo de Ítem')
                                     ->readOnly()
                                     ->prefixIcon('heroicon-o-puzzle-piece')
-                                    ->dehydrated(false)
-                                    ->formatStateUsing(fn(?ProjectRequirement $record) => $record?->consumable_type_name),
+                                    ->dehydrated(false),
 
                                 TextInput::make('unit_of_measure')
                                     ->label('Medida')
                                     ->readOnly()
                                     ->prefixIcon('heroicon-o-scale')
-                                    ->dehydrated(false)
-                                    ->formatStateUsing(fn(?ProjectRequirement $record) => $record?->unit_name),
+                                    ->dehydrated(false),
                             ]),
                     ]),
 
                 Section::make('Cantidades y Costos')
                     ->icon('heroicon-o-calculator')
-                    ->compact()
+                    ->columnSpanFull()
                     ->schema([
                         Grid::make(3)
                             ->schema([

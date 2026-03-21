@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use App\Services\PushNotificationService;
+use App\Services\ProjectRequirementService;
 use Filament\Facades\Filament;
 use Filament\Support\Facades\FilamentView;
 use Illuminate\Support\Facades\Blade;
@@ -19,6 +20,7 @@ class AppServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->app->singleton(PushNotificationService::class);
+        $this->app->singleton(ProjectRequirementService::class);
     }
 
     /**
