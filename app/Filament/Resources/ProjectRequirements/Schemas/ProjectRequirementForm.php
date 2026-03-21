@@ -145,7 +145,8 @@ class ProjectRequirementForm
                             ->placeholder('Escriba aquí cualquier detalle relevante...')
                             ->rows(3)
                             ->columnSpanFull(),
-                    ])->collapsible(),
+                    ])->collapsible()
+                    ->columnSpanFull(),
 
             ]);
     }
