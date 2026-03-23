@@ -30,10 +30,19 @@
                 <template x-for="(board, bIndex) in boards" :key="board.id">
                     <div class="quote-tab" :class="{
                             'quote-tab--active': activeBoardIndex === bIndex,
-                            'quote-tab--preventivo': quoteType === 'Preventivo'
+                            'quote-tab--preventivo': quoteType === 'Preventivo',
+                            'quote-tab--dragging-tab': draggingTabIndex === bIndex,
+                            'quote-tab--drag-over': dragOverTabIndex === bIndex && draggingTabIndex !== null && draggingTabIndex !== bIndex
                         }" @click="setActiveBoard(bIndex)"
                         @dblclick.stop="if(quoteType !== 'Preventivo' || bIndex !== 0) startRenameTab(bIndex)"
-                        @contextmenu.prevent="if($event.target.closest('.quote-tab') && quoteType === 'Preventivo' && boards.length > 1 && bIndex !== 0) removeBoard(bIndex)">
+                        @contextmenu.prevent="if($event.target.closest('.quote-tab') && quoteType === 'Preventivo' && boards.length > 1 && bIndex !== 0) removeBoard(bIndex)"
+                        :draggable="!(quoteType === 'Preventivo' && bIndex === 0)"
+                        @dragstart="tabDragStart(bIndex, $event)"
+                        @dragover="tabDragOver(bIndex, $event)"
+                        @dragleave="if (dragOverTabIndex === bIndex) dragOverTabIndex = null"
+                        @drop.prevent="tabDrop(bIndex)"
+                        @dragend="tabDragEnd()"
+                    >
 
                         {{-- Tab icon --}}
                         <span class="quote-tab__icon material-symbols-outlined"

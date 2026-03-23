@@ -208,6 +208,32 @@
     background: rgb(236 253 245);
 }
 
+/* Tab drag & drop reordering */
+.quote-tab--dragging-tab {
+    opacity: 0.35;
+    background: rgb(243 244 246);
+}
+
+.dark .quote-tab--dragging-tab {
+    background: rgb(51 65 85);
+}
+
+.quote-tab--drag-over {
+    box-shadow: inset 3px 0 0 0 rgb(16 185 129);
+}
+
+.dark .quote-tab--drag-over {
+    box-shadow: inset 3px 0 0 0 rgb(52 211 153);
+}
+
+.quote-tab--preventivo.quote-tab--drag-over {
+    box-shadow: inset 3px 0 0 0 rgb(139 92 246);
+}
+
+.dark .quote-tab--preventivo.quote-tab--drag-over {
+    box-shadow: inset 3px 0 0 0 rgb(167 139 250);
+}
+
 /* ═══════════════════════════════════════════════════════════
    BOARD CONTENT AREA
    ═══════════════════════════════════════════════════════════ */

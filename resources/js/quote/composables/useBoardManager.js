@@ -21,6 +21,12 @@ export function useBoardManager() {
         /** Tab being renamed (index), null if none */
         renamingTabIndex: null,
 
+        /** Tab being dragged (index), null if none */
+        draggingTabIndex: null,
+
+        /** Tab currently being hovered during a drag (index), null if none */
+        dragOverTabIndex: null,
+
         // ─── Active Board Helpers ─────────────────────────
 
         /** Get the currently active board object. */
@@ -63,6 +69,78 @@ export function useBoardManager() {
 
         finishRenameTab() {
             this.renamingTabIndex = null;
+        },
+
+        // ─── Tab Drag & Drop (Reorder Groups) ────────────
+
+        /**
+         * Begins dragging a tab.
+         * The GLOBAL tab (index 0 in Preventivo) is not draggable.
+         */
+        tabDragStart(index, event) {
+            if (this.quoteType === 'Preventivo' && index === 0) {
+                event.preventDefault();
+                return;
+            }
+            this.draggingTabIndex = index;
+            event.dataTransfer.effectAllowed = 'move';
+            // Required for Firefox
+            event.dataTransfer.setData('text/plain', String(index));
+        },
+
+        tabDragOver(index, event) {
+            // Don't allow dropping on the GLOBAL tab
+            if (this.quoteType === 'Preventivo' && index === 0) return;
+            if (this.draggingTabIndex === null) return;
+            event.preventDefault();
+            event.dataTransfer.dropEffect = 'move';
+            this.dragOverTabIndex = index;
+        },
+
+        /**
+         * Drops a tab at the target position, swapping board order.
+         * Updates activeBoardIndex to follow the moved tab.
+         */
+        tabDrop(targetIndex) {
+            if (this.draggingTabIndex === null || this.draggingTabIndex === targetIndex) {
+                this.draggingTabIndex = null;
+                this.dragOverTabIndex = null;
+                return;
+            }
+
+            // Prevent swapping with GLOBAL tab
+            if (this.quoteType === 'Preventivo' && targetIndex === 0) {
+                this.draggingTabIndex = null;
+                this.dragOverTabIndex = null;
+                return;
+            }
+
+            const sourceIndex = this.draggingTabIndex;
+
+            // Remove the dragged board and insert it at the target position
+            const [movedBoard] = this.boards.splice(sourceIndex, 1);
+            this.boards.splice(targetIndex, 0, movedBoard);
+
+            // Keep the active tab following the moved board
+            if (this.activeBoardIndex === sourceIndex) {
+                this.activeBoardIndex = targetIndex;
+            } else if (
+                sourceIndex < this.activeBoardIndex && targetIndex >= this.activeBoardIndex
+            ) {
+                this.activeBoardIndex--;
+            } else if (
+                sourceIndex > this.activeBoardIndex && targetIndex <= this.activeBoardIndex
+            ) {
+                this.activeBoardIndex++;
+            }
+
+            this.draggingTabIndex = null;
+            this.dragOverTabIndex = null;
+        },
+
+        tabDragEnd() {
+            this.draggingTabIndex = null;
+            this.dragOverTabIndex = null;
         },
 
         // ─── Board CRUD ───────────────────────────────────

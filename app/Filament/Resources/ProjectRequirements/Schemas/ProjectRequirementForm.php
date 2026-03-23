@@ -9,6 +9,7 @@ use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Forms\Components\MorphToSelect;
+use Filament\Forms\Components\Hidden;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Utilities\Get;
@@ -19,6 +20,8 @@ use App\Models\Tool;
 use App\Models\QuoteDetail;
 use App\Enums\RequirementType;
 use App\Enums\ToolType;
+use App\Models\RequirementType as ModelsRequirementType;
+use App\Models\Unit;
 
 class ProjectRequirementForm
 {
@@ -38,32 +41,47 @@ class ProjectRequirementForm
                         MorphToSelect\Type::make(Requirement::class)
                             ->label('Catálogo de Requerimientos')
                             ->titleAttribute('product_description')
+                            ->getOptionLabelFromRecordUsing(fn($record) => $record->title)
                             ->modifyOptionsQueryUsing(fn($query) => $query->with('unit', 'requirementType')),
                         MorphToSelect\Type::make(QuoteDetail::class)
                             ->label('Detalle de Cotización')
-                            ->getOptionLabelFromRecordUsing(fn($record) => ($record->pricelist->sat_description ?? 'Sin descripción') . ($record->comment ? ' - ' . $record->comment : ''))
+                            ->titleAttribute('name')
+                            ->getOptionLabelFromRecordUsing(fn($record) => $record->title)
                             ->modifyOptionsQueryUsing(fn($query) => $query->with('pricelist.unit')),
                         MorphToSelect\Type::make(Tool::class)
                             ->label('Herramienta / Equipo')
-                            ->getOptionLabelFromRecordUsing(fn($record) => $record->name ?? 'Sin nombre')
+                            ->titleAttribute('name')
+                            ->getOptionLabelFromRecordUsing(fn($record) => $record->title)
                             ->modifyOptionsQueryUsing(fn($query) => $query),
                     ])
-                    ->searchable()
                     ->preload()
                     ->required()
+                    ->searchable()
                     ->columnSpanFull()
                     ->live()
-                    ->afterStateUpdated(function ($state, Set $set, Get $get) {
+                    ->afterStateUpdated(function (Get $get, Set $set) {
                         $type = $get('requirementable_type');
                         $id = $get('requirementable_id');
 
-                        if ($type && $id) {
-                            $service = app(\App\Services\ProjectRequirementService::class);
-                            $data = $service->mapFromRequirementable($type, $id);
-                            foreach ($data as $key => $value) {
-                                $set($key, $value);
+                        if (blank($type) || blank($id)) {
+                            return;
+                        }
+
+                        $currentRef = $type . '-' . $id;
+                        if ($get('_last_requirementable') === $currentRef) {
+                            return; // Ya se mapearon los valores para este requerimiento, evitamos resets continuos
+                        }
+
+                        $service = app(\App\Services\ProjectRequirementService::class);
+                        $mapped = $service->mapFromRequirementable($type, (int) $id);
+
+                        foreach (['name', 'type', 'unit_id', 'requirement_type', 'price_unit', 'quantity', 'subtotal', 'unit_symbol'] as $field) {
+                            if (array_key_exists($field, $mapped)) {
+                                $set($field, $mapped[$field]);
                             }
                         }
+
+                        $set('_last_requirementable', $currentRef);
                     }),
 
 
@@ -71,26 +89,33 @@ class ProjectRequirementForm
                     ->icon('heroicon-o-document-text')
                     ->columnSpanFull()
                     ->schema([
+                        TextInput::make('name')
+                            ->label('Nombre del Requerimiento')
+                            ->required()
+                            ->maxLength(255)
+                            ->live(onBlur: true),
                         Grid::make(3)
                             ->schema([
                                 Select::make('type')
                                     ->label('Categoría Operativa')
                                     ->options(RequirementType::class)
                                     ->required()
-                                    ->prefixIcon('heroicon-o-tag')
-                                    ->default(RequirementType::MATERIAL),
-
-                                TextInput::make('requirement_type')
+                                    ->native(false)
+                                    ->prefixIcon('heroicon-o-tag'),
+                                Select::make('requirement_type')
                                     ->label('Tipo de Ítem')
-                                    ->readOnly()
+                                    ->options(ModelsRequirementType::pluck('name', 'id'))
+                                    ->native(false)
+
                                     ->prefixIcon('heroicon-o-puzzle-piece')
                                     ->dehydrated(false),
 
-                                TextInput::make('unit_of_measure')
+                                Select::make('unit_id')
                                     ->label('Medida')
-                                    ->readOnly()
-                                    ->prefixIcon('heroicon-o-scale')
-                                    ->dehydrated(false),
+                                    ->options(Unit::pluck('name', 'id'))
+                                    ->required()
+                                    ->native(false)
+                                    ->prefixIcon('heroicon-o-scale'),
                             ]),
                     ]),
 
@@ -104,7 +129,7 @@ class ProjectRequirementForm
                                     ->label('Cantidad Solicitada')
                                     ->required()
                                     ->numeric()
-                                    ->prefixIcon('heroicon-o-hashtag')
+                                    ->prefix(fn(Get $get) => $get('unit_symbol'))
                                     ->default(1)
                                     ->live(onBlur: true)
                                     ->afterStateUpdated(function (Get $get, Set $set) {
@@ -115,8 +140,7 @@ class ProjectRequirementForm
                                     ->label('Costo Unitario')
                                     ->required()
                                     ->numeric()
-                                    ->prefixIcon('heroicon-o-currency-dollar')
-                                    ->prefix(fn(Get $get) => $get('unit_symbol') ?? 'S/')
+                                    ->prefix('S/')
                                     ->live(onBlur: true)
                                     ->afterStateUpdated(function (Get $get, Set $set) {
                                         $set('subtotal', round((float)$get('quantity') * (float)$get('price_unit'), 2));
@@ -125,7 +149,6 @@ class ProjectRequirementForm
                                 TextInput::make('subtotal')
                                     ->label('Monto Total')
                                     ->numeric()
-                                    ->prefixIcon('heroicon-o-banknotes')
                                     ->prefix('S/')
                                     ->readOnly()
                                     ->extraInputAttributes(['class' => 'font-bold text-primary-600'])
@@ -136,6 +159,9 @@ class ProjectRequirementForm
 
                 TextInput::make('unit_symbol')
                     ->hidden()
+                    ->dehydrated(false),
+
+                Hidden::make('_last_requirementable')
                     ->dehydrated(false),
 
                 Section::make('Adicionales')

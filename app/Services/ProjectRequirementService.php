@@ -29,17 +29,19 @@ class ProjectRequirementService
         if ($type === Requirement::class) {
             $requirement = Requirement::with('unit', 'requirementType')->find($id);
             if ($requirement) {
-                $data['unit_symbol'] = $requirement->unit->symbol ?? 'S/';
-                $data['requirement_type'] = $requirement->requirementType->name ?? 'Suministro';
-                $data['unit_of_measure'] = $requirement->unit->name ?? 'UND';
-                $data['type'] = $this->mapRequirementType($requirement->requirementType->name ?? '');
+                $data['name'] = $requirement->product_description;
+                $data['unit_id'] = $requirement->unit_id;
+                $data['unit_symbol'] = $requirement->unit?->symbol ?? 'UND';
+                $data['requirement_type'] = $requirement->requirement_type_id;
+                $data['type'] = $this->mapRequirementType($requirement->requirementType?->name ?? '');
             }
         } elseif ($type === QuoteDetail::class) {
             $quoteDetail = QuoteDetail::with('pricelist.unit')->find($id);
             if ($quoteDetail) {
-                $data['unit_symbol'] = $quoteDetail->pricelist->unit->symbol ?? 'S/';
-                $data['requirement_type'] = 'Suministro';
-                $data['unit_of_measure'] = $quoteDetail->pricelist->unit->name ?? 'UND';
+                $data['name'] = $quoteDetail->name;
+                $data['unit_id'] = $quoteDetail->pricelist?->unit?->id;
+                $data['unit_symbol'] = $quoteDetail->pricelist?->unit?->symbol ?? 'UND';
+                $data['requirement_type'] = null;
                 $data['price_unit'] = $quoteDetail->unit_price;
                 $data['quantity'] = $quoteDetail->quantity;
                 $data['subtotal'] = round((float)$quoteDetail->quantity * (float)$quoteDetail->unit_price, 2);
@@ -48,9 +50,10 @@ class ProjectRequirementService
         } elseif ($type === Tool::class) {
             $tool = Tool::find($id);
             if ($tool) {
+                $data['name'] = $tool->name;
+                $data['unit_id'] = 3; // 'Unidad'
                 $data['unit_symbol'] = 'UND';
-                $data['requirement_type'] = 'Herramienta';
-                $data['unit_of_measure'] = 'UND';
+                $data['requirement_type'] = null;
                 $data['type'] = $tool->type === ToolType::HERRAMIENTA ? RequirementType::HERRAMIENTA : RequirementType::EQUIPO;
             }
         }

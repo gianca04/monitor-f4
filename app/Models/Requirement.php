@@ -36,6 +36,11 @@ class Requirement extends Model
         'unit_id' => 'integer',
     ];
 
+    public function getTitleAttribute(): string
+    {
+        return $this->product_description;
+    }
+
     public function requirementType(): BelongsTo
     {
         return $this->belongsTo(RequirementType::class);

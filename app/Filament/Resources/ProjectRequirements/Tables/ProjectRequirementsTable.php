@@ -16,33 +16,17 @@ class ProjectRequirementsTable
         return $table
             ->columns([
 
-                TextColumn::make('product_name')
+                TextColumn::make('name')
                     ->label('Producto / Descripción')
                     ->limit(50)
                     ->tooltip(fn($state): string => $state)
-                    ->searchable(query: function (Builder $query, string $search): Builder {
-                        return $query->whereHasMorph(
-                            'requirementable',
-                            [\App\Models\Requirement::class, \App\Models\QuoteDetail::class, \App\Models\Tool::class],
-                            function (Builder $query, string $type) use ($search) {
-                                if ($type === \App\Models\Requirement::class) {
-                                    $query->where('product_description', 'like', "%{$search}%");
-                                } elseif ($type === \App\Models\QuoteDetail::class) {
-                                    $query->whereHas('pricelist', function ($q) use ($search) {
-                                        $q->where('sat_description', 'like', "%{$search}%");
-                                    });
-                                } elseif ($type === \App\Models\Tool::class) {
-                                    $query->where('name', 'like', "%{$search}%");
-                                }
-                            }
-                        );
-                    })
+                    ->searchable()
                     ->sortable(),
 
                 TextColumn::make('consumable_type_name')
                     ->label('Tipo'),
 
-                TextColumn::make('unit_name')
+                TextColumn::make('unit.name')
                     ->label('Unidad'),
                 TextColumn::make('quantity')
                     ->numeric()
@@ -50,10 +34,12 @@ class ProjectRequirementsTable
                     ->sortable(),
                 TextColumn::make('price_unit')
                     ->numeric()
+                    ->prefix('S/')
                     ->label('Precio Unitario')
                     ->sortable(),
                 TextColumn::make('subtotal')
                     ->numeric()
+                    ->prefix('S/')
                     ->label('Subtotal')
                     ->sortable(),
                 TextColumn::make('comments')
@@ -76,7 +62,7 @@ class ProjectRequirementsTable
                 //
             ])
             ->recordActions([
-                EditAction::make()->modalWidth('xl'),
+                EditAction::make()->slideOver(),
             ])
             ->toolbarActions([
                 BulkActionGroup::make([

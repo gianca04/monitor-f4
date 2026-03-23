@@ -16,6 +16,11 @@ class QuoteDetail extends Model
     protected static function booted()
     {
         static::observe(QuoteDetailObserver::class);
+
+        static::saving(function ($model) {
+            $model->load('pricelist');
+            $model->name = $model->getNameAttribute();
+        });
     }
 
     protected $table = 'quote_details';
@@ -30,6 +35,7 @@ class QuoteDetail extends Model
         'unit_price',
         'comment',
         'line',
+        'name',
     ];
 
     protected $casts = [
@@ -40,11 +46,21 @@ class QuoteDetail extends Model
         'updated_at' => 'datetime',
     ];
 
-    protected $appends = ['subtotal'];
+    protected $appends = ['subtotal', 'name'];
 
     public function getSubtotalAttribute(): float
     {
         return round((float) $this->quantity * (float) $this->unit_price, 2);
+    }
+
+    public function getTitleAttribute(): string
+    {
+        return ($this->pricelist->sat_description ?? 'Sin descripción') . ($this->comment ? ' - ' . $this->comment : '');
+    }
+
+    public function getNameAttribute(): string
+    {
+        return ($this->pricelist->sat_line ?? '') . ' ' . ($this->pricelist->sat_description ?? '');
     }
 
     public function quote(): BelongsTo

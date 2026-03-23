@@ -52,6 +52,11 @@ class Tool extends Model
 
     protected $appends = ['units_in_stock', 'total_units'];
 
+    public function getTitleAttribute(): string
+    {
+        return $this->name ?? 'Sin nombre';
+    }
+
     /**
      * Relación: Una herramienta pertenece a una marca.
      */

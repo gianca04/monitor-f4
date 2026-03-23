@@ -173,7 +173,7 @@ class ToolForm
                                             ->label('Código Interno')
                                             ->placeholder('Ej: HRR-001')
                                             ->required()
-                                            ->default(fn() => ToolUnit::generateNextInternalCode())
+                                            //->default(fn() => ToolUnit::generateNextInternalCode())
                                             ->maxLength(50),
 
                                         TextInput::make('serial_number')
@@ -195,8 +195,7 @@ class ToolForm
 
                                         DatePicker::make('certification_expiry')
                                             ->label('Vencimiento Certificación')
-                                            ->displayFormat('d/m/Y')
-                                            ->native(false),
+                                            ->displayFormat('d/m/Y'),
 
                                         FileUpload::make('certification_document')
                                             ->label('Certificado')
@@ -209,7 +208,7 @@ class ToolForm
                                             ->columnSpanFull(),
                                     ])
                             ])
-                            ->defaultItems(1)
+                            ->defaultItems(0)
                             ->addActionLabel('Agregar Nueva Unidad')
                             ->collapsible()
                             ->cloneable()
