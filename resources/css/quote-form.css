@@ -23,13 +23,6 @@
     border-bottom: 0;
     border-radius: 0.75rem 0.75rem 0 0;
     margin-top: 0.75rem;
-    overflow-x: auto;
-    -ms-overflow-style: none;
-    scrollbar-width: none;
-}
-
-.quote-tab-bar::-webkit-scrollbar {
-    display: none;
 }
 
 .dark .quote-tab-bar {
@@ -42,6 +35,30 @@
     align-items: stretch;
     gap: 0;
     min-height: 38px;
+    flex: 1;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scroll-behavior: smooth;
+    scrollbar-width: thin;
+    scrollbar-color: rgb(209 213 219) transparent;
+}
+
+.dark .quote-tab-bar__tabs {
+    scrollbar-color: rgb(75 85 99) transparent;
+}
+
+.quote-tab-bar__tabs::-webkit-scrollbar {
+    height: 4px;
+}
+.quote-tab-bar__tabs::-webkit-scrollbar-track {
+    background: transparent;
+}
+.quote-tab-bar__tabs::-webkit-scrollbar-thumb {
+    background-color: rgb(209 213 219);
+    border-radius: 4px;
+}
+.dark .quote-tab-bar__tabs::-webkit-scrollbar-thumb {
+    background-color: rgb(75 85 99);
 }
 
 .quote-tab-bar__info {
@@ -49,7 +66,15 @@
     align-items: center;
     gap: 0.375rem;
     padding-right: 0.75rem;
+    padding-left: 0.75rem;
     white-space: nowrap;
+    flex-shrink: 0;
+    border-left: 1px solid rgb(243 244 246);
+    margin-left: 0.5rem;
+}
+
+.dark .quote-tab-bar__info {
+    border-left-color: rgb(51 65 85);
 }
 
 /* Individual Tab */
@@ -67,6 +92,7 @@
     white-space: nowrap;
     user-select: none;
     position: relative;
+    flex-shrink: 0;
 }
 
 .quote-tab:hover {
@@ -196,7 +222,8 @@
     color: rgb(156 163 175);
     padding: 0.375rem 0.5rem;
     border-left: 1px solid rgb(229 231 235);
-    margin-left: 0.125rem;
+    margin-left: auto;
+    flex-shrink: 0;
 }
 
 .dark .quote-tab--add {

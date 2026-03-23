@@ -10,6 +10,7 @@ use App\Models\PriceType;
 use App\Models\QuoteCategory;
 use App\Models\Project;
 use App\Models\Quote;
+use Filament\Support\Enums\Width;
 use Illuminate\Support\Collection;
 
 class CreateQuote extends CreateRecord
@@ -83,5 +84,10 @@ class CreateQuote extends CreateRecord
         $breadcrumbs[] = $this->getBreadcrumb();
 
         return $breadcrumbs;
+    }
+
+    public function getMaxContentWidth(): Width | string | null
+    {
+        return Width::Full;
     }
 }

@@ -9,6 +9,7 @@ use App\Models\PriceType;
 use App\Models\Quote;
 use App\Models\QuoteCategory;
 use Filament\Resources\Pages\EditRecord;
+use Filament\Support\Enums\Width;
 use Illuminate\Support\Collection;
 
 class EditQuote extends EditRecord
@@ -79,5 +80,10 @@ class EditQuote extends EditRecord
         $breadcrumbs[] = $this->getBreadcrumb();
 
         return $breadcrumbs;
+    }
+
+    public function getMaxContentWidth(): Width | string | null
+    {
+        return Width::Full;
     }
 }
