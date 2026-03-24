@@ -6,8 +6,10 @@ export default defineConfig({
     plugins: [
         laravel({
             input: ['resources/css/app.css',
+                'resources/css/banking.css',
                 'resources/js/app.js',
                 'resources/js/quote/index.js',
+                'resources/js/quote-warehouse.js',
                 'resources/css/filament/dashboard/theme.css',
                 'resources/css/custom-login.css',
                 'resources/css/quote-form.css',

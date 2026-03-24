@@ -2,9 +2,12 @@
 
 namespace App\Filament\Resources\ProjectRequirements\Tables;
 
+use Filament\Actions\ActionGroup;
 use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
+use Filament\Actions\ViewAction;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
@@ -62,7 +65,13 @@ class ProjectRequirementsTable
                 //
             ])
             ->recordActions([
-                EditAction::make()->slideOver(),
+                ActionGroup::make(
+                    [
+                        ViewAction::make()->slideOver(),
+                        EditAction::make()->slideOver(),
+                        DeleteAction::make()->requiresConfirmation(),
+                    ]
+                )
             ])
             ->toolbarActions([
                 BulkActionGroup::make([

@@ -15,8 +15,10 @@ class DispatchTransaction extends Model
         'project_requirement_id',
         'employee_id',
         'quantity',
-        'location_origin_id',
-        'location_destination_id',
+        'is_external_purchase',
+        'price_unit',
+        'supplier_name',
+        'receipt_number',
         'additional_cost',
         'cost_description',
         'comment',
@@ -25,6 +27,8 @@ class DispatchTransaction extends Model
 
     protected $casts = [
         'quantity' => 'decimal:2',
+        'is_external_purchase' => 'boolean',
+        'price_unit' => 'decimal:2',
         'additional_cost' => 'decimal:2',
     ];
 
@@ -56,5 +60,13 @@ class DispatchTransaction extends Model
     public function toolUnit(): BelongsTo
     {
         return $this->belongsTo(ToolUnit::class, 'tool_unit_id');
+    }
+
+    /**
+     * Get the dispatch guide associated with this transaction.
+     */
+    public function dispatchGuide(): BelongsTo
+    {
+        return $this->belongsTo(DispatchGuide::class);
     }
 }

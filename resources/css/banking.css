@@ -1,0 +1,374 @@
+@reference "./filament/dashboard/theme.css";
+
+/* ==========================================================================
+   Monitor —  Design System
+   Inspired by Filament v4 and professional financial interfaces.
+   Flat, restrained, information-dense, and accessible.
+   ========================================================================== */
+/* --------------------------------------------------------------------------
+   BASE OVERRIDES
+   -------------------------------------------------------------------------- */
+@layer base {
+
+    /* Remove the global transition on all elements — too aggressive */
+    * {
+        transition: none;
+    }
+
+    /* Restore transitions only where intentional */
+    .transition-colors {
+        transition-property: color, background-color, border-color, text-decoration-color, fill, stroke;
+        transition-timing-function: ease;
+        transition-duration: 150ms;
+    }
+
+    .transition-all {
+        transition-property: all;
+        transition-timing-function: ease;
+        transition-duration: 150ms;
+    }
+
+    .transition-opacity {
+        transition-property: opacity;
+        transition-timing-function: ease;
+        transition-duration: 150ms;
+    }
+}
+
+/* --------------------------------------------------------------------------
+   CARD SYSTEM  — .bk-card, .bk-card-header, .bk-card-body
+   -------------------------------------------------------------------------- */
+@layer components {
+
+    /* Card container */
+    .bk-card {
+        @apply bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden;
+    }
+
+    /* Card header — slim, neutral, with left accent option */
+    .bk-card-header {
+        @apply px-5 py-3.5 border-b border-gray-200 dark:border-gray-700 bg-gray-50/80 dark:bg-gray-800/60;
+    }
+
+    .bk-card-header h3,
+    .bk-card-header-title {
+        @apply text-[13px] font-semibold text-gray-800 dark:text-gray-200 tracking-wide;
+    }
+
+    .bk-card-body {
+        @apply p-5;
+    }
+
+    /* --------------------------------------------------------------------------
+       SECTION HEADER  — .bk-section-title
+       -------------------------------------------------------------------------- */
+    .bk-section-title {
+        @apply text-[13px] font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider pb-2.5 mb-4 border-b border-gray-200 dark:border-gray-700;
+    }
+
+    /* --------------------------------------------------------------------------
+       STAT / KPI CARDS  — .bk-stat
+       -------------------------------------------------------------------------- */
+    .bk-stat {
+        @apply bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg p-4;
+    }
+
+    .bk-stat-label {
+        @apply text-[11px] font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider;
+    }
+
+    .bk-stat-value {
+        @apply text-lg font-semibold text-gray-900 dark:text-white tabular-nums mt-1;
+    }
+
+    .bk-stat-value--accent {
+        @apply text-lg font-semibold text-primary-700 dark:text-primary-400 tabular-nums mt-1;
+    }
+
+    /* --------------------------------------------------------------------------
+       TABLE SYSTEM  — .bk-table
+       -------------------------------------------------------------------------- */
+    .bk-table {
+        @apply w-full text-left border-collapse;
+    }
+
+    .bk-table thead tr {
+        @apply border-b border-gray-200 dark:border-gray-700;
+    }
+
+    .bk-table thead th {
+        @apply px-4 py-2.5 text-[11px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider bg-gray-50/80 dark:bg-gray-800/60;
+    }
+
+    .bk-table tbody tr {
+        @apply border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50/60 dark:hover:bg-gray-800/30;
+    }
+
+    .bk-table tbody td {
+        @apply px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300;
+    }
+
+    .bk-table tbody td.bk-cell-number {
+        @apply tabular-nums text-right font-medium text-gray-900 dark:text-white;
+    }
+
+    .bk-table tbody td.bk-cell-muted {
+        @apply tabular-nums text-right text-gray-500 dark:text-gray-400;
+    }
+
+    .bk-table tfoot tr {
+        @apply border-t-2 border-gray-200 dark:border-gray-700 bg-gray-50/80 dark:bg-gray-800/60;
+    }
+
+    .bk-table tfoot td {
+        @apply px-4 py-3 text-sm font-semibold text-gray-900 dark:text-white;
+    }
+
+    /* --------------------------------------------------------------------------
+       STATUS BADGES  — .bk-badge
+       -------------------------------------------------------------------------- */
+    .bk-badge {
+        @apply inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wider leading-tight;
+    }
+
+    .bk-badge--neutral {
+        @apply bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400;
+    }
+
+    .bk-badge--warning {
+        @apply bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400;
+    }
+
+    .bk-badge--success {
+        @apply bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400;
+    }
+
+    .bk-badge--danger {
+        @apply bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400;
+    }
+
+    .bk-badge--info {
+        @apply bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400;
+    }
+
+    .bk-badge--primary {
+        @apply bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-400;
+    }
+
+    /* --------------------------------------------------------------------------
+       BUTTONS  — .bk-btn
+       -------------------------------------------------------------------------- */
+    .bk-btn {
+        @apply inline-flex items-center gap-1.5 px-3.5 py-2 text-sm font-medium rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed;
+    }
+
+    .bk-btn--primary {
+        @apply bg-primary-600 text-white hover:bg-primary-700 focus:ring-2 focus:ring-primary-500/40;
+    }
+
+    .bk-btn--secondary {
+        @apply bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700;
+    }
+
+    .bk-btn--success {
+        @apply bg-emerald-600 text-white hover:bg-emerald-700;
+    }
+
+    .bk-btn--danger {
+        @apply bg-red-600 text-white hover:bg-red-700;
+    }
+
+    .bk-btn--ghost {
+        @apply text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800;
+    }
+
+    .bk-btn--sm {
+        @apply text-xs px-2.5 py-1.5;
+    }
+
+    /* --------------------------------------------------------------------------
+       FORM INPUTS  — .bk-input, .bk-select, .bk-label
+       -------------------------------------------------------------------------- */
+    .bk-label {
+        @apply block text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wider mb-1.5;
+    }
+
+    .bk-input {
+        @apply w-full px-3 py-2 text-sm rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder:text-gray-400 focus:ring-2 focus:ring-primary-500/40 focus:border-primary-500;
+    }
+
+    .bk-input--readonly {
+        @apply bg-gray-50 dark:bg-gray-800/80 opacity-75 cursor-default;
+    }
+
+    .bk-select {
+        @apply w-full px-3 py-2 text-sm rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500/40 focus:border-primary-500;
+    }
+
+    /* --------------------------------------------------------------------------
+       MODAL  — .bk-modal
+       -------------------------------------------------------------------------- */
+    .bk-modal-backdrop {
+        @apply fixed inset-0 z-50 flex items-center justify-center p-4;
+    }
+
+    .bk-modal-overlay {
+        @apply absolute inset-0 bg-gray-900/40 dark:bg-black/60;
+    }
+
+    .bk-modal {
+        @apply relative w-full bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 shadow-lg overflow-hidden;
+    }
+
+    .bk-modal--sm {
+        @apply max-w-md;
+    }
+
+    .bk-modal--md {
+        @apply max-w-lg;
+    }
+
+    .bk-modal--lg {
+        @apply max-w-2xl;
+    }
+
+    .bk-modal-header {
+        @apply px-5 py-3.5 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between;
+    }
+
+    .bk-modal-body {
+        @apply px-5 py-4 space-y-4 max-h-[65vh] overflow-y-auto;
+    }
+
+    .bk-modal-footer {
+        @apply px-5 py-3.5 border-t border-gray-200 dark:border-gray-700 flex items-center justify-end gap-2;
+    }
+
+    /* --------------------------------------------------------------------------
+       PROGRESS BAR  — .bk-progress
+       -------------------------------------------------------------------------- */
+    .bk-progress {
+        @apply h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden;
+    }
+
+    .bk-progress-bar {
+        @apply h-full bg-primary-600 rounded-full transition-all duration-500;
+    }
+
+    /* --------------------------------------------------------------------------
+       INFO ROW  — .bk-info-row (label-value pair)
+       -------------------------------------------------------------------------- */
+    .bk-info-row {
+        @apply flex items-center justify-between py-2 border-b border-gray-100 dark:border-gray-800 last:border-b-0;
+    }
+
+    .bk-info-label {
+        @apply text-sm text-gray-500 dark:text-gray-400;
+    }
+
+    .bk-info-value {
+        @apply text-sm font-medium text-gray-900 dark:text-white tabular-nums;
+    }
+
+    /* --------------------------------------------------------------------------
+       TAB NAVIGATION  — .bk-tabs
+       -------------------------------------------------------------------------- */
+    .bk-tabs {
+        @apply flex bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg p-0.5;
+    }
+
+    .bk-tab {
+        @apply flex-1 px-4 py-2.5 text-xs font-semibold uppercase tracking-wider rounded-md transition-colors flex items-center justify-center gap-2 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800/50;
+    }
+
+    .bk-tab--active {
+        @apply bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white;
+    }
+
+    /* --------------------------------------------------------------------------
+       AVATAR  — .bk-avatar
+       -------------------------------------------------------------------------- */
+    .bk-avatar {
+        @apply flex items-center justify-center rounded-full font-semibold text-sm;
+    }
+
+    .bk-avatar--sm {
+        @apply w-8 h-8 text-xs;
+    }
+
+    .bk-avatar--md {
+        @apply w-10 h-10 text-sm;
+    }
+
+    .bk-avatar--lg {
+        @apply w-12 h-12 text-base;
+    }
+
+    /* --------------------------------------------------------------------------
+       FIELD GROUP for read-only summary grids
+       -------------------------------------------------------------------------- */
+    .bk-field {
+        @apply p-3 bg-gray-50 dark:bg-gray-800/50 rounded-md;
+    }
+
+    .bk-field-label {
+        @apply text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider;
+    }
+
+    .bk-field-value {
+        @apply text-sm font-semibold text-gray-900 dark:text-white mt-0.5 tabular-nums;
+    }
+
+    /* --------------------------------------------------------------------------
+       PAYMENT METHOD SELECTOR  — .bk-method-btn
+       -------------------------------------------------------------------------- */
+    .bk-method-btn {
+        @apply flex flex-col items-center gap-1 p-2.5 rounded-md border transition-colors;
+    }
+
+    .bk-method-btn--active {
+        @apply border-primary-400 dark:border-primary-500/40 bg-primary-50 dark:bg-primary-900/20;
+    }
+
+    .bk-method-btn--inactive {
+        @apply border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800;
+    }
+
+    /* --------------------------------------------------------------------------
+       OPTION CARD (for renewal modal options)
+       -------------------------------------------------------------------------- */
+    .bk-option-card {
+        @apply border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden;
+    }
+
+    .bk-option-header {
+        @apply px-4 py-3 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between;
+    }
+
+    .bk-option-body {
+        @apply px-4 py-3;
+    }
+
+    /* --------------------------------------------------------------------------
+       BANNER / ALERT
+       -------------------------------------------------------------------------- */
+    .bk-alert {
+        @apply flex items-center gap-3 px-4 py-3 rounded-lg border text-sm;
+    }
+
+    .bk-alert--warning {
+        @apply bg-amber-50 dark:bg-amber-900/10 border-amber-200 dark:border-amber-700/40 text-amber-800 dark:text-amber-300;
+    }
+
+    .bk-alert--info {
+        @apply bg-blue-50 dark:bg-blue-900/10 border-blue-200 dark:border-blue-700/40 text-blue-800 dark:text-blue-300;
+    }
+
+    .bk-alert--success {
+        @apply bg-emerald-50 dark:bg-emerald-900/10 border-emerald-200 dark:border-emerald-700/40 text-emerald-800 dark:text-emerald-300;
+    }
+
+    .bk-alert--danger {
+        @apply bg-red-50 dark:bg-red-900/10 border-red-200 dark:border-red-700/40 text-red-800 dark:text-red-300;
+    }
+}

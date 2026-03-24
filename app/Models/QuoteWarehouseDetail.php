@@ -45,9 +45,8 @@ class QuoteWarehouseDetail extends Model
         'quote_warehouse_id',
         'project_requirement_id',
         'attended_quantity',
+        'is_external_purchase',
         'comment',
-        'location_origin_id',
-        'location_destination_id',
         'additional_cost',
         'cost_description',
         'tool_unit_id',
@@ -60,6 +59,7 @@ class QuoteWarehouseDetail extends Model
      */
     protected $casts = [
         'attended_quantity' => 'decimal:2',
+        'is_external_purchase' => 'boolean',
         'additional_cost' => 'decimal:2',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',

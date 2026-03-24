@@ -139,10 +139,35 @@ class QuoteService
                         'price_unit'      => $detail->unit_price,
                         'comments'        => $detail->description ?? $detail->comment,
                         'type'            => \App\Enums\RequirementType::CONSUMIBLE,
+                        'name'            => $this->extractProductName($detail),
                     ]
                 );
             }
         }
+    }
+
+    /**
+     * Extrae el nombre del producto desde un QuoteDetail.
+     * Este método se usa específicamente en generateProjectRequirements
+     * para asignar automáticamente el nombre cuando se crea un ProjectRequirement.
+     *
+     * @param \App\Models\QuoteDetail $detail
+     * @return string
+     */
+    private function extractProductName(\App\Models\QuoteDetail $detail): string
+    {
+        // Intentar obtener desde SAT description del priceliest
+        if ($detail->pricelist?->sat_description) {
+            return $detail->pricelist->sat_description;
+        }
+
+        // Fallback: usar name del QuoteDetail
+        if ($detail->name) {
+            return $detail->name;
+        }
+
+        // Fallback final: usar description
+        return $detail->description ?? 'Artículo';
     }
 
     /**
