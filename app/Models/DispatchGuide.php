@@ -14,8 +14,18 @@ class DispatchGuide extends Model
 
     protected $guarded = [];
 
+    protected $fillable = [
+        'quote_warehouse_id',
+        'guide_number',
+        'location_origin_id',
+        'location_destination_id',
+        'transfer_date',
+        'store_entry_date',
+    ];
+
     protected $casts = [
         'transfer_date' => 'datetime',
+        'store_entry_date' => 'datetime',
     ];
 
     public function quoteWarehouse()

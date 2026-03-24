@@ -77,6 +77,15 @@ class EditQuoteWarehouse extends EditRecord
             ->orderBy('created_at', 'desc')
             ->get();
 
+        $transactions = \App\Models\DispatchTransaction::with([
+            'projectRequirement.project.subClient.client',
+            'projectRequirement.unit',
+            'dispatchGuide'
+        ])
+            ->where('quote_warehouse_id', $this->record->id)
+            ->orderBy('created_at', 'desc')
+            ->get();
+
         $users = \App\Models\User::where('is_active', true)->orderBy('name')->get(['id', 'name']);
 
         return [
@@ -86,6 +95,7 @@ class EditQuoteWarehouse extends EditRecord
             'details'        => $this->detailsCollection->toArray(),
             'locations'      => $this->locationsCollection,
             'dispatchGuides' => $dispatchGuides,
+            'transactions'   => $transactions,
             'users'          => $users,
         ];
     }

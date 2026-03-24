@@ -17,6 +17,9 @@
                 <x-quote-warehouse.tab id="guias" title="Guías de Despacho" icon="local_shipping">
                     <x-quote-warehouse.guides-list :guides="$dispatchGuides" />
                 </x-quote-warehouse.tab>
+                <x-quote-warehouse.tab id="transacciones" title="Transacciones" icon="list">
+                    <x-quote-warehouse.transaction-table :transactions="$transactions" />
+                </x-quote-warehouse.tab>
             </x-quote-warehouse.tabs>
 
             <x-quote-warehouse.modals />
