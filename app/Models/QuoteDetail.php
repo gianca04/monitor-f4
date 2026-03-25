@@ -52,6 +52,10 @@ class QuoteDetail extends Model
     {
         return round((float) $this->quantity * (float) $this->unit_price, 2);
     }
+    public function unit(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(\App\Models\Unit::class);
+    }
 
     public function getTitleAttribute(): string
     {
