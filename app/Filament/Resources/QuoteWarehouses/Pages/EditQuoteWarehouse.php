@@ -28,6 +28,9 @@ class EditQuoteWarehouse extends EditRecord
     public Collection $detailsCollection;
     public Collection $locationsCollection;
     public string $clientName = '';
+    public ?string $clientLogo = null;
+    public ?string $clientBusinessName = null;
+    public ?string $clientAddress = null;
 
     /**
      * Inicializa el componente, resolviendo el modelo subyacente y preparando el estado inicial.
@@ -44,12 +47,17 @@ class EditQuoteWarehouse extends EditRecord
         // para prevenir el problema de N+1 consultas (N+1 queries problem).
         $this->record->load('employee.employee');
         $this->record->quote->load([
-            'subClient',
+            'subClient.client',
             'project.projectRequirements.requirementable',
         ]);
 
         // 3. Preparar datos base requeridos por la vista compilada
-        $this->clientName = $this->record->quote->subClient->name ?? '';
+        $subClient = $this->record->quote->subClient;
+        $this->clientName = $subClient->name ?? '';
+        $this->clientLogo = $subClient->client->logo ?? null;
+        $this->clientBusinessName = $subClient->client->business_name ?? null;
+        $this->clientAddress = $subClient->address ?? null;
+
         $this->locationsCollection = Location::where('is_active', true)->get();
         $this->detailsCollection = $this->buildDetails();
     }
@@ -92,6 +100,9 @@ class EditQuoteWarehouse extends EditRecord
             'quoteWarehouse' => $this->record,
             'quote'          => $this->record->quote,
             'client'         => $this->clientName,
+            'clientLogo'     => $this->clientLogo,
+            'clientBusiness' => $this->clientBusinessName,
+            'clientAddress'  => $this->clientAddress,
             'details'        => $this->detailsCollection->toArray(),
             'locations'      => $this->locationsCollection,
             'dispatchGuides' => $dispatchGuides,

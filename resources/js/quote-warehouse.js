@@ -84,7 +84,7 @@ class QuoteWarehouseEditor {
         this.inputsReceipt = document.querySelectorAll('.receipt-input');
         this.btnFillAll = document.querySelector('.btn-fill-all');
         this.inputObs = document.querySelector('.obs-input');
-        this.btnSubmit = document.querySelector('.btn-submit');
+        this.btnSubmit = document.getElementById('btn-registrar-despacho');
         this.progressText = document.querySelector('.progress-text');
         this.progressBar = document.querySelector('.progress-bar');
 
@@ -307,9 +307,9 @@ class QuoteWarehouseEditor {
 
             // Insertar nueva fila (Maestro - Detalle)
             const detailRow = document.createElement('tr');
-            detailRow.className = 'tx-details-row bg-gray-50/20 dark:bg-gray-800/20';
+            detailRow.className = 'tx-details-row bg-gray-100/30 dark:bg-gray-900/30';
             // Colspan 7 (Ancho total de la tabla de guías)
-            detailRow.innerHTML = `<td colspan="7" class="p-0 border-t border-gray-100 dark:border-gray-800">${html}</td>`;
+            detailRow.innerHTML = `<td colspan="7" class="p-0 border-t border-gray-200 dark:border-gray-700">${html}</td>`;
             tr.insertAdjacentElement('afterend', detailRow);
 
             // Importante: Volver a enlazar el comportamiento de redimensionado 
@@ -662,12 +662,11 @@ class QuoteWarehouseEditor {
     }
 
     openGuideModal() {
+        // Obtenemos todos los ítems que tienen cantidades ingresadas para despachar
         const hasDispatches = this.items.some(i => (parseInt(i.despachar) || 0) > 0);
 
-        if (!hasDispatches) {
-            this.submitForm();
-            return;
-        }
+        // Si el usuario quiere que el modal se abra siempre al presionar Registrar Despacho:
+        // (Anteriormente saltábamos el modal si no había cantidades, pero el usuario solicitó abrirlo siempre)
 
         if (this.inputGuideOrigin && this.inputGuideOrigin.options.length <= 1) {
             this.locations.forEach(loc => {

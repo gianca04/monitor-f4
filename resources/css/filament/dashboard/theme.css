@@ -5,3 +5,8 @@
 @source '../../../../resources/views/filament/**/*';
 @source '../../../../resources/views/livewire/**/*';
 @source '../../../../vendor/guava/filament-modal-relation-managers/resources/**/*';
+
+/* Añade este bloque para el escalado al 90% */
+html {
+    zoom: 0.98;
+}

@@ -1,13 +1,14 @@
 <x-filament-panels::page>
     <div>
-        @vite(['resources/css/app.css','resources/css/banking.css', 'resources/css/quote-form.css'])
+        @vite(['resources/css/app.css', 'resources/css/quote-form.css'])
         <link
             href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
             rel="stylesheet" />
         <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
         <div>
-            <x-quote-warehouse.header :quoteWarehouse="$quoteWarehouse" :client="$client" :quote="$quote" />
+            <x-quote-warehouse.header :quoteWarehouse="$quoteWarehouse" :client="$client" :quote="$quote"
+                :clientLogo="$clientLogo" :clientBusiness="$clientBusiness" :clientAddress="$clientAddress" />
 
             <x-quote-warehouse.tabs>
                 <x-quote-warehouse.tab id="despacho" title="Despacho Rapido" icon="inventory_2" active="true">
@@ -35,7 +36,7 @@
                 status: '{{ $quoteWarehouse->estatus }}',
                 items: [
                     @foreach ($details as $i => $item)
-                                {
+                                                            {
                             project_requirement_id: {{ $item['project_requirement_id'] }},
                             solicitado: {{ $item['quantity'] }},
                             entregado: {{ $item['entregado'] ?? 0 }},
