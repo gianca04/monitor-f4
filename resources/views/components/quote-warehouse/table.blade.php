@@ -232,7 +232,7 @@
                                 class="flex items-center justify-center h-full divide-x divide-gray-100 dark:divide-gray-800">
                                 <button type="button"
                                     class="btn-add-tx w-full h-full text-gray-400 transition hover:text-success-600 hover:bg-success-50 dark:hover:bg-success-500/10 flex justify-center items-center py-2"
-                                    data-index="{{ $i }}" data-name="{{ htmlspecialchars($item['product_name'] ?? '') }}"
+                                    data-index="{{ $i }}" data-name="{{ htmlspecialchars($item['product_name'] ?? $item['name']) }}"
                                     title="Añadir / Ver más">
                                     <span class="material-symbols-outlined text-[18px]">add</span>
                                 </button>

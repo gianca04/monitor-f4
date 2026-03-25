@@ -75,9 +75,12 @@
                                 </span>
                             </td>
                             <td class="p-0 align-middle bg-white dark:bg-gray-900 sticky right-0 z-10 shadow-[-4px_0_10px_rgba(0,0,0,0.05)] border-l border-gray-200 group-hover:bg-primary-50/30 transition-colors">
-                                <div class="flex items-center justify-center h-full">
+                                <div class="flex items-center justify-center h-full divide-x divide-gray-100 dark:divide-gray-800">
+                                    <button type="button" class="btn-toggle-tx w-full h-full text-gray-400 transition hover:text-primary-600 hover:bg-primary-50 dark:hover:bg-primary-500/10 flex justify-center items-center py-2" data-guide-id="{{ $guide->id }}" title="Ver Transacciones de esta Guía">
+                                        <span class="material-symbols-outlined text-[20px]">expand_more</span>
+                                    </button>
                                     <a href="{{ route('quoteswarehouse.pdf', $guide->id) }}" target="_blank"
-                                       class="w-full h-full text-gray-400 transition hover:text-primary-600 hover:bg-primary-50 dark:hover:bg-primary-500/10 flex justify-center items-center py-2" title="Imprimir Guía">
+                                       class="w-full h-full text-gray-400 transition hover:text-success-600 hover:bg-success-50 dark:hover:bg-success-500/10 flex justify-center items-center py-2" title="Imprimir Guía">
                                         <span class="material-symbols-outlined text-[20px]">print</span>
                                     </a>
                                 </div>

@@ -115,7 +115,7 @@
                             {{ $index + 1 }}
                         </td>
                         <td class="p-1.5 align-middle truncate font-semibold text-primary-600 dark:text-primary-400">
-                            {{ $transaction->projectRequirement?->project?->service_code ?? '-' }}
+                            {{ $transaction->projectRequirement?->project?->request_number ?? '-' }}
                         </td>
                         <td class="p-1.5 align-middle truncate text-gray-900 dark:text-white" title="{{ $transaction->projectRequirement?->name ?? '' }}">
                             {{ $transaction->projectRequirement?->name ?? '-' }}

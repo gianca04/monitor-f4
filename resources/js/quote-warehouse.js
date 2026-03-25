@@ -8,7 +8,7 @@ class VanillaTabsManager {
         this.containers.forEach(container => {
             const nav = container.querySelector('.vanilla-tabs-nav');
             const panes = container.querySelectorAll('.vanilla-tab-pane');
-            
+
             nav.innerHTML = ''; // Limpiar botones previos en caso de rehidratación
 
             panes.forEach(pane => {
@@ -19,13 +19,12 @@ class VanillaTabsManager {
 
                 const btn = document.createElement('button');
                 btn.type = 'button';
-                btn.className = `flex items-center gap-2 px-4 py-3 text-sm font-semibold border-b-2 transition-colors whitespace-nowrap ${
-                    isActive 
-                        ? 'border-blue-500 text-blue-600 dark:text-blue-400' 
-                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
-                }`;
+                btn.className = `flex items-center gap-2 px-4 py-3 text-sm font-semibold border-b-2 transition-colors whitespace-nowrap ${isActive
+                    ? 'border-blue-500 text-blue-600 dark:text-blue-400'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
+                    }`;
                 btn.dataset.targetId = id;
-                
+
                 let innerHTML = '';
                 if (icon) {
                     innerHTML += `<span class="material-symbols-outlined text-[18px]">${icon}</span> `;
@@ -88,14 +87,14 @@ class QuoteWarehouseEditor {
         this.btnSubmit = document.querySelector('.btn-submit');
         this.progressText = document.querySelector('.progress-text');
         this.progressBar = document.querySelector('.progress-bar');
-        
+
         // Modals
         this.modalLoc = document.getElementById('modal-new-location');
         this.inputLocName = document.getElementById('new-loc-name');
         this.inputLocDesc = document.getElementById('new-loc-desc');
         this.btnSaveLoc = document.getElementById('btn-save-loc');
         this.btnCloseLoc = document.querySelectorAll('.btn-close-loc');
-        
+
         this.modalHist = document.getElementById('modal-history');
         this.histTitle = document.getElementById('hist-title');
         this.histContent = document.getElementById('hist-content');
@@ -110,12 +109,13 @@ class QuoteWarehouseEditor {
         this.inputGuideDate = document.getElementById('guide-transfer-date');
         this.btnConfirmDispatch = document.getElementById('btn-confirm-dispatch');
         this.btnCloseGuide = document.querySelectorAll('.btn-close-guide');
-        
+
         // Modal de Transacción Detallada
         this.modalTx = document.getElementById('modal-transaction');
         this.formTx = document.getElementById('form-transaction');
         this.txIndex = document.getElementById('tx-index');
         this.txProductName = document.getElementById('tx-product-name');
+        this.txDescription = document.getElementById('tx-description');
         this.txQty = document.getElementById('tx-quantity');
         this.txUnitPriceReference = document.getElementById('tx-unit-price-reference');
         this.txIsExternal = document.getElementById('tx-is-external');
@@ -231,7 +231,7 @@ class QuoteWarehouseEditor {
 
         document.querySelectorAll('.btn-add-tx').forEach(btn => {
             btn.addEventListener('click', (e) => {
-                this.openTransactionModal(e.currentTarget.dataset.index, e.currentTarget.dataset.name);
+                this.openTransactionModal(e.currentTarget.dataset.index, e.currentTarget.dataset.name, e.currentTarget.dataset.name);
             });
         });
 
@@ -260,6 +260,67 @@ class QuoteWarehouseEditor {
                     e.target.value = val;
                 }
             });
+        }
+
+        // Lógica Maestro-Detalle para Guías (AJAX Fetch)
+        document.querySelectorAll('.btn-toggle-tx').forEach(btn => {
+            btn.addEventListener('click', (e) => this.toggleGuideTransactions(e.currentTarget));
+        });
+    }
+
+    async toggleGuideTransactions(button) {
+        const guideId = button.dataset.guideId;
+        const tr = button.closest('tr');
+        const icon = button.querySelector('.material-symbols-outlined');
+
+        // Si ya está abierto, lo cerramos
+        let nextRow = tr.nextElementSibling;
+        if (nextRow && nextRow.classList.contains('tx-details-row')) {
+            nextRow.remove();
+            icon.innerText = 'expand_more';
+            icon.classList.remove('text-primary-600');
+            tr.classList.remove('bg-gray-50', 'dark:bg-gray-800');
+            return;
+        }
+
+        // Cambiar icono a loading
+        icon.innerText = 'sync';
+        icon.classList.add('animate-spin', 'text-primary-600');
+
+        try {
+            // El endpoint espera autenticación web clásica de sesión
+            const response = await fetch(`/quoteswarehouse/dispatch-guide/${guideId}/transactions`, {
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'text/html'
+                }
+            });
+
+            if (!response.ok) throw new Error('Network response was not ok');
+
+            const html = await response.text();
+
+            // Restaurar icono a expandido
+            icon.classList.remove('animate-spin');
+            icon.innerText = 'expand_less';
+            tr.classList.add('bg-gray-50', 'dark:bg-gray-800');
+
+            // Insertar nueva fila (Maestro - Detalle)
+            const detailRow = document.createElement('tr');
+            detailRow.className = 'tx-details-row bg-gray-50/20 dark:bg-gray-800/20';
+            // Colspan 7 (Ancho total de la tabla de guías)
+            detailRow.innerHTML = `<td colspan="7" class="p-0 border-t border-gray-100 dark:border-gray-800">${html}</td>`;
+            tr.insertAdjacentElement('afterend', detailRow);
+
+            // Importante: Volver a enlazar el comportamiento de redimensionado 
+            // a la nueva sub-tabla inyectada que contiene las clases `.col-resizer`
+            this.bindColumnResizers();
+
+        } catch (e) {
+            console.error('Error fetching transactions:', e);
+            icon.classList.remove('animate-spin', 'text-primary-600');
+            icon.innerText = 'error';
+            icon.classList.add('text-red-500');
         }
     }
 
@@ -319,9 +380,9 @@ class QuoteWarehouseEditor {
 
     updateProgress() {
         let totalSolicitado = this.items.reduce((acc, item) => acc + item.solicitado, 0);
-        let totalListo = this.items.reduce((acc, item) => acc + Math.min(item.entregado + (parseInt(item.despachar)||0), item.solicitado), 0);
+        let totalListo = this.items.reduce((acc, item) => acc + Math.min(item.entregado + (parseInt(item.despachar) || 0), item.solicitado), 0);
         let progress = totalSolicitado === 0 ? 0 : Math.round((totalListo / totalSolicitado) * 100);
-        
+
         if (this.progressText) this.progressText.innerText = progress + '%';
         if (this.progressBar) this.progressBar.style.width = progress + '%';
     }
@@ -332,7 +393,7 @@ class QuoteWarehouseEditor {
         this.inputLocDesc.value = '';
         this.modalLoc.classList.remove('hidden');
         setTimeout(() => this.inputLocName.focus(), 100);
-        
+
         const closeOnEscape = (e) => {
             if (e.key === 'Escape') {
                 this.closeLocModal();
@@ -360,17 +421,17 @@ class QuoteWarehouseEditor {
         try {
             const response = await fetch(this.config.routes.storeLocation, {
                 method: 'POST',
-                headers: { 
-                    'Content-Type': 'application/json', 
-                    'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content, 
-                    'Accept': 'application/json' 
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content,
+                    'Accept': 'application/json'
                 },
                 body: JSON.stringify({ name: name, description: desc })
             });
             const data = await response.json();
             if (data.success) {
                 this.locations.push({ id: data.data.id, name: data.data.name });
-                
+
                 // Actualizar los selects del Modal de Guía
                 document.querySelectorAll('#guide-origin, #guide-destination').forEach(sel => {
                     const opt = document.createElement('option');
@@ -444,7 +505,7 @@ class QuoteWarehouseEditor {
         }
 
         let html = `<div class="relative pl-4 space-y-6 before:absolute before:inset-0 before:ml-[23px] before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-gray-200 dark:before:via-gray-700 before:to-transparent">`;
-        
+
         transactions.forEach(tx => {
             html += `
             <div class="relative flex items-start gap-4">
@@ -484,12 +545,18 @@ class QuoteWarehouseEditor {
         this.histContent.innerHTML = html;
     }
 
-    openTransactionModal(idx, name) {
+    openTransactionModal(idx, name, description) {
         const item = this.items[idx];
         if (!item) return;
-
         this.txIndex.value = idx;
         this.txProductName.innerText = name;
+        // Actualizar el div con la descripción (ProjectRequirement.name)
+        const descDiv = this.txDescription.querySelector('p') || this.txDescription;
+        if (this.txDescription.querySelector('p')) {
+            this.txDescription.querySelector('p').textContent = description || '-';
+        } else {
+            this.txDescription.textContent = description || '-';
+        }
         this.txQty.value = item.despachar > 0 ? item.despachar : '';
         this.txQty.max = item.solicitado - item.entregado;
         if (this.txUnitPriceReference) this.txUnitPriceReference.value = item.unit_price || '';
@@ -595,8 +662,8 @@ class QuoteWarehouseEditor {
     }
 
     openGuideModal() {
-        const hasDispatches = this.items.some(i => (parseInt(i.despachar)||0) > 0);
-        
+        const hasDispatches = this.items.some(i => (parseInt(i.despachar) || 0) > 0);
+
         if (!hasDispatches) {
             this.submitForm();
             return;
@@ -613,12 +680,12 @@ class QuoteWarehouseEditor {
 
         const now = new Date();
         now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
-        if(this.inputGuideDate) this.inputGuideDate.value = now.toISOString().slice(0, 16);
-        
-        if(this.inputGuideNumber) this.inputGuideNumber.value = '';
+        if (this.inputGuideDate) this.inputGuideDate.value = now.toISOString().slice(0, 16);
+
+        if (this.inputGuideNumber) this.inputGuideNumber.value = '';
 
         this.modalGuide.classList.remove('hidden');
-        if(this.inputGuideNumber) setTimeout(() => this.inputGuideNumber.focus(), 100);
+        if (this.inputGuideNumber) setTimeout(() => this.inputGuideNumber.focus(), 100);
 
         const closeOnEscape = (e) => {
             if (e.key === 'Escape') {
@@ -634,34 +701,34 @@ class QuoteWarehouseEditor {
     }
 
     async submitForm() {
-        const details = this.items.filter(i => (parseInt(i.despachar)||0) > 0).map(i => ({
-            project_requirement_id: i.project_requirement_id, 
-            a_despachar: parseInt(i.despachar) || 0, 
-            quantity: parseInt(i.solicitado) || 0, 
+        const details = this.items.filter(i => (parseInt(i.despachar) || 0) > 0).map(i => ({
+            project_requirement_id: i.project_requirement_id,
+            a_despachar: parseInt(i.despachar) || 0,
+            quantity: parseInt(i.solicitado) || 0,
             is_external_purchase: i.is_external_purchase || false,
             price_unit: i.price_unit || null,
             supplier_name: i.supplier_name || null,
             receipt_number: i.receipt_number || null,
-            comment: i.comment || '', 
-            additional_cost: i.additional_cost || 0, 
-            cost_description: i.cost_description || '', 
+            comment: i.comment || '',
+            additional_cost: i.additional_cost || 0,
+            cost_description: i.cost_description || '',
             tool_unit_id: i.tool_unit_id || null,
             employee_id: i.employee_id || null
         }));
 
         let totalSolicitado = this.items.reduce((acc, item) => acc + item.solicitado, 0);
-        let totalListo = this.items.reduce((acc, item) => acc + Math.min(item.entregado + (parseInt(item.despachar)||0), item.solicitado), 0);
+        let totalListo = this.items.reduce((acc, item) => acc + Math.min(item.entregado + (parseInt(item.despachar) || 0), item.solicitado), 0);
         let progreso_total = totalSolicitado === 0 ? 0 : Math.round((totalListo / totalSolicitado) * 100);
 
-        const payload = { 
-            quote_warehouse_id: this.config.quoteWarehouseId, 
-            observations: this.inputObs ? this.inputObs.value : '', 
-            progreso_total: progreso_total, 
+        const payload = {
+            quote_warehouse_id: this.config.quoteWarehouseId,
+            observations: this.inputObs ? this.inputObs.value : '',
+            progreso_total: progreso_total,
             guide_number: this.inputGuideNumber ? this.inputGuideNumber.value.trim() : '',
             global_origin_id: this.inputGuideOrigin ? this.inputGuideOrigin.value : null,
             global_destination_id: this.inputGuideDest ? this.inputGuideDest.value : null,
             transfer_date: this.inputGuideDate ? this.inputGuideDate.value : null,
-            details 
+            details
         };
 
         try {
@@ -673,29 +740,29 @@ class QuoteWarehouseEditor {
                 this.btnSubmit.innerHTML = `<span class="material-symbols-outlined text-[18px] animate-spin">sync</span> Registrando...`;
             }
 
-            const r = await fetch(this.config.routes.store, { 
-                method: 'POST', 
-                headers: { 
-                    'Content-Type': 'application/json', 
-                    'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content, 
-                    'Accept': 'application/json' 
-                }, 
-                body: JSON.stringify(payload) 
+            const r = await fetch(this.config.routes.store, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content,
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify(payload)
             });
             const d = await r.json();
             if (d.success) {
-                Swal.fire({ 
-                    icon: 'success', 
-                    title: '¡Éxito!', 
-                    text: d.message + (d.estadoMensaje ? `\n${d.estadoMensaje}` : ''), 
-                    confirmButtonColor: '#059669' 
+                Swal.fire({
+                    icon: 'success',
+                    title: '¡Éxito!',
+                    text: d.message + (d.estadoMensaje ? `\n${d.estadoMensaje}` : ''),
+                    confirmButtonColor: '#059669'
                 }).then(() => location.reload());
             } else {
                 Swal.fire({ icon: 'error', title: 'Error', text: d.message });
                 this.resetSubmitButtons();
             }
-        } catch (e) { 
-            Swal.fire({ icon: 'error', title: 'Error', text: 'Error de red' }); 
+        } catch (e) {
+            Swal.fire({ icon: 'error', title: 'Error', text: 'Error de red' });
             this.resetSubmitButtons();
         }
     }

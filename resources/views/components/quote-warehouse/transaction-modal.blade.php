@@ -39,6 +39,20 @@
 
                         <div class="">
                             <div class="flex flex-col gap-1.5">
+                                <label class="text-xs font-semibold text-gray-600 dark:text-gray-400 ml-1">
+                                    Descripción del item
+                                </label>
+                                <div id="tx-description" class="relative group p-3 rounded-lg bg-gradient-to-br from-primary-50 to-primary-50/50 dark:from-primary-500/10 dark:to-primary-500/5 border border-primary-200 dark:border-primary-500/20 shadow-sm">
+                                    <div class="flex items-start gap-2">
+                                        <span class="material-symbols-outlined text-primary-600 dark:text-primary-400 text-[18px] shrink-0 mt-0.5">description</span>
+                                        <p class="text-sm font-medium text-gray-900 dark:text-white leading-relaxed break-words whitespace-normal">-</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="">
+                            <div class="flex flex-col gap-1.5">
                                 <label for="tx-quantity" class="text-xs font-semibold text-gray-600 dark:text-gray-400 ml-1">
                                     Cantidad<span class="text-red-500 ml-0.5">*</span>
                                 </label>
