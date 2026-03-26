@@ -27,7 +27,14 @@
 
 /* Hover effects para las tarjetas */
 .admin-dashboard-widget .group:hover {
-    transform: translateY(-2px);
+    transform: translateY(-0.125rem);
+}
+
+@layer base {
+    html {
+        font-size: 14.4px !important;
+        font-family: 'Poppins', sans-serif !important;
+    }
 }
 
 /* Scroll suave en la tabla */

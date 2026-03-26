@@ -10,7 +10,7 @@
 @keyframes slideUp {
     from {
         opacity: 0;
-        transform: translateY(20px);
+        transform: translateY(1.25rem);
     }
 
     to {
@@ -34,16 +34,16 @@
 /* Cards - Solo dentro del contenedor de cotizaciones */
 .quote-cards-container .quote-card {
     background: #ffffff;
-    border: 1px solid rgba(0, 0, 0, 0.05);
-    border-radius: 16px;
+    border: 0.0625rem solid rgba(0, 0, 0, 0.05);
+    border-radius: 1rem;
     overflow: hidden;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+    box-shadow: 0 0.25rem 0.375rem -0.0625rem rgba(0, 0, 0, 0.05), 0 0.125rem 0.25rem -0.0625rem rgba(0, 0, 0, 0.03);
     transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .quote-cards-container .quote-card:hover {
-    transform: translateY(-8px);
-    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    transform: translateY(-0.5rem);
+    box-shadow: 0 1.25rem 1.5625rem -0.3125rem rgba(0, 0, 0, 0.1), 0 0.625rem 0.625rem -0.3125rem rgba(0, 0, 0, 0.04);
 }
 
 /* Sección de Monto Destacada */
@@ -59,10 +59,10 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 4px;
-    border-radius: 8px;
-    font-size: 11px;
-    padding: 8px 4px;
+    gap: 0.25rem;
+    border-radius: 0.5rem;
+    font-size: 0.6875rem;
+    padding: 0.5rem 0.25rem;
     transition: transform 0.2s;
 }
 
@@ -92,9 +92,9 @@
 
 /* Hover effect */
 .quote-cards-container .quote-card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1),
-        0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    transform: translateY(-0.25rem);
+    box-shadow: 0 1.25rem 1.5625rem -0.3125rem rgba(0, 0, 0, 0.1),
+        0 0.625rem 0.625rem -0.3125rem rgba(0, 0, 0, 0.04);
 }
 
 /* Header gradient */
@@ -154,7 +154,7 @@
 }
 
 .quote-cards-container .quote-stat-card:hover {
-    transform: translateY(-2px);
+    transform: translateY(-0.125rem);
 }
 
 /* Buttons */
@@ -177,33 +177,33 @@
 /* Contenedor de la Card */
 .quote-card {
     background: white;
-    border: 1px solid rgba(0, 0, 0, 0.08);
-    border-radius: 16px;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    border: 0.0625rem solid rgba(0, 0, 0, 0.08);
+    border-radius: 1rem;
+    box-shadow: 0 0.25rem 0.375rem -0.0625rem rgba(0, 0, 0, 0.05);
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     display: flex;
     flex-direction: column;
 }
 
 .quote-card:hover {
-    transform: translateY(-8px);
-    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+    transform: translateY(-0.5rem);
+    box-shadow: 0 1.25rem 1.5625rem -0.3125rem rgba(0, 0, 0, 0.1);
 }
 
 /* Sección del Logo (Expandida) */
 .quote-card-logo-container {
-    height: 100px;
+    height: 6.25rem;
     /* Aumentado para que se vea grande */
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 15px;
+    padding: 0.9375rem;
     background: #fdfdfd;
-    border-radius: 16px 16px 0 0;
+    border-radius: 1rem 1rem 0 0;
 }
 
 .quote-card-logo {
-    max-height: 75px;
+    max-height: 4.6875rem;
     /* Logo más grande */
     max-width: 90%;
     object-fit: contain;
@@ -219,7 +219,7 @@
     background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
     padding: 1rem;
     text-align: center;
-    box-shadow: inset 0 -2px 10px rgba(0, 0, 0, 0.1);
+    box-shadow: inset 0 -0.125rem 0.625rem rgba(0, 0, 0, 0.1);
 }
 
 /* Botones de acción pequeños */
@@ -227,18 +227,18 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 4px;
-    border-radius: 8px;
-    font-size: 11px;
+    gap: 0.25rem;
+    border-radius: 0.5rem;
+    font-size: 0.6875rem;
     font-weight: 700;
-    padding: 6px 2px;
+    padding: 0.375rem 0.125rem;
     transition: all 0.2s;
     text-transform: uppercase;
 }
 
 /* Estados */
 .status-badge {
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.05);
 }
 
 .quote-cards-container .quote-btn-pdf:hover {
@@ -289,12 +289,12 @@
 
 .quote-cards-container .quote-search-input:focus {
     border-color: rgb(59, 130, 246);
-    box-shadow: 0 0 0 3px rgb(219, 234, 254);
+    box-shadow: 0 0 0 0.1875rem rgb(219, 234, 254);
 }
 
 .dark .quote-cards-container .quote-search-input:focus {
     border-color: rgb(96, 165, 250);
-    box-shadow: 0 0 0 3px rgb(30, 58, 138);
+    box-shadow: 0 0 0 0.1875rem rgb(30, 58, 138);
 }
 
 /* Select filter */
@@ -304,11 +304,11 @@
 
 .quote-cards-container .quote-select-filter:focus {
     border-color: rgb(59, 130, 246);
-    box-shadow: 0 0 0 3px rgb(219, 234, 254);
+    box-shadow: 0 0 0 0.1875rem rgb(219, 234, 254);
 }
 
 /* Responsive */
-@media (max-width: 640px) {
+@media (max-width: 40rem) {
     .quote-cards-container .quote-card-grid {
         grid-template-columns: 1fr !important;
     }

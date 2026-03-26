@@ -29,7 +29,6 @@ class ClientForm
 
                         TextInput::make('ceco')
                             ->label('CECO')
-                            ->required()
                             ->maxLength(255),
 
                         TextInput::make('address')

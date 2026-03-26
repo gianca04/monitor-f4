@@ -8,5 +8,15 @@
 
 /* Añade este bloque para el escalado al 90% */
 html {
-    zoom: 0.98;
+    /* Si el estándar es 16px:
+       90% = 14.4px
+       80% = 12.8px
+    */
+    font-size: 14.4px !important;
+}
+
+/* Reajuste para que los inputs y textos no pierdan legibilidad */
+body {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
 }
