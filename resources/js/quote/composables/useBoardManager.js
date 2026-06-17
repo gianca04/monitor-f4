@@ -157,12 +157,25 @@ export function useBoardManager() {
             if (this.quoteType === 'Preventivo' && index === 0) return;
 
             if (this.boards.length > 1) {
-                this.boards.splice(index, 1);
-                if (this.activeBoardIndex >= this.boards.length) {
-                    this.activeBoardIndex = this.boards.length - 1;
-                } else if (this.activeBoardIndex > index) {
-                    this.activeBoardIndex--;
-                }
+                Swal.fire({
+                    title: '¿Eliminar grupo?',
+                    text: `¿Está seguro de que desea eliminar el grupo "${this.boards[index].name}"? Todos los ítems asociados se perderán.`,
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#d33',
+                    cancelButtonColor: '#3085d6',
+                    confirmButtonText: 'Sí, eliminar',
+                    cancelButtonText: 'Cancelar'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        this.boards.splice(index, 1);
+                        if (this.activeBoardIndex >= this.boards.length) {
+                            this.activeBoardIndex = this.boards.length - 1;
+                        } else if (this.activeBoardIndex > index) {
+                            this.activeBoardIndex--;
+                        }
+                    }
+                });
             }
         },
 
