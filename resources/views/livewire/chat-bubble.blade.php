@@ -10,7 +10,7 @@
 
 <div
     x-data="chatBubble"
-    class="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-3"
+    class="relative flex items-center"
 >
     {{-- ═══════════════════════════════════════════
          CHAT PANEL
@@ -24,7 +24,7 @@
         x-transition:leave-start="opacity-100 translate-y-0 scale-100"
         x-transition:leave-end="opacity-0 translate-y-4 scale-95"
         x-cloak
-        class="mb-2 flex h-[32rem] w-80 flex-col overflow-hidden rounded-2xl bg-white shadow-xl ring-1 ring-gray-950/5 dark:bg-gray-900 dark:ring-white/10"
+        class="fixed bottom-6 right-6 z-50 flex h-[32rem] w-80 flex-col overflow-hidden rounded-2xl bg-white shadow-xl ring-1 ring-gray-950/5 dark:bg-gray-900 dark:ring-white/10"
     >
         {{-- ─── VISTA: LISTA DE CONVERSACIONES ─── --}}
         @if ($view === 'list')
@@ -217,18 +217,18 @@
     </div>
 
     {{-- ═══════════════════════════════════════════
-         FLOATING ACTION BUTTON
+         NAVBAR BUTTON (was floating bubble button)
     ═══════════════════════════════════════════ --}}
     <button
         type="button"
         wire:click="chatBubbleToggle"
-        class="group relative inline-flex h-14 w-14 items-center justify-center rounded-full bg-primary-600 text-white shadow-lg transition-all duration-200 hover:bg-primary-500 hover:shadow-xl focus:outline-none focus:ring-4 focus:ring-primary-500/40 active:scale-95"
+        class="group relative flex h-9 w-9 items-center justify-center rounded-lg text-gray-500 transition hover:bg-gray-500/10 focus:outline-none dark:text-gray-400 dark:hover:bg-white/10 active:scale-95"
         :aria-expanded="$wire.isOpen"
         aria-label="Abrir chat"
     >
         {{-- Badge de no leídos --}}
         @if ($unreadCount > 0)
-            <span class="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white ring-2 ring-white dark:ring-gray-900">
+            <span class="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[9px] font-bold text-white ring-1 ring-white dark:ring-gray-950">
                 {{ $unreadCount > 99 ? '99+' : $unreadCount }}
             </span>
         @endif
@@ -240,7 +240,7 @@
             x-transition:enter="transition ease-out duration-150"
             x-transition:enter-start="rotate-90 scale-0 opacity-0"
             x-transition:enter-end="rotate-0 scale-100 opacity-100"
-            class="h-6 w-6"
+            class="h-5 w-5"
         />
 
         {{-- Close icon (visible when open) --}}
@@ -251,7 +251,7 @@
             x-transition:enter="transition ease-out duration-150"
             x-transition:enter-start="-rotate-90 scale-0 opacity-0"
             x-transition:enter-end="rotate-0 scale-100 opacity-100"
-            class="h-6 w-6"
+            class="h-5 w-5"
         />
     </button>
 </div>

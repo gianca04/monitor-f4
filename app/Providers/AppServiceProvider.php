@@ -45,7 +45,7 @@ class AppServiceProvider extends ServiceProvider
 
         // Inyectar burbuja flotante de chat en todas las pantallas del panel, excepto en el login
         FilamentView::registerRenderHook(
-            'panels::body.end',
+            'panels::user-menu.before',
             fn(): string => request()->routeIs('filament.*.auth.login')
                 ? ''
                 : Blade::render('@livewire(\'chat-bubble\')'),

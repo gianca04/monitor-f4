@@ -67,17 +67,34 @@
                     </template>
                 </div>
 
-                {{-- Selected Items Badge --}}
+                {{-- Selected Items List (Persistent) --}}
                 <div x-show="searchModal.selectedItems.length > 0"
-                    class="px-4 py-2 bg-emerald-50 dark:bg-emerald-900/30 border-b border-emerald-200 dark:border-emerald-800">
-                    <div class="flex items-center justify-between">
-                        <span class="text-xs font-medium text-emerald-700 dark:text-emerald-400">
-                            <span x-text="searchModal.selectedItems.length"></span> item(s) seleccionado(s)
+                    class="px-4 py-3 bg-emerald-50/50 dark:bg-emerald-950/20 border-b border-emerald-200 dark:border-emerald-800/60 max-h-48 overflow-y-auto">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-xs font-black text-emerald-800 dark:text-emerald-400 uppercase tracking-wider">
+                            Items Seleccionados (<span x-text="searchModal.selectedItems.length"></span>)
                         </span>
                         <button @click="searchModal.selectedItems = []"
-                            class="text-xs text-emerald-600 hover:text-emerald-800 dark:text-emerald-400">
-                            Limpiar
+                            class="text-xs font-bold text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-350">
+                            Limpiar todo
                         </button>
+                    </div>
+                    <div class="flex flex-col gap-1.5">
+                        <template x-for="selItem in searchModal.selectedItems" :key="selItem.id">
+                            <div class="flex items-center justify-between bg-white dark:bg-gray-800 px-3 py-1.5 rounded-xl border border-emerald-100 dark:border-emerald-900/50 shadow-sm">
+                                <div class="flex items-center gap-2 min-w-0 pr-2">
+                                    <span class="font-mono text-[10px] px-1.5 py-0.5 rounded bg-emerald-50 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-400 font-bold shrink-0"
+                                        x-text="selItem.code"></span>
+                                    <span class="text-xs text-gray-700 dark:text-gray-200 truncate"
+                                        x-text="selItem.description"></span>
+                                </div>
+                                <button @click.stop="toggleItemSelection(selItem)"
+                                    class="text-gray-400 hover:text-red-500 rounded-lg p-0.5 transition-colors shrink-0"
+                                    title="Quitar selección">
+                                    <span class="material-symbols-outlined text-base">close</span>
+                                </button>
+                            </div>
+                        </template>
                     </div>
                 </div>
 
