@@ -126,7 +126,7 @@ class DashboardPanelProvider extends PanelProvider
             ->brandLogoHeight('2rem')
             ->favicon(asset('images/favicon.svg'))
             ->databaseNotifications()
-            ->databaseNotificationsPolling('30s')
+            ->databaseNotificationsPolling(null) // Desactivado: usa Reverb para tiempo real. Evita flood de POST /livewire/update
         ;
     }
 }
