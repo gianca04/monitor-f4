@@ -80,9 +80,11 @@ Route::get('/work-report/{workReport}/word', [WorkReportWordController::class, '
     ->name('work-report.word')
     ->middleware('auth');
 
-Livewire::setScriptRoute(function ($handle) {
-    return Route::get('/superfood/public/livewire/livewire.js', $handle);
-});
+if (app()->environment('local') && str_contains(request()->getBaseUrl(), '/superfood/public')) {
+    Livewire::setScriptRoute(function ($handle) {
+        return Route::get('/superfood/public/livewire/livewire.js', $handle);
+    });
+}
 
 // Ruta pública para estadísticas de cotizaciones
 Route::get('/quotes/stats', [QuoteController::class, 'getStatistics']);
@@ -113,9 +115,11 @@ Route::prefix('quoteswarehouse')->middleware('auth')->group(function () {
         ->middleware('auth');
 });
 
-Livewire::setUpdateRoute(function ($handle) {
-    return Route::post('/superfood/public/livewire/update', $handle);
-});
+if (app()->environment('local') && str_contains(request()->getBaseUrl(), '/superfood/public')) {
+    Livewire::setUpdateRoute(function ($handle) {
+        return Route::post('/superfood/public/livewire/update', $handle);
+    });
+}
 
 Route::get('/storage-link', function () {
     Artisan::call('storage:link');
