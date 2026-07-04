@@ -30,16 +30,8 @@ export const SECTIONS = [
         iconClass: 'text-purple-600 dark:text-purple-400',
     },
     {
-        key: 'consumibles',
-        title: 'Consumibles',
-        icon: 'shopping_cart',
-        priceTypeId: 2,
-        bgClass: 'bg-emerald-100 dark:bg-emerald-900/30',
-        iconClass: 'text-emerald-600 dark:text-emerald-400',
-    },
-    {
         key: 'transporte',
-        title: 'Transporte',
+        title: 'Gasto de transporte',
         icon: 'local_shipping',
         priceTypeId: 2,
         bgClass: 'bg-rose-100 dark:bg-rose-900/30',
@@ -52,7 +44,6 @@ export const ITEM_TYPE_MAP = {
     VIATICOS: 'viaticos',
     SUMINISTRO: 'suministros',
     'MANO DE OBRA': 'mano_obra',
-    CONSUMIBLE: 'consumibles',
     TRANSPORTE: 'transporte',
 };
 
@@ -61,12 +52,11 @@ export const SECTION_TO_ITEM_TYPE = {
     viaticos: 'VIATICOS',
     suministros: 'SUMINISTRO',
     mano_obra: 'MANO DE OBRA',
-    consumibles: 'CONSUMIBLE',
     transporte: 'TRANSPORTE',
 };
 
 /** Sections that belong ONLY in the GLOBAL tab (Preventivo) */
-export const GLOBAL_SECTIONS = ['viaticos', 'consumibles', 'transporte'];
+export const GLOBAL_SECTIONS = ['viaticos', 'transporte'];
 
 /** Sections that belong ONLY in the REGULAR equipment tabs (Preventivo) */
 export const REGULAR_SECTIONS = ['suministros', 'mano_obra'];
@@ -77,7 +67,6 @@ export function createEmptyItems() {
         viaticos: [],
         suministros: [],
         mano_obra: [],
-        consumibles: [],
         transporte: [],
     };
 }

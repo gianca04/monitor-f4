@@ -16,12 +16,4 @@ class Unit extends Model
     {
         return $this->hasMany(Pricelist::class);
     }
-
-    /**
-     * Get the requirements for the unit.
-     */
-    public function requirements(): HasMany
-    {
-        return $this->hasMany(Requirement::class);
-    }
 }

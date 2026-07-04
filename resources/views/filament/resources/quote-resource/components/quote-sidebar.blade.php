@@ -106,7 +106,7 @@
 
             {{-- Cliente --}}
             <div>
-                <label class="quote-sidebar__label">Cliente</label>
+                <label class="quote-sidebar__label">Compañia</label>
                 <div class="searchable-select" @click.away="clientDropdownOpen = false">
                     <input type="text" x-model="clientSearch" @focus="clientDropdownOpen = true"
                         @click="clientDropdownOpen = true" @input="filterClients()"
@@ -145,7 +145,7 @@
 
             {{-- SubCliente --}}
             <div>
-                <label class="quote-sidebar__label">Tienda / SubCliente</label>
+                <label class="quote-sidebar__label">Cliente</label>
                 <div class="searchable-select" @click.away="subClientDropdownOpen = false">
                     <input type="text" x-model="subClientSearch" @focus="subClientDropdownOpen = true"
                         @click="subClientDropdownOpen = true" @input="filterSubClients()"

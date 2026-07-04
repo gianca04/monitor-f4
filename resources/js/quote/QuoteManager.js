@@ -307,7 +307,7 @@ export function quoteManager(
         },
 
         getTotal() {
-            return Math.round(this.getSubtotal() * 10) / 10;
+            return this.getSubtotal();
         },
 
         // ─── Persistence ────────────────────────────────────

@@ -47,13 +47,13 @@ class AppServiceProvider extends ServiceProvider
         FilamentView::registerRenderHook(
             'panels::user-menu.before',
             fn(): string => request()->routeIs('filament.*.auth.login')
-                ? ''
-                : Blade::render('@livewire(\'chat-bubble\')'),
+            ? ''
+            : Blade::render('@livewire(\'chat-bubble\')'),
         );
         if ($this->app->environment('production') || env('APP_URL') == 'https://superfood.sat-sistemas.uk') {
             URL::forceScheme('https');
 
-            // Esto arregla el problema de "Mixed Content" con el Load Balancer de Cloudflare
+
             $this->app['request']->server->set('HTTPS', 'on');
         }
     }

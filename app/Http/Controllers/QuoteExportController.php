@@ -20,12 +20,11 @@ class QuoteExportController extends Controller
         $formattedId = str_pad($quote->id, 5, '0', STR_PAD_LEFT);
 
         $sections = [
-            'VIATICOS'     => 'VIATICOS',
-            'SUMINISTRO'   => 'SUMINISTRO',
+            'VIATICOS' => 'VIATICOS',
+            'SUMINISTRO' => 'SUMINISTRO',
             'MANO DE OBRA' => 'MANO DE OBRA',
-            'CONSUMIBLE'   => 'CONSUMIBLE',
-            'TRANSPORTE'   => 'TRANSPORTE',
-            'SERVICIO'     => 'SERVICIO',
+            'TRANSPORTE' => 'GASTO DE TRANSPORTE',
+            'SERVICIO' => 'SERVICIO',
         ];
 
         $itemsData = collect();
@@ -53,15 +52,15 @@ class QuoteExportController extends Controller
                     $itemSubIndex = 1;
                     foreach ($sortedDetails as $detail) {
                         $itemsData->push([
-                            'tipo'        => 'item',
-                            'line'        => $sectionIndex . '.' . $itemSubIndex,
-                            'linea'       => $detail->pricelist->sat_line ?? '-',
+                            'tipo' => 'item',
+                            'line' => $sectionIndex . '.' . $itemSubIndex,
+                            'linea' => $detail->pricelist->sat_line ?? '-',
                             'descripcion' => $detail->pricelist->sat_description ?? 'Sin descripción',
-                            'comentario'  => $detail->comment ?? '-',
-                            'unidad'      => $detail->pricelist->unit->name ?? 'UND',
-                            'cantidad'    => $detail->quantity,
-                            'pu'          => $detail->unit_price,
-                            'subtotal'    => $detail->subtotal,
+                            'comentario' => $detail->comment ?? '-',
+                            'unidad' => $detail->pricelist->unit->name ?? 'UND',
+                            'cantidad' => $detail->quantity,
+                            'pu' => $detail->unit_price,
+                            'subtotal' => $detail->subtotal,
                         ]);
                         $itemSubIndex++;
                     }
@@ -71,23 +70,23 @@ class QuoteExportController extends Controller
         }
 
         $data = [
-            'original_id'       => $quote->id,
-            'quote_id'          => $formattedId,
+            'original_id' => $quote->id,
+            'quote_id' => $formattedId,
             'numero_cotizacion' => $quote->request_number,
-            'servicio'          => $quote->project->name ?? $quote->quoteCategory->name ?? 'Sin servicio',
-            'ruc_empresa'       => '20539249640',
-            'empresa_nombre'    => 'SAT INDUSTRIALES',
-            'cotizado_por'      => $quote->employee ? $quote->employee->short_name : 'No asignado',
-            'n_solicitud'       => $quote->project && $quote->project->request_number ? $quote->project->request_number : '-',
-            'cliente'           => $quote->subClient->name ?? 'Sin cliente',
-            'jefe_energia'      => $quote->energy_sci_manager ?? '-',
-            'fecha_cotizacion'  => $quote->quote_date ? $quote->quote_date->format('d/m/Y') : '-',
-            'categoria'         => $quote->quoteCategory->name ?? '-',
-            'ceco'              => $ceco,
-            'fecha_ejecucion'   => $quote->execution_date ? $quote->execution_date->format('d/m/Y') : '-',
-            'total_general'     => number_format($quote->total_amount, 2),
-            'items'             => $itemsData,
-            'isPdf'             => true,
+            'servicio' => $quote->project->name ?? $quote->quoteCategory->name ?? 'Sin servicio',
+            'ruc_empresa' => '20539249640',
+            'empresa_nombre' => 'SAT INDUSTRIALES',
+            'cotizado_por' => $quote->employee ? $quote->employee->short_name : 'No asignado',
+            'n_solicitud' => $quote->project && $quote->project->request_number ? $quote->project->request_number : '-',
+            'cliente' => $quote->subClient->name ?? 'Sin cliente',
+            'jefe_energia' => $quote->energy_sci_manager ?? '-',
+            'fecha_cotizacion' => $quote->quote_date ? $quote->quote_date->format('d/m/Y') : '-',
+            'categoria' => $quote->quoteCategory->name ?? '-',
+            'ceco' => $ceco,
+            'fecha_ejecucion' => $quote->execution_date ? $quote->execution_date->format('d/m/Y') : '-',
+            'total_general' => number_format($quote->total_amount, 2),
+            'items' => $itemsData,
+            'isPdf' => true,
         ];
         $html = view('filament.resources.quote-resource.pages.preview', $data)->render();
 
@@ -127,12 +126,11 @@ class QuoteExportController extends Controller
 
         // --- ITEMS AGRUPADOS POR QuoteGroup ---
         $sections = [
-            'VIATICOS'     => 'VIATICOS',
-            'SUMINISTRO'   => 'SUMINISTRO',
+            'VIATICOS' => 'VIATICOS',
+            'SUMINISTRO' => 'SUMINISTRO',
             'MANO DE OBRA' => 'MANO DE OBRA',
-            'CONSUMIBLE'   => 'CONSUMIBLE',
-            'TRANSPORTE'   => 'TRANSPORTE',
-            'SERVICIO'     => 'SERVICIO',
+            'TRANSPORTE' => 'GASTO DE TRANSPORTE',
+            'SERVICIO' => 'SERVICIO',
         ];
 
         $currentRow = 9; // Comenzamos en la fila 9
@@ -154,7 +152,7 @@ class QuoteExportController extends Controller
                 $sheet->getStyle("A{$currentRow}:H{$currentRow}")->getFont()
                     ->setBold(true)->setName('Calibri')->setSize(12)->getColor()->setRGB('000000');
                 $sheet->getStyle("A{$currentRow}:H{$currentRow}")->getAlignment()
-                    ->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER)
+                    ->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_LEFT)
                     ->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER);
                 $sheet->getRowDimension($currentRow)->setRowHeight(22);
                 $currentRow++;
@@ -177,6 +175,9 @@ class QuoteExportController extends Controller
                         ->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)
                         ->getStartColor()->setRGB('C6E0B4');
                     $sheet->getStyle("A{$currentRow}:H{$currentRow}")->getFont()->setBold(true)->setName('Calibri')->setSize(11);
+                    $sheet->getStyle("A{$currentRow}:H{$currentRow}")->getAlignment()
+                        ->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_LEFT)
+                        ->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER);
 
                     $currentRow++;
                     // Ordenar los detalles por 'line' antes de añadirlos
@@ -231,7 +232,8 @@ class QuoteExportController extends Controller
         // Descargar archivo
         $filename = 'Cotizacion_' . ($quote->request_number ?? $quote->id) . '.xlsx';
         $writer = IOFactory::createWriter($spreadsheet, 'Xlsx');
-        if (ob_get_length()) ob_end_clean();
+        if (ob_get_length())
+            ob_end_clean();
         header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
         header("Content-Disposition: attachment; filename=\"$filename\"");
         $writer->save('php://output');

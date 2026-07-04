@@ -44,6 +44,10 @@ Route::prefix('pricelists')->middleware(['web', 'auth'])->group(function () {
 Route::prefix('sub-clients')->middleware(['web', 'auth'])->group(function () {
     Route::get('/', [SubClientController::class, 'index']);
     Route::get('/search', [SubClientController::class, 'search']);
+    Route::get('/{id}', function ($id) {
+        $subClient = SubClient::select('id', 'name', 'client_id', 'ceco')->findOrFail($id);
+        return response()->json($subClient);
+    });
 });
 
 // Clients API (para búsqueda de clientes)
@@ -142,10 +146,3 @@ Route::middleware(['auth:sanctum', 'CheckTokenExpiration'])->group(function () {
     Route::apiResource('photos', PhotoController::class);
     Route::apiResource('positions', PositionController::class);
 });
-
-// SubClient detail endpoint
-Route::get('/sub-clients/{id}', function ($id) {
-    $subClient = SubClient::select('id', 'name', 'client_id', 'ceco')->findOrFail($id);
-    return response()->json($subClient);
-});
-Route::get('/sub-clients', [SubClientController::class, 'index']);

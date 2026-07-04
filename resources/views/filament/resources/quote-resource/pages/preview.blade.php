@@ -196,13 +196,14 @@
     .row-category {
         background-color: #c6e0b4 !important;
         font-weight: bold;
+        text-align: left;
     }
 
     .row-group {
         background-color: #FFC000 !important;
         font-weight: bold;
         font-size: 13px;
-        text-align: center;
+        text-align: left;
     }
 
     .center {
@@ -241,8 +242,8 @@
     <div class="action-bar no-print">
         <a href="javascript:window.close()" class="btn btn-back">Volver</a>
         <button onclick="window.print()" class="btn btn-print">Imprimir</button>
-        <a href="{{ route('quotes.pdf', $original_id) }}" class="btn btn-pdf">Descargar PDF</a>
-        <a href="{{ route('quotes.excel', $original_id) }}" class="btn btn-excel">Descargar EXCEL</a>
+        <a href="{{ route('quotes.pdf', $original_id) }}" target="_blank" class="btn btn-pdf">Descargar PDF</a>
+        <a href="{{ route('quotes.excel', $original_id) }}" target="_blank" class="btn btn-excel">Descargar EXCEL</a>
     </div>
 @endif
 

@@ -3,12 +3,9 @@
 namespace App\Services;
 
 use App\Models\ProjectRequirement;
-use App\Models\Requirement;
 use App\Models\QuoteDetail;
-use App\Models\Tool;
 use App\DTOs\ProjectRequirementDto;
 use App\Enums\RequirementType;
-use App\Enums\ToolType;
 
 class ProjectRequirementService
 {
@@ -40,9 +37,9 @@ class ProjectRequirementService
 
     /**
      * Mapea y extrae los datos básicos dependiendo del tipo Entidad requerida. 
-     * Lógica polimórfica (Requirement, QuoteDetail o Tool).
+     * Lógica polimórfica (QuoteDetail).
      * 
-     * @param string $type El FQCN de la clase polimórfica (ej. App\Models\Requirement).
+     * @param string $type El FQCN de la clase polimórfica (ej. App\Models\QuoteDetail).
      * @param int $id El ID del registro de dicha clase.
      * @return array
      */
@@ -50,16 +47,7 @@ class ProjectRequirementService
     {
         $data = [];
 
-        if ($type === Requirement::class) {
-            $requirement = Requirement::with('unit', 'requirementType')->find($id);
-            if ($requirement) {
-                $data['name'] = $requirement->product_description;
-                $data['unit_id'] = $requirement->unit_id;
-                $data['unit_symbol'] = $requirement->unit?->symbol ?? 'UND';
-                $data['requirement_type'] = $requirement->requirement_type_id;
-                $data['type'] = $this->mapRequirementType($requirement->requirementType?->name ?? '');
-            }
-        } elseif ($type === QuoteDetail::class) {
+        if ($type === QuoteDetail::class) {
             $quoteDetail = QuoteDetail::with('pricelist.unit')->find($id);
             if ($quoteDetail) {
                 $data['name'] = $quoteDetail->name;
@@ -71,15 +59,6 @@ class ProjectRequirementService
                 $data['subtotal'] = round((float)$quoteDetail->quantity * (float)$quoteDetail->unit_price, 2);
                 $data['type'] = RequirementType::CONSUMIBLE;
             }
-        } elseif ($type === Tool::class) {
-            $tool = Tool::find($id);
-            if ($tool) {
-                $data['name'] = $tool->name;
-                $data['unit_id'] = 3; // 'Unidad'
-                $data['unit_symbol'] = 'UND';
-                $data['requirement_type'] = null;
-                $data['type'] = $tool->type === ToolType::HERRAMIENTA ? RequirementType::HERRAMIENTA : RequirementType::EQUIPO;
-            }
         }
 
         return $data;
@@ -87,41 +66,18 @@ class ProjectRequirementService
 
     private function getProductName(ProjectRequirement $req): string
     {
-        if ($req->requirementable instanceof Requirement) {
-            return $req->requirementable->product_description ?? 'N/A';
-        } elseif ($req->requirementable instanceof QuoteDetail) {
+        if ($req->requirementable instanceof QuoteDetail) {
             return $req->requirementable->pricelist->sat_description ?? 'N/A';
-        } elseif ($req->requirementable instanceof Tool) {
-            return $req->requirementable->name ?? 'N/A';
         }
         return 'N/A';
     }
 
     private function getUnitName(ProjectRequirement $req): string
     {
-        if ($req->requirementable instanceof Requirement) {
-            return $req->requirementable->unit->name ?? 'N/A';
-        } elseif ($req->requirementable instanceof QuoteDetail) {
+        if ($req->requirementable instanceof QuoteDetail) {
             return $req->requirementable->pricelist->unit->name ?? 'N/A';
-        } elseif ($req->requirementable instanceof Tool) {
-            return 'UND';
         }
         return 'N/A';
-    }
-
-    private function mapRequirementType(string $reqTypeName): RequirementType
-    {
-        $reqTypeName = strtolower($reqTypeName);
-        if (str_contains($reqTypeName, 'material')) {
-            return RequirementType::MATERIAL;
-        } elseif (str_contains($reqTypeName, 'consumible') || str_contains($reqTypeName, 'suministro')) {
-            return RequirementType::CONSUMIBLE;
-        } elseif (str_contains($reqTypeName, 'herramienta')) {
-            return RequirementType::HERRAMIENTA;
-        } elseif (str_contains($reqTypeName, 'equipo')) {
-            return RequirementType::EQUIPO;
-        }
-        return RequirementType::MATERIAL;
     }
 
     /**
@@ -151,23 +107,12 @@ class ProjectRequirementService
             }
 
             $isTool = false;
-            $toolId = null;
             $availableUnits = [];
             $satLine = '-';
 
             // Polimorfismo: Dependiendo de la entidad origen del requerimiento, obtenemos los datos relevantes
             if ($req->requirementable instanceof QuoteDetail) {
                 $satLine = $req->requirementable->pricelist->sat_line ?? '-';
-            } elseif ($req->requirementable instanceof Tool) {
-                $satLine = 'HERRAMIENTAS';
-                $isTool = true;
-                $toolId = $req->requirementable->id;
-                
-                // Si el requerimiento es una herramienta, obtenemos dinámicamente sus unidades serializadas disponibles
-                $availableUnits = \App\Models\ToolUnit::where('tool_id', $toolId)
-                    ->where('status', 'Disponible')
-                    ->get(['id', 'internal_code', 'serial_number'])
-                    ->toArray();
             }
 
             $details[] = [

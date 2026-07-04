@@ -435,8 +435,7 @@ class QuoteController extends Controller
             'VIATICOS'     => 'VIATICOS',
             'SUMINISTRO'   => 'SUMINISTRO',
             'MANO DE OBRA' => 'MANO DE OBRA',
-            'CONSUMIBLE'   => 'CONSUMIBLE',
-            'TRANSPORTE'   => 'TRANSPORTE',
+            'TRANSPORTE'   => 'GASTO DE TRANSPORTE',
             'SERVICIO'     => 'SERVICIO',
             'OTROS'        => 'OTROS',
         ];

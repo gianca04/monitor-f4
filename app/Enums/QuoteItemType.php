@@ -19,7 +19,7 @@ enum QuoteItemType: string
             self::SUMINISTRO => 'Suministro',
             self::MANO_DE_OBRA => 'Mano de Obra',
             self::CONSUMIBLE => 'Consumible',
-            self::TRANSPORTE => 'Transporte',
+            self::TRANSPORTE => 'Gasto de transporte',
         };
     }
 }
