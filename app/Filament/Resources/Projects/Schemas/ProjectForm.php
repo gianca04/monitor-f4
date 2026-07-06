@@ -589,7 +589,7 @@ class ProjectForm
                                             ->prefix('S/ ')
                                             ->label('Monto del Proyecto')
                                             ->readOnly()
-                                            ->onlyVisible edit
+                                            ->visibleOn('edit')
                                             ->formatStateUsing(function ($state, $livewire) {
                                                 if ($state) return $state;
 
