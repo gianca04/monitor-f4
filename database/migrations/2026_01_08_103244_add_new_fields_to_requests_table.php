@@ -4,8 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration
-{
+return new class extends Migration {
     /**
      * Run the migrations.
      */
@@ -13,7 +12,7 @@ return new class extends Migration
     {
         Schema::table('projects', function (Blueprint $table) {
             $table->string('service_code')->nullable();      // Código de Servicio correlativo
-            $table->string('request_number')->nullable();    // N° de Solicitud
+            $table->string('request_number')->nullable();    // N° de Solicitud (ST)
             $table->text('comment')->nullable();            // Comentario
             $table->renameColumn('start_date', 'requested_at'); // Renombrar columna a Fecha de Solicitud
         });

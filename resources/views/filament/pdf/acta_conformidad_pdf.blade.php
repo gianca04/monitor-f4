@@ -363,7 +363,7 @@
                 </tr>
                 <tr>
                     <td class="left">
-                        <span class="label">A5) N° de Solicitud:</span><br>
+                        <span class="label">A5) N° de Solicitud (ST):</span><br>
                         {{ $request_number ?? 'N/A' }}
                     </td>
                 </tr>

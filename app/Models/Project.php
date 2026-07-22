@@ -17,10 +17,86 @@ class Project extends Model
 {
     use HasFactory;
 
+    /**
+     * The attributes that are mass assignable.
+     *
+     * @var array<int, string>
+     */
+    protected $fillable = [
+        // 1. DATOS GENERALES / SOLICITUD
+        'name',             // Descripción de la solicitud
+        'service_code',     // Código de Servicio Correlativo
+        'request_number',   // N° de Solicitud (ST)
+        'service_start_date',       // Fecha solicitud
+        'sub_client_id',    // Cliente (ID)
+        'location',         // Tienda (JSON)
+        'comment',          // Comentario
+
+        // 2. SERVICE (EXECUTION)
+        'work_order_number',    // Antes: ot
+        'service_start_date',   // Antes: fecha_inicio_servicio
+        'service_end_date',     // Antes: fecha_fin_servicio
+        'service_days',         // Antes: dias
+        'task_type',            // Antes: tarea
+        'has_quote',            // cotizacion
+        'has_report',           // Antes: informe
+
+        //3. BILLING
+        'fracttal_status', // Antes: fracttal
+        'purchase_order', // Antes: orden_compra
+        'migo_code', // Antes: migo
+
+        //4. TRACKING DATA
+        'status',             // estado: Pendiente, Enviada, Aprobado...
+        'quote_sent_at',      // fecha_cot_enviada
+        'quote_approved_at',  // fecha_cot_aprobada
+        'wo_review_at',       // fecha_ot_revision
+        'wo_completed_at',    // fecha_ot_finalizado
+        'days_to_completion', // dias_hasta_finalizacion
+        'final_comments',     // comentario_observación: Observaciones finales
+        'end_date',
+
+        //Supervisor
+        'supervisor_id',
+        'employee_id',
+    ];
+
+    protected $casts = [
+        // 1. DATOS GENERALES
+        'start_date' => 'date',
+        'end_date' => 'date',
+        'latitude' => 'decimal:7',
+        'longitude' => 'decimal:7',
+        'location' => 'array',
+        'sub_client_id' => 'integer',
+
+        // 2. SERVICE (EXECUTION)
+        'service_start_date' => 'date',
+        'service_end_date' => 'date',
+        'service_days' => 'integer',
+        'has_quote' => 'string',
+        'has_report' => 'string',
+
+        'fracttal_status' => 'string',
+
+        'status' => 'string',
+
+        // 4. TRACKING DATA (Fechas y Números)
+        'quote_sent_at' => 'datetime',
+        'quote_approved_at' => 'datetime',
+        'wo_review_at' => 'datetime',
+        'wo_completed_at' => 'datetime',
+        'days_to_completion' => 'integer',
+        // Otros
+        'quote_id' => 'integer',
+        'supervisor_id' => 'integer',
+    ];
+
     protected static function boot()
     {
         parent::boot();
 
+        /*
         static::created(function (Project $project) {
             // Verificar si no existe ninguna cotización asociada a este proyecto
             if (!$project->quotes()->exists()) {
@@ -33,6 +109,7 @@ class Project extends Model
                 ]);
             }
         });
+        */
 
         // Crear Compliance automáticamente cuando el estado cambie a 'Aprobado'
         static::updating(function (Project $project) {
@@ -59,80 +136,6 @@ class Project extends Model
             }
         });
     }
-
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var array<int, string>
-     */
-    protected $fillable = [
-        // 1. DATOS GENERALES / SOLICITUD
-        'name',             // Descripción de la solicitud
-        'service_code',     // Código de Servicio Correlativo
-        'request_number',   // N° de Solicitud
-        'service_start_date',       // Fecha solicitud
-        'sub_client_id',    // Cliente (ID)
-        'location',         // Tienda (JSON)
-        'comment',          // Comentario
-
-        // 2. SERVICE (EXECUTION)
-        'work_order_number',    // Antes: ot
-        'service_start_date',   // Antes: fecha_inicio_servicio
-        'service_end_date',     // Antes: fecha_fin_servicio
-        'service_days',         // Antes: dias
-        'task_type',            // Antes: tarea
-        'has_report',           // Antes: informe
-
-        //3. BILLING
-        'fracttal_status', // Antes: fracttal
-        'purchase_order', // Antes: orden_compra
-        'migo_code', // Antes: migo
-
-        //4. TRACKING DATA
-        'status',             // estado: Pendiente, Enviada, Aprobado...
-        'quote_sent_at',      // fecha_cot_enviada
-        'quote_approved_at',  // fecha_cot_aprobada
-        'wo_review_at',       // fecha_ot_revision
-        'wo_completed_at',    // fecha_ot_finalizado
-        'days_to_completion', // dias_hasta_finalizacion
-        'final_comments',     // comentario_observación: Observaciones finales
-        'end_date',
-
-
-        //Supervisor
-        'supervisor_id',
-        'employee_id',
-    ];
-
-    protected $casts = [
-        // 1. DATOS GENERALES
-        'start_date' => 'date',
-        'end_date' => 'date',
-        'latitude' => 'decimal:7',
-        'longitude' => 'decimal:7',
-        'location' => 'array',
-        'sub_client_id' => 'integer',
-
-        // 2. SERVICE (EXECUTION)
-        'service_start_date' => 'date',
-        'service_end_date' => 'date',
-        'service_days' => 'integer',
-        'has_report' => 'string',
-
-        'fracttal_status' => 'string',
-
-        'status' => 'string',
-
-        // 4. TRACKING DATA (Fechas y Números)
-        'quote_sent_at' => 'datetime',
-        'quote_approved_at' => 'datetime',
-        'wo_review_at' => 'datetime',
-        'wo_completed_at' => 'datetime',
-        'days_to_completion' => 'integer',
-        // Otros
-        'quote_id' => 'integer',
-        'supervisor_id' => 'integer',
-    ];
 
     public function visit()
     {
@@ -186,7 +189,7 @@ class Project extends Model
         /** @var \App\Models\User|null $user */
         $user = $user ?? Auth::user();
 
-        if (! $user) {
+        if (!$user) {
             return $query->whereRaw('1 = 0');
         }
 
@@ -197,7 +200,7 @@ class Project extends Model
 
         $employeeId = $user->employee_id;
 
-        if (! $employeeId) {
+        if (!$employeeId) {
             return $query->whereRaw('1 = 0');
         }
 
@@ -263,9 +266,14 @@ class Project extends Model
         return $this->belongsToMany(Employee::class, 'employee_project');
     }
 
-    public function getHasQuoteAttribute(): string
+    public function getHasQuoteAttribute($value): string
     {
-        return $this->quotes()->exists() ? 'SI' : 'NO';
+        return $value ?? ($this->quotes()->exists() ? 'SI' : 'NO');
+    }
+
+    public function getHasComplianceAttribute(): bool
+    {
+        return $this->compliance()->exists();
     }
 
 

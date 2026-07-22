@@ -32,7 +32,7 @@ class ProjectMainInfo
                             ->maxLength(100),
 
                         TextInput::make('request_number')
-                            ->label('N° de Solicitud')
+                            ->label('N° de Solicitud (ST)')
                             ->maxLength(100),
 
                         DatePicker::make('start_date')

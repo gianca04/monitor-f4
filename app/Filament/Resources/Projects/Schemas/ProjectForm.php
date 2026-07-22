@@ -60,7 +60,7 @@ class ProjectForm
                                 Grid::make(4)
                                     ->schema([
                                         TextInput::make('request_number')
-                                            ->label('N° de Solicitud')
+                                            ->label('N° de Solicitud (ST)')
                                             ->columnSpan(2)
                                             ->maxLength(255),
                                         DatePicker::make('requested_at')
@@ -591,7 +591,8 @@ class ProjectForm
                                             ->readOnly()
                                             ->visibleOn('edit')
                                             ->formatStateUsing(function ($state, $livewire) {
-                                                if ($state) return $state;
+                                                if ($state)
+                                                    return $state;
 
                                                 $project = null;
                                                 // Filament v3 access to record might vary, but usually getRecord works on pages.
@@ -600,7 +601,8 @@ class ProjectForm
                                                     $project = $livewire->getRecord();
                                                 }
 
-                                                if (!$project instanceof Project) return null;
+                                                if (!$project instanceof Project)
+                                                    return null;
 
                                                 // Use the latestQuote relationship and the scopeWithTotal
                                                 $quote = $project->latestQuote()->withTotal()->first();
@@ -721,8 +723,8 @@ class ProjectForm
                                                     ->color('success')
                                                     ->url(
                                                         fn(?Project $record) => $record?->compliance
-                                                            ? url("/actas/{$record->compliance->id}/preview")
-                                                            : null
+                                                        ? url("/actas/{$record->compliance->id}/preview")
+                                                        : null
                                                     )
                                                     ->openUrlInNewTab()
                                                     ->visible(fn(?Project $record) => $record?->compliance !== null)

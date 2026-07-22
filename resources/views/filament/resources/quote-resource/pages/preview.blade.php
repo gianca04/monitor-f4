@@ -305,7 +305,7 @@ style="width: 100%; max-width: 287mm; margin: 0 auto; min-height: auto; padding:
 
             {{-- Columna 2 (Alineada con Unidad) --}}
             <td width="40%" style="text-align: right;">
-                <span class="label-bold" style="width: 140px;">N° de Solicitud:</span> <span class="text-blue"
+                <span class="label-bold" style="width: 140px;">N° de Solicitud (ST):</span> <span class="text-blue"
                     style="border: 1px solid #000; padding: 3px 10px; min-width: 100px; display: inline-block; text-align: left;">{{ $n_solicitud }}</span><br>
                 <span class="label-bold" style="width: 140px;">Cliente:</span> <span class="text-blue"
                     style="border: 1px solid #000; padding: 3px 10px; width: 100px; display: inline-block; text-align: left;">{{ $cliente }}</span><br>

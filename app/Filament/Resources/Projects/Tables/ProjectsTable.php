@@ -101,7 +101,7 @@ class ProjectsTable
                     ->sortable(),
 
                 TextColumn::make('request_number')
-                    ->label('N° de Solicitud')
+                    ->label('N° de Solicitud (ST)')
                     ->placeholder('No definido')
                     ->toggleable(isToggledHiddenByDefault: true)
                     ->sortable(),
