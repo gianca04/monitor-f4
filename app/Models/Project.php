@@ -38,7 +38,7 @@ class Project extends Model
         'service_end_date',     // Antes: fecha_fin_servicio
         'service_days',         // Antes: dias
         'task_type',            // Antes: tarea
-        'has_quote',            // cotizacion
+        'has_quote',            // cotizacion enviada a cliente
         'has_report',           // Antes: informe
 
         //3. BILLING
@@ -96,7 +96,6 @@ class Project extends Model
     {
         parent::boot();
 
-        /*
         static::created(function (Project $project) {
             // Verificar si no existe ninguna cotización asociada a este proyecto
             if (!$project->quotes()->exists()) {
@@ -109,7 +108,6 @@ class Project extends Model
                 ]);
             }
         });
-        */
 
         // Crear Compliance automáticamente cuando el estado cambie a 'Aprobado'
         static::updating(function (Project $project) {
@@ -172,7 +170,9 @@ class Project extends Model
 
     public function scopeHasQuote(Builder $query)
     {
-        return $query->has('quotes');
+        return $query->whereHas('latestQuote', function (Builder $q) {
+            $q->whereIn('status', ['Enviado', 'Aprobado']);
+        });
     }
     /**
      * Filtra proyectos que no estén finalizados.
@@ -268,7 +268,11 @@ class Project extends Model
 
     public function getHasQuoteAttribute($value): string
     {
-        return $value ?? ($this->quotes()->exists() ? 'SI' : 'NO');
+        $latestQuote = $this->latestQuote;
+        if ($latestQuote) {
+            return in_array($latestQuote->status, ['Enviado', 'Aprobado']) ? 'SI' : 'NO';
+        }
+        return 'NO';
     }
 
     public function getHasComplianceAttribute(): bool

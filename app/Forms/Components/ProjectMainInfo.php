@@ -113,11 +113,13 @@ class ProjectMainInfo
                         Select::make('fracttal_status')
                             ->label('Estado Fracttal')
                             ->options([
-                                'Pendiente' => 'Pendiente',
-                                'Completado' => 'Completado',
+                                'Sin OT' => 'Sin OT',
                                 'En Proceso' => 'En Proceso',
+                                'En Revisión' => 'En Revisión',
+                                'Finalizado' => 'Finalizado',
+                                'Cancelada' => 'Cancelada',
                             ])
-                            ->default('Pendiente'),
+                            ->default('Sin OT'),
 
                         TextInput::make('purchase_order')
                             ->label('Orden de Compra')

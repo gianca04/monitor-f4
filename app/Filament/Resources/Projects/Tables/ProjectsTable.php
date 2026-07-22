@@ -126,10 +126,11 @@ class ProjectsTable
                     ->sortable()
                     ->badge()
                     ->color(fn(?string $state): string => match ($state) {
-                        'Pendiente' => 'danger',
+                        'Sin OT' => 'gray',
                         'En Proceso' => 'warning',
-                        'Completado' => 'success',
-                        default => 'gray',
+                        'En Revisión' => 'info',
+                        'Finalizado' => 'success',
+                        'Cancelada' => 'danger',
                     }),
 
                 TextColumn::make('purchase_order')
@@ -241,9 +242,11 @@ class ProjectsTable
                     ->label('Estado Fracttal')
                     ->native(false)
                     ->options([
-                        'Pendiente' => 'Pendiente',
-                        'Completado' => 'Completado',
+                        'Sin OT' => 'Sin OT',
                         'En Proceso' => 'En Proceso',
+                        'En Revisión' => 'En Revisión',
+                        'Finalizado' => 'Finalizado',
+                        'Cancelada' => 'Cancelada',
                     ]),
 
                 Filter::make('date_range')

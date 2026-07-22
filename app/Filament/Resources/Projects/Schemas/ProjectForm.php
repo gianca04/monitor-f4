@@ -746,6 +746,7 @@ class ProjectForm
                                                 'En Proceso' => 'En Proceso',
                                                 'En Revisión' => 'En Revisión',
                                                 'Finalizado' => 'Finalizado',
+                                                'Cancelada' => 'Cancelada',
                                             ])
                                             ->default('Sin OT'),
 
