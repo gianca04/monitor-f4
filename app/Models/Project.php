@@ -33,18 +33,18 @@ class Project extends Model
         'comment',          // Comentario
 
         // 2. SERVICE (EXECUTION)
-        'work_order_number',    // Antes: ot
-        'service_start_date',   // Antes: fecha_inicio_servicio
-        'service_end_date',     // Antes: fecha_fin_servicio
-        'service_days',         // Antes: dias
-        'task_type',            // Antes: tarea
+        'work_order_number',    //  ot
+        'service_start_date',   //  fecha_inicio_servicio
+        'service_end_date',     //  fecha_fin_servicio
+        'service_days',         //  dias
+        'task_type',            //  tarea
         'has_quote',            // cotizacion enviada a cliente
-        'has_report',           // Antes: informe
+        'has_report',           //  informe
 
         //3. BILLING
-        'fracttal_status', // Antes: fracttal
-        'purchase_order', // Antes: orden_compra
-        'migo_code', // Antes: migo
+        'fracttal_status', //  fracttal
+        'purchase_order', //  orden_compra oc
+        'migo_code', //  migo
 
         //4. TRACKING DATA
         'status',             // estado: Pendiente, Enviada, Aprobado...

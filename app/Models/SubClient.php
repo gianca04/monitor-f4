@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class SubClient extends Model
 {
@@ -13,6 +14,7 @@ class SubClient extends Model
 
     protected $fillable = [
         'client_id',
+        'district_id',
         'name',
         'description',
         'location',
@@ -24,6 +26,7 @@ class SubClient extends Model
 
     protected $casts = [
         'client_id' => 'integer',
+        'district_id' => 'integer',
         'name' => 'string',
         'description' => 'string',
         'location' => 'array',
@@ -33,9 +36,14 @@ class SubClient extends Model
         'ceco' => 'string',
     ];
 
-    public function client()
+    public function client(): BelongsTo
     {
         return $this->belongsTo(Client::class);
+    }
+
+    public function district(): BelongsTo
+    {
+        return $this->belongsTo(District::class);
     }
 
     public function quotes()

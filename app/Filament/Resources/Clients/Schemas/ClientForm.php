@@ -3,9 +3,16 @@
 namespace App\Filament\Resources\Clients\Schemas;
 
 use App\Forms\Components\ClientMainInfo;
+use App\Models\Department;
+use App\Models\District;
+use App\Models\Province;
 use Filament\Forms\Components\Repeater;
-use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\TextInput;
+use Filament\Schemas\Components\Grid;
+use Filament\Schemas\Components\Utilities\Get;
+use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Schema;
 
 class ClientForm
@@ -30,6 +37,85 @@ class ClientForm
                         TextInput::make('ceco')
                             ->label('CECO')
                             ->maxLength(255),
+
+                        Grid::make(3)
+                            ->columnSpanFull()
+                            ->schema([
+                                Select::make('department_id')
+                                    ->label('Región')
+                                    ->placeholder('Seleccione región')
+                                    ->options(fn () => Department::orderBy('name')->pluck('name', 'id'))
+                                    ->searchable()
+                                    ->preload()
+                                    ->live()
+                                    ->dehydrated(false)
+                                    ->afterStateHydrated(function (Get $get, Set $set) {
+                                        $districtId = $get('district_id');
+                                        if ($districtId) {
+                                            $district = District::with('province')->find($districtId);
+                                            if ($district?->province) {
+                                                $set('department_id', $district->province->department_id);
+                                            }
+                                        }
+                                    })
+                                    ->afterStateUpdated(function (Set $set) {
+                                        $set('province_id', null);
+                                        $set('district_id', null);
+                                    }),
+
+                                Select::make('province_id')
+                                    ->label('Provincia')
+                                    ->placeholder('Seleccione provincia')
+                                    ->options(function (Get $get) {
+                                        $departmentId = $get('department_id');
+                                        if (!$departmentId) {
+                                            $districtId = $get('district_id');
+                                            if ($districtId) {
+                                                $departmentId = District::find($districtId)?->province?->department_id;
+                                            }
+                                        }
+                                        if (!$departmentId) {
+                                            return [];
+                                        }
+                                        return Province::where('department_id', $departmentId)->orderBy('name')->pluck('name', 'id');
+                                    })
+                                    ->searchable()
+                                    ->preload()
+                                    ->live()
+                                    ->dehydrated(false)
+                                    ->afterStateHydrated(function (Get $get, Set $set) {
+                                        $districtId = $get('district_id');
+                                        if ($districtId) {
+                                            $district = District::find($districtId);
+                                            if ($district) {
+                                                $set('province_id', $district->province_id);
+                                            }
+                                        }
+                                    })
+                                    ->afterStateUpdated(function (Set $set) {
+                                        $set('district_id', null);
+                                    }),
+
+                                Select::make('district_id')
+                                    ->label('Distrito')
+                                    ->placeholder('Seleccione distrito')
+                                    ->options(function (Get $get) {
+                                        $provinceId = $get('province_id');
+                                        if (!$provinceId) {
+                                            $districtId = $get('district_id');
+                                            if ($districtId) {
+                                                $provinceId = District::find($districtId)?->province_id;
+                                            }
+                                        }
+                                        if (!$provinceId) {
+                                            return [];
+                                        }
+                                        return District::where('province_id', $provinceId)->orderBy('name')->pluck('name', 'id');
+                                    })
+                                    ->searchable()
+                                    ->preload()
+                                    ->live(),
+                            ]),
 
                         TextInput::make('address')
                             ->label('Dirección')
@@ -79,3 +165,4 @@ class ClientForm
             ]);
     }
 }
+

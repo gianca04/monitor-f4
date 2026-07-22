@@ -122,7 +122,7 @@ class ProjectMainInfo
                             ->default('Sin OT'),
 
                         TextInput::make('purchase_order')
-                            ->label('Orden de Compra')
+                            ->label('Orden de Compra (OC)')
                             ->maxLength(100),
 
                         TextInput::make('migo_code')
