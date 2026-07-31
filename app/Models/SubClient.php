@@ -22,6 +22,9 @@ class SubClient extends Model
         'longitude',
         'address',
         'ceco',
+        'arrival_time_hrs',
+        'corrective_quote_time_hrs',
+        'corrective_execution_time_hrs',
     ];
 
     protected $casts = [
@@ -34,6 +37,9 @@ class SubClient extends Model
         'longitude' => 'float',
         'address' => 'string',
         'ceco' => 'string',
+        'arrival_time_hrs' => 'float',
+        'corrective_quote_time_hrs' => 'float',
+        'corrective_execution_time_hrs' => 'float',
     ];
 
     public function client(): BelongsTo

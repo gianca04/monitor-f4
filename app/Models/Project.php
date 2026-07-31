@@ -27,6 +27,7 @@ class Project extends Model
         'name',             // Descripción de la solicitud
         'service_code',     // Código de Servicio Correlativo
         'request_number',   // N° de Solicitud (ST)
+        'service_type',     // Tipo de Servicio: Correctivo, Emergencia, ITSE, Preventivo
         'service_start_date',       // Fecha solicitud
         'sub_client_id',    // Cliente (ID)
         'location',         // Tienda (JSON)

@@ -19,6 +19,7 @@ class DatabaseSeeder extends Seeder
 
         $this->call([
             PeruLocationsSeeder::class,
+            SubClientTimesSeeder::class,
         ]);
     }
 }

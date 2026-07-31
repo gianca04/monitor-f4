@@ -68,6 +68,20 @@ class ProjectForm
                                             ->columnSpan(2)
                                             ->default(now()),
 
+                                        Select::make('service_type')
+                                            ->label('Tipo de Servicio')
+                                            ->columnSpan(4)
+                                            ->options([
+                                                'Correctivo' => 'Correctivo',
+                                                'Emergencia' => 'Emergencia',
+                                                'ITSE' => 'ITSE',
+                                                'Preventivo' => 'Preventivo',
+                                            ])
+                                            ->placeholder('Seleccionar tipo de servicio')
+                                            ->searchable()
+                                            ->preload()
+                                            ->prefixIcon('heroicon-m-wrench-screwdriver'),
+
                                         Select::make('client_id')
                                             ->required()
                                             ->columnSpan(2)

@@ -11,10 +11,11 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('work_reports', function (Blueprint $table) {
-            //
-            $table->text('conclusions')->nullable()->after('materials');
-        });
+        if (!Schema::hasColumn('work_reports', 'conclusions')) {
+            Schema::table('work_reports', function (Blueprint $table) {
+                $table->text('conclusions')->nullable();
+            });
+        }
     }
 
     /**
@@ -22,9 +23,10 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('work_reports', function (Blueprint $table) {
-            //
-            $table->dropColumn('conclusions');
-        });
+        if (Schema::hasColumn('work_reports', 'conclusions')) {
+            Schema::table('work_reports', function (Blueprint $table) {
+                $table->dropColumn('conclusions');
+            });
+        }
     }
 };

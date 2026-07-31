@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
 use App\Models\QuoteWarehouse;
 use App\Observers\QuoteWarehouseObserver;
+use Illuminate\Support\HtmlString;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -28,6 +29,16 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        FilamentView::registerRenderHook(
+            'panels::head.end',
+            fn(): HtmlString => new HtmlString('
+                <style>
+                    html {
+                        font-size: 85% !important;
+                    }
+                </style>
+            '),
+        );
         QuoteWarehouse::observe(QuoteWarehouseObserver::class);
 
         $this->configureOpenSsl();

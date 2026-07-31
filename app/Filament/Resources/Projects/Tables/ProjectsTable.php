@@ -40,6 +40,19 @@ class ProjectsTable
                     ->tooltip(fn($record) => $record->name)
                     ->sortable(),
 
+                TextColumn::make('service_type')
+                    ->label('Tipo de Servicio')
+                    ->badge()
+                    ->placeholder('No definido')
+                    ->colors([
+                        'info' => 'Correctivo',
+                        'danger' => 'Emergencia',
+                        'warning' => 'ITSE',
+                        'success' => 'Preventivo',
+                    ])
+                    ->searchable()
+                    ->sortable(),
+
                 TextColumn::make('subClient.client.business_name')
                     ->label('Cliente')
                     ->placeholder('No definido')
@@ -237,6 +250,16 @@ class ProjectsTable
                     ->searchable()
                     ->preload()
                     ->native(false),
+
+                SelectFilter::make('service_type')
+                    ->label('Tipo de Servicio')
+                    ->native(false)
+                    ->options([
+                        'Correctivo' => 'Correctivo',
+                        'Emergencia' => 'Emergencia',
+                        'ITSE' => 'ITSE',
+                        'Preventivo' => 'Preventivo',
+                    ]),
 
                 SelectFilter::make('fracttal_status')
                     ->label('Estado Fracttal')
