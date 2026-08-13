@@ -630,19 +630,19 @@
                                     <tr
                                         class="transition-colors group hover:bg-slate-50 dark:hover:bg-slate-800/50 {{ $completado ? 'bg-slate-50/50 dark:bg-slate-800/30' : '' }}">
                                         <td :class="items[{{ $i }}].entregado + items[{{ $i }}].despachar >=
-                                                                                                                                                items[{{ $i }}].solicitado ?
-                                                                                                                                                'font-mono text-xs text-center align-middle text-slate-400 dark:text-slate-500 line-through underline' :
-                                                                                                                                                'font-mono text-xs text-center align-middle text-slate-900 dark:text-white'"
-                                            class="font-mono text-xs text-center align-middle {{ $completado ? 'text-slate-400 dark:text-slate-500' : 'text-slate-900 dark:text-white' }}">
+                                                                                                                                                    items[{{ $i }}].solicitado ?
+                                                                                                                                                    'text-xs text-center align-middle text-slate-400 dark:text-slate-500 line-through underline' :
+                                                                                                                                                    'text-xs text-center align-middle text-slate-900 dark:text-white'"
+                                            class="text-xs text-center align-middle {{ $completado ? 'text-slate-400 dark:text-slate-500' : 'text-slate-900 dark:text-white' }}">
                                             {{ $item['sat_line'] ?? '-' }}
                                         </td>
                                         <td class="px-4 py-4 break-words whitespace-normal align-top">
                                             <div class="flex flex-col">
                                                 <span
                                                     :class="items[{{ $i }}].entregado + items[{{ $i }}]
-                                                                                                                                                            .despachar >= items[{{ $i }}].solicitado ?
-                                                                                                                                                            'line-through underline text-slate-400 dark:text-slate-500' :
-                                                                                                                                                            'text-xs font-medium leading-relaxed text-slate-900 dark:text-white'"
+                                                                                                                                                                .despachar >= items[{{ $i }}].solicitado ?
+                                                                                                                                                                'line-through underline text-slate-400 dark:text-slate-500' :
+                                                                                                                                                                'text-xs font-medium leading-relaxed text-slate-900 dark:text-white'"
                                                     class="text-xs font-medium leading-relaxed {{ $completado ? 'text-slate-400 dark:text-slate-500' : 'text-slate-900 dark:text-white' }}">
                                                     {{ $item['product_name'] ?? '-' }}
                                                 </span>
@@ -684,15 +684,17 @@
                                                     :disabled="{{ $completado ? 'true' : 'false' }}">
                                                     <option value="">Origen...</option>
                                                     <template x-for="loc in locations" :key="loc.id">
-                                                        <option :value="loc.id" x-text="loc.name" :selected="loc.id == items[{{ $i }}].location_origin_id"></option>
+                                                        <option :value="loc.id" x-text="loc.name"
+                                                            :selected="loc.id == items[{{ $i }}].location_origin_id">
+                                                        </option>
                                                     </template>
                                                 </select>
                                                 @if (!$completado)
-                                                <button type="button" @click="openNewLocationModal('origin', {{ $i }})"
-                                                    class="flex-shrink-0 inline-flex items-center justify-center w-7 h-7 rounded-md text-primary hover:bg-primary/10 transition-colors"
-                                                    title="Agregar nuevo lugar">
-                                                    <span class="material-symbols-outlined text-[18px]">add_circle</span>
-                                                </button>
+                                                    <button type="button" @click="openNewLocationModal('origin', {{ $i }})"
+                                                        class="flex-shrink-0 inline-flex items-center justify-center w-7 h-7 rounded-md text-primary hover:bg-primary/10 transition-colors"
+                                                        title="Agregar nuevo lugar">
+                                                        <span class="material-symbols-outlined text-[18px]">add_circle</span>
+                                                    </button>
                                                 @endif
                                             </div>
                                         </td>
@@ -703,15 +705,17 @@
                                                     :disabled="{{ $completado ? 'true' : 'false' }}">
                                                     <option value="">Destino...</option>
                                                     <template x-for="loc in locations" :key="loc.id">
-                                                        <option :value="loc.id" x-text="loc.name" :selected="loc.id == items[{{ $i }}].location_destination_id"></option>
+                                                        <option :value="loc.id" x-text="loc.name"
+                                                            :selected="loc.id == items[{{ $i }}].location_destination_id">
+                                                        </option>
                                                     </template>
                                                 </select>
                                                 @if (!$completado)
-                                                <button type="button" @click="openNewLocationModal('destination', {{ $i }})"
-                                                    class="flex-shrink-0 inline-flex items-center justify-center w-7 h-7 rounded-md text-primary hover:bg-primary/10 transition-colors"
-                                                    title="Agregar nuevo lugar">
-                                                    <span class="material-symbols-outlined text-[18px]">add_circle</span>
-                                                </button>
+                                                    <button type="button" @click="openNewLocationModal('destination', {{ $i }})"
+                                                        class="flex-shrink-0 inline-flex items-center justify-center w-7 h-7 rounded-md text-primary hover:bg-primary/10 transition-colors"
+                                                        title="Agregar nuevo lugar">
+                                                        <span class="material-symbols-outlined text-[18px]">add_circle</span>
+                                                    </button>
                                                 @endif
                                             </div>
                                         </td>
@@ -722,11 +726,10 @@
                                                 :disabled="{{ $completado ? 'true' : 'false' }}"></textarea>
                                         </td>
                                         <td class="px-4 py-4 text-right align-top">
-                                            <input type="number" x-model.number="items[{{ $i }}].additional_cost"
-                                                min="0" step="0.01"
+                                            <input type="number" x-model.number="items[{{ $i }}].additional_cost" min="0"
+                                                step="0.01"
                                                 class="block w-full rounded-md border-0 py-1.5 px-2 text-slate-900 ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-primary text-xs dark:bg-slate-900 dark:ring-slate-600 dark:text-white text-right"
-                                                placeholder="0.00"
-                                                :disabled="{{ $completado ? 'true' : 'false' }}" />
+                                                placeholder="0.00" :disabled="{{ $completado ? 'true' : 'false' }}" />
                                         </td>
                                         <td class="px-4 py-4 align-top">
                                             <input type="text" x-model="items[{{ $i }}].cost_description"
@@ -746,7 +749,7 @@
                                             <div class="relative flex items-center">
                                                 <input type="number" x-model.number="items[{{ $i }}].despachar"
                                                     :max="items[{{ $i }}].solicitado - items[{{ $i }}]
-                                                                                                                                                                                                                                                                        .entregado"
+                                                                                                                                                                                                                                                                                .entregado"
                                                     min="0"
                                                     @input="if(items[{{ $i }}].despachar > (items[{{ $i }}].solicitado - items[{{ $i }}].entregado)) items[{{ $i }}].despachar = items[{{ $i }}].solicitado - items[{{ $i }}].entregado"
                                                     class="block w-full rounded-md border-0 py-1.5 pl-2 pr-8 text-slate-900 ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-primary text-xs dark:bg-slate-900 dark:ring-slate-600 dark:text-white font-bold"
@@ -770,14 +773,14 @@
                                                     @click="items[{{ $i }}].despachar = items[{{ $i }}].solicitado - items[{{ $i }}].entregado"
                                                     class="inline-flex items-center justify-center p-1.5 transition-all rounded-full group/btn"
                                                     :class="items[{{ $i }}].despachar + items[{{ $i }}]
-                                                                                                                                                                                                                                                                    .entregado >= items[{{ $i }}].solicitado ?
-                                                                                                                                                                                                                                                                    'bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-500' :
-                                                                                                                                                                                                                                                                    'text-slate-300 dark:text-slate-600 hover:text-green-600 dark:hover:text-green-500'"
+                                                                                                                                                                                                                                                                            .entregado >= items[{{ $i }}].solicitado ?
+                                                                                                                                                                                                                                                                            'bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-500' :
+                                                                                                                                                                                                                                                                            'text-slate-300 dark:text-slate-600 hover:text-green-600 dark:hover:text-green-500'"
                                                     type="button" title="Marcar como listo">
                                                     <span class="material-symbols-outlined text-[22px] group-hover/btn:fill-1"
                                                         :class="items[{{ $i }}].despachar + items[{{ $i }}]
-                                                                                                                                                                                                                                                                        .entregado >= items[{{ $i }}].solicitado ?
-                                                                                                                                                                                                                                                                        'text-green-600 dark:text-green-500' : ''">check_circle</span>
+                                                                                                                                                                                                                                                                                .entregado >= items[{{ $i }}].solicitado ?
+                                                                                                                                                                                                                                                                                'text-green-600 dark:text-green-500' : ''">check_circle</span>
                                                 </button>
                                             @endif
                                         </td>
@@ -794,7 +797,8 @@
                     <div class="flex gap-4">
                         <div class="flex gap-2">
                             <span class="font-medium text-slate-700 dark:text-slate-300">Costos Adic.:</span>
-                            <span class="font-bold text-amber-600" x-text="'$' + items.reduce((sum, i) => sum + (parseFloat(i.additional_cost) || 0), 0).toFixed(2)"></span>
+                            <span class="font-bold text-amber-600"
+                                x-text="'$' + items.reduce((sum, i) => sum + (parseFloat(i.additional_cost) || 0), 0).toFixed(2)"></span>
                         </div>
                         <div class="flex gap-2">
                             <span class="font-medium text-slate-700 dark:text-slate-300">Progreso Total:</span>
@@ -843,16 +847,14 @@
             {{-- Modal: Nuevo Lugar --}}
             <div x-show="newLocationModal.open" x-cloak
                 class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
-                x-transition:enter="transition ease-out duration-200"
-                x-transition:enter-start="opacity-0"
-                x-transition:enter-end="opacity-100"
-                x-transition:leave="transition ease-in duration-150"
-                x-transition:leave-start="opacity-100"
-                x-transition:leave-end="opacity-0"
+                x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0"
+                x-transition:enter-end="opacity-100" x-transition:leave="transition ease-in duration-150"
+                x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"
                 @keydown.escape.window="closeNewLocationModal()">
                 <div class="w-full max-w-md bg-white rounded-xl shadow-xl dark:bg-gray-900 border border-slate-200 dark:border-slate-700"
                     @click.outside="closeNewLocationModal()">
-                    <div class="flex items-center justify-between px-6 py-4 border-b border-slate-200 dark:border-slate-700">
+                    <div
+                        class="flex items-center justify-between px-6 py-4 border-b border-slate-200 dark:border-slate-700">
                         <div class="flex items-center gap-2">
                             <span class="material-symbols-outlined text-primary text-[22px]">add_location_alt</span>
                             <h3 class="text-base font-bold text-slate-900 dark:text-white">Nuevo Lugar</h3>
@@ -864,20 +866,24 @@
                     </div>
                     <div class="px-6 py-4 space-y-4">
                         <div>
-                            <label class="block mb-1.5 text-sm font-medium text-slate-700 dark:text-slate-300">Nombre <span class="text-red-500">*</span></label>
+                            <label class="block mb-1.5 text-sm font-medium text-slate-700 dark:text-slate-300">Nombre
+                                <span class="text-red-500">*</span></label>
                             <input type="text" x-model="newLocationModal.name" x-ref="newLocationName"
                                 @keydown.enter.prevent="createLocation()"
                                 class="block w-full rounded-lg border-0 py-2 px-3 text-sm text-slate-900 ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-primary dark:bg-slate-800 dark:ring-slate-600 dark:text-white"
                                 placeholder="Ej: Almacén Central, Planta 2...">
                         </div>
                         <div>
-                            <label class="block mb-1.5 text-sm font-medium text-slate-700 dark:text-slate-300">Descripción <span class="text-slate-400 font-normal">(opcional)</span></label>
+                            <label
+                                class="block mb-1.5 text-sm font-medium text-slate-700 dark:text-slate-300">Descripción
+                                <span class="text-slate-400 font-normal">(opcional)</span></label>
                             <input type="text" x-model="newLocationModal.description"
                                 class="block w-full rounded-lg border-0 py-2 px-3 text-sm text-slate-900 ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-primary dark:bg-slate-800 dark:ring-slate-600 dark:text-white"
                                 placeholder="Descripción breve del lugar...">
                         </div>
                     </div>
-                    <div class="flex items-center justify-end gap-3 px-6 py-4 border-t border-slate-200 dark:border-slate-700">
+                    <div
+                        class="flex items-center justify-end gap-3 px-6 py-4 border-t border-slate-200 dark:border-slate-700">
                         <button type="button" @click="closeNewLocationModal()"
                             class="px-4 py-2 text-sm font-medium rounded-lg border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
                             Cancelar
@@ -885,8 +891,10 @@
                         <button type="button" @click="createLocation()"
                             :disabled="newLocationModal.loading || !newLocationModal.name.trim()"
                             class="inline-flex items-center gap-2 px-4 py-2 text-sm font-bold text-white rounded-lg bg-primary hover:bg-primary-dark disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
-                            <span x-show="newLocationModal.loading" class="material-symbols-outlined text-[16px] animate-spin">progress_activity</span>
-                            <span x-show="!newLocationModal.loading" class="material-symbols-outlined text-[16px]">add</span>
+                            <span x-show="newLocationModal.loading"
+                                class="material-symbols-outlined text-[16px] animate-spin">progress_activity</span>
+                            <span x-show="!newLocationModal.loading"
+                                class="material-symbols-outlined text-[16px]">add</span>
                             <span x-text="newLocationModal.loading ? 'Creando...' : 'Crear Lugar'"></span>
                         </button>
                     </div>

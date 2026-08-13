@@ -19,7 +19,7 @@
                 <span class="text-gray-300 dark:text-gray-600">·</span>
                 <span class="text-gray-400" x-text="getBoardItemCount(activeBoardIndex) + ' items'"></span>
                 <span class="text-gray-300 dark:text-gray-600">·</span>
-                <span class="font-mono font-bold text-gray-600 dark:text-gray-300"
+                <span class="font-bold text-gray-600 dark:text-gray-300"
                     x-text="'S/ ' + getBoardSubtotal(activeBoardIndex).toLocaleString('es-PE', {minimumFractionDigits: 2})"></span>
             </div>
         </div>
@@ -29,8 +29,7 @@
             {{-- Global totals (all boards) --}}
             <div x-show="boards.length > 1" class="quote-footer__global-total">
                 <div class="text-[9px] uppercase tracking-wider text-gray-400 font-bold">TOTAL</div>
-                <div class="text-xs font-bold font-mono text-gray-500 dark:text-gray-400"
-                    x-text="getTotalItems() + ' items'">
+                <div class="text-xs font-bold text-gray-500 dark:text-gray-400" x-text="getTotalItems() + ' items'">
                 </div>
             </div>
 
@@ -40,7 +39,7 @@
             {{-- Total --}}
             <div class="text-right">
                 <div class="text-[9px] uppercase tracking-wider text-gray-400 font-bold">Total</div>
-                <div class="text-lg font-black font-mono text-emerald-600 dark:text-emerald-400"
+                <div class="text-lg font-black text-emerald-600 dark:text-emerald-400"
                     x-text="'S/ ' + getTotal().toLocaleString('es-PE', {minimumFractionDigits: 2})"></div>
             </div>
 

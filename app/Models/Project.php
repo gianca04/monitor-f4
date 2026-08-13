@@ -60,6 +60,12 @@ class Project extends Model
         //Supervisor
         'supervisor_id',
         'employee_id',
+
+        // 5. TIEMPOS REALES Y CUMPLIMIENTO
+        'emergency_response_time_hrs',      // Rsta_Emergencia_Real
+        'emergency_attendance_time_hrs',    // Ate_Emerg_Real
+        'corrective_quote_upload_time_hrs', // Tiempo Max en cargar la Cot Real
+        'corrective_execution_time_hrs',   // Time max de ejecución del correctivo Real
     ];
 
     protected $casts = [
@@ -88,10 +94,81 @@ class Project extends Model
         'wo_review_at' => 'datetime',
         'wo_completed_at' => 'datetime',
         'days_to_completion' => 'integer',
+
+        // 5. TIEMPOS REALES (Casts)
+        'emergency_response_time_hrs' => 'float',
+        'emergency_attendance_time_hrs' => 'float',
+        'corrective_quote_upload_time_hrs' => 'float',
+        'corrective_execution_time_hrs' => 'float',
+
         // Otros
         'quote_id' => 'integer',
         'supervisor_id' => 'integer',
     ];
+
+    /**
+     * EE_Respuesta (campo virtual booleano)
+     * Verifica si Rsta_Emergencia_Real <= SubClient.emergency_response_time_hrs
+     */
+    public function getIsEmergencyResponseCompliantAttribute(): ?bool
+    {
+        if ($this->emergency_response_time_hrs === null) {
+            return null;
+        }
+        $target = $this->subClient?->emergency_response_time_hrs;
+        if ($target === null) {
+            return null;
+        }
+        return $this->emergency_response_time_hrs <= $target;
+    }
+
+    /**
+     * EE_Atendida (campo virtual booleano)
+     * Verifica si Ate_Emerg_Real <= SubClient.arrival_time_hrs
+     */
+    public function getIsEmergencyAttendanceCompliantAttribute(): ?bool
+    {
+        if ($this->emergency_attendance_time_hrs === null) {
+            return null;
+        }
+        $target = $this->subClient?->arrival_time_hrs;
+        if ($target === null) {
+            return null;
+        }
+        return $this->emergency_attendance_time_hrs <= $target;
+    }
+
+    /**
+     * Estado de cumplimiento en cargar la cotización (campo virtual booleano)
+     * Verifica si Tiempo Max en cargar la Cot Real <= SubClient.corrective_quote_time_hrs
+     */
+    public function getIsQuoteUploadCompliantAttribute(): ?bool
+    {
+        if ($this->corrective_quote_upload_time_hrs === null) {
+            return null;
+        }
+        $target = $this->subClient?->corrective_quote_time_hrs;
+        if ($target === null) {
+            return null;
+        }
+        return $this->corrective_quote_upload_time_hrs <= $target;
+    }
+
+    /**
+     * Estado de cumplimiento del correctivo (campo virtual booleano)
+     * Verifica si Time max de ejecución del correctivo Real <= SubClient.corrective_execution_time_hrs
+     */
+    public function getIsCorrectiveExecutionCompliantAttribute(): ?bool
+    {
+        if ($this->corrective_execution_time_hrs === null) {
+            return null;
+        }
+        $target = $this->subClient?->corrective_execution_time_hrs;
+        if ($target === null) {
+            return null;
+        }
+        return $this->corrective_execution_time_hrs <= $target;
+    }
 
     protected static function boot()
     {

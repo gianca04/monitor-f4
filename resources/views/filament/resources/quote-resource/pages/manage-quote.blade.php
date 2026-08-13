@@ -37,12 +37,9 @@
                         @dblclick.stop="if(quoteType !== 'Preventivo' || bIndex !== 0) startRenameTab(bIndex)"
                         @contextmenu.prevent="if($event.target.closest('.quote-tab') && quoteType === 'Preventivo' && boards.length > 1 && bIndex !== 0) removeBoard(bIndex)"
                         :draggable="!(quoteType === 'Preventivo' && bIndex === 0)"
-                        @dragstart="tabDragStart(bIndex, $event)"
-                        @dragover="tabDragOver(bIndex, $event)"
+                        @dragstart="tabDragStart(bIndex, $event)" @dragover="tabDragOver(bIndex, $event)"
                         @dragleave="if (dragOverTabIndex === bIndex) dragOverTabIndex = null"
-                        @drop.prevent="tabDrop(bIndex)"
-                        @dragend="tabDragEnd()"
-                    >
+                        @drop.prevent="tabDrop(bIndex)" @dragend="tabDragEnd()">
 
                         {{-- Tab icon --}}
                         <span class="quote-tab__icon material-symbols-outlined"
@@ -80,7 +77,7 @@
             <div class="quote-tab-bar__info">
                 <span class="text-[10px] uppercase tracking-wider text-gray-400 font-bold" x-text="quoteType"></span>
                 <span class="text-[10px] text-gray-300">·</span>
-                <span class="text-[10px] font-mono text-gray-400"
+                <span class="text-[10px] text-gray-400"
                     x-text="boards.length + (boards.length === 1 ? ' grupo' : ' grupos')"></span>
             </div>
         </div>

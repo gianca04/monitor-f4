@@ -817,6 +817,42 @@ class ProjectForm
                                     ->maxLength(255)
                                     ->columnSpanFull()
                                     ->rows(2),
+
+                                Grid::make(4)
+                                    ->columnSpanFull()
+                                    ->schema([
+                                        TextInput::make('emergency_response_time_hrs')
+                                            ->label('Rsta. Emergencia Real (Hrs)')
+                                            ->numeric()
+                                            ->minValue(0)
+                                            ->step(0.01)
+                                            ->suffix('Hrs')
+                                            ->placeholder(''),
+
+                                        TextInput::make('emergency_attendance_time_hrs')
+                                            ->label('Ate. Emergencia Real (Hrs)')
+                                            ->numeric()
+                                            ->minValue(0)
+                                            ->step(0.01)
+                                            ->suffix('Hrs')
+                                            ->placeholder(''),
+
+                                        TextInput::make('corrective_quote_upload_time_hrs')
+                                            ->label('Carga Cotización Real (Hrs)')
+                                            ->numeric()
+                                            ->minValue(0)
+                                            ->step(0.01)
+                                            ->suffix('Hrs')
+                                            ->placeholder(''),
+
+                                        TextInput::make('corrective_execution_time_hrs')
+                                            ->label('Ejecución Correctivo Real (Hrs)')
+                                            ->numeric()
+                                            ->minValue(0)
+                                            ->step(0.01)
+                                            ->suffix('Hrs')
+                                            ->placeholder(''),
+                                    ]),
                             ]),
                     ])
                     ->columnSpanFull(),

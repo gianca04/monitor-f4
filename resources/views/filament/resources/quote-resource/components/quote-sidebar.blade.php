@@ -220,8 +220,8 @@
             <div>
                 <label class="quote-sidebar__label">CECO</label>
                 <input x-model="quote.ceco"
-                    class="quote-sidebar__input quote-sidebar__input--readonly font-mono text-[10px] text-gray-400"
-                    type="text" readonly placeholder="Automático" />
+                    class="quote-sidebar__input quote-sidebar__input--readonly text-[10px] text-gray-400" type="text"
+                    readonly placeholder="Automático" />
             </div>
         </div>
     </div>

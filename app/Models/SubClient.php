@@ -22,9 +22,10 @@ class SubClient extends Model
         'longitude',
         'address',
         'ceco',
-        'arrival_time_hrs',
-        'corrective_quote_time_hrs',
-        'corrective_execution_time_hrs',
+        'emergency_response_time_hrs', // Rsta_Emergencia_Solicitado (Tiempo Respuesta Emergencia)
+        'corrective_quote_time_hrs', // Tiempo Max en cargar la Cot Solicitado	
+        'arrival_time_hrs', // Ate_Emerg_Solicitado (Tiempo de Atención a Emergencias)	
+        'corrective_execution_time_hrs', // Time max de ejecución del correctivo solicitado	
     ];
 
     protected $casts = [
@@ -37,6 +38,7 @@ class SubClient extends Model
         'longitude' => 'float',
         'address' => 'string',
         'ceco' => 'string',
+        'emergency_response_time_hrs' => 'float',
         'arrival_time_hrs' => 'float',
         'corrective_quote_time_hrs' => 'float',
         'corrective_execution_time_hrs' => 'float',
@@ -62,7 +64,8 @@ class SubClient extends Model
      */
     public function getLocationLatitudeAttribute()
     {
-        if (!$this->location || !is_array($this->location)) return null;
+        if (!$this->location || !is_array($this->location))
+            return null;
         return $this->location['latitude'] ?? null;
     }
 
@@ -71,13 +74,15 @@ class SubClient extends Model
      */
     public function getLocationLongitudeAttribute()
     {
-        if (!$this->location || !is_array($this->location)) return null;
+        if (!$this->location || !is_array($this->location))
+            return null;
         return $this->location['longitude'] ?? null;
     }
 
     public function getLocationAddressAttribute()
     {
-        if (!$this->location || !is_array($this->location)) return null;
+        if (!$this->location || !is_array($this->location))
+            return null;
         return $this->location['location'] ?? null;
     }
 

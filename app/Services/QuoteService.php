@@ -105,7 +105,10 @@ class QuoteService
     }
     public function handleDetailChange(\App\Models\QuoteDetail $detail): void
     {
-        $detail->quote()->touch();
+        if ($detail->quote) {
+            $detail->quote->recalculateAmount();
+            $detail->quote->touch();
+        }
     }
     /**
      * Generate Project Requirements from Quote Details when approved.

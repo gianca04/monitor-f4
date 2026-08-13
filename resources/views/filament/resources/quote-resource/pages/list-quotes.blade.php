@@ -321,7 +321,7 @@
                                 <div>
                                     <p class="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-0.5">
                                         Monto Total</p>
-                                    <p class="text-xl font-bold text-gray-900 dark:text-white font-mono tracking-tight"
+                                    <p class="text-xl font-bold text-gray-900 dark:text-white tracking-tight"
                                         x-text="'S/ ' + formatNumber(quote.total_amount || 0)">
                                     </p>
                                 </div>

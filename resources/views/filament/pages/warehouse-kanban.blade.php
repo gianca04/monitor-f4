@@ -55,7 +55,7 @@
                             <span class="size-2 rounded-full bg-{{ $statusColor }}-500"></span>
                             {{ ucfirst($quoteWarehouse->status) }}
                         </span>
-                        <span class="font-mono text-xs text-slate-400">#{{ $quoteWarehouse->quote_id }}</span>
+                        <span class="text-xs text-slate-400">#{{ $quoteWarehouse->quote_id }}</span>
                     </div>
 
                     <div class="flex flex-col">

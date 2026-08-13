@@ -328,9 +328,10 @@ class SubClientTimesSeeder extends Seeder
                 ->first();
 
             $updateData = [
+                'is_emergency_requested' => $store['is_emergency_requested'] ?? true,
                 'arrival_time_hrs' => $store['arrival_time_hrs'],
-                'corrective_quote_time_hrs' => $store['corrective_quote_time_hrs'],
-                'corrective_execution_time_hrs' => $store['corrective_execution_time_hrs'],
+                'corrective_quote_time_hrs' => $store['corrective_quote_time_hrs'] ?? 72,
+                'corrective_execution_time_hrs' => $store['corrective_execution_time_hrs'] ?? 120,
             ];
 
             if ($districtId) {

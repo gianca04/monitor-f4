@@ -5,6 +5,7 @@ namespace App\Filament\Resources\Clients\RelationManagers;
 use App\Models\Department;
 use App\Models\District;
 use App\Models\Province;
+use Filament\Actions\ActionGroup;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\CreateAction;
 use Filament\Actions\DeleteAction;
@@ -14,11 +15,13 @@ use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Toggle;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Schema;
+use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 
@@ -50,7 +53,7 @@ class SubClientsRelationManager extends RelationManager
                         Select::make('department_id')
                             ->label('Región')
                             ->placeholder('Seleccione región')
-                            ->options(fn () => Department::orderBy('name')->pluck('name', 'id'))
+                            ->options(fn() => Department::orderBy('name')->pluck('name', 'id'))
                             ->searchable()
                             ->preload()
                             ->live()
@@ -72,6 +75,7 @@ class SubClientsRelationManager extends RelationManager
                         Select::make('province_id')
                             ->label('Provincia')
                             ->placeholder('Seleccione provincia')
+                            ->disabled(fn (Get $get) => !$get('department_id'))
                             ->options(function (Get $get) {
                                 $departmentId = $get('department_id');
                                 if (!$departmentId) {
@@ -105,6 +109,7 @@ class SubClientsRelationManager extends RelationManager
                         Select::make('district_id')
                             ->label('Distrito')
                             ->placeholder('Seleccione distrito')
+                            ->disabled(fn (Get $get) => !$get('province_id'))
                             ->options(function (Get $get) {
                                 $provinceId = $get('province_id');
                                 if (!$provinceId) {
@@ -130,11 +135,19 @@ class SubClientsRelationManager extends RelationManager
                     ->maxLength(255)
                     ->prefixIcon('heroicon-o-map-pin'),
 
-                Grid::make(3)
+                Grid::make(4)
                     ->columnSpanFull()
                     ->schema([
+                        TextInput::make('emergency_response_time_hrs')
+                            ->label('Rsta. Emergencia (Hrs)')
+                            ->numeric()
+                            ->minValue(0)
+                            ->step(0.01)
+                            ->suffix('Hrs')
+                            ->placeholder('Ej: 0.33 (20 min)'),
+
                         TextInput::make('arrival_time_hrs')
-                            ->label('Llegada (Hrs)')
+                            ->label('Ate. Emergencia (Hrs)')
                             ->numeric()
                             ->minValue(0)
                             ->step(0.01)
@@ -142,7 +155,7 @@ class SubClientsRelationManager extends RelationManager
                             ->placeholder('Ej: 24'),
 
                         TextInput::make('corrective_quote_time_hrs')
-                            ->label('Cotización correctivos (Hr)')
+                            ->label('Cotización Solicitada (Hrs)')
                             ->numeric()
                             ->minValue(0)
                             ->step(0.01)
@@ -150,7 +163,7 @@ class SubClientsRelationManager extends RelationManager
                             ->placeholder('Ej: 72'),
 
                         TextInput::make('corrective_execution_time_hrs')
-                            ->label('Ejecución correctivos (Hr)')
+                            ->label('Ejecución Solicitada (Hrs)')
                             ->numeric()
                             ->minValue(0)
                             ->step(0.01)
@@ -224,8 +237,14 @@ class SubClientsRelationManager extends RelationManager
                     ->limit(35)
                     ->placeholder('-'),
 
+                TextColumn::make('emergency_response_time_hrs')
+                    ->label('Rsta. Emergencia')
+                    ->suffix(' Hrs')
+                    ->sortable()
+                    ->placeholder('-'),
+
                 TextColumn::make('arrival_time_hrs')
-                    ->label('Llegada')
+                    ->label('Ate. Emergencia')
                     ->suffix(' Hrs')
                     ->sortable()
                     ->placeholder('-'),
@@ -250,8 +269,10 @@ class SubClientsRelationManager extends RelationManager
                     ->label('Agregar subcliente'),
             ])
             ->recordActions([
-                EditAction::make(),
-                DeleteAction::make(),
+                ActionGroup::make([
+                    EditAction::make(),
+                    DeleteAction::make(),
+                ])
             ])
             ->toolbarActions([
                 BulkActionGroup::make([

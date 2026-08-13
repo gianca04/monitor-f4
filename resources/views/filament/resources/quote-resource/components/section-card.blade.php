@@ -19,7 +19,7 @@
             <h3 class="text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wide"
                 x-text="section.title"></h3>
             {{-- Item count --}}
-            <span class="text-[10px] font-mono text-gray-400 bg-gray-100 dark:bg-gray-700 px-1.5 py-0.5 rounded"
+            <span class="text-[10px] text-gray-400 bg-gray-100 dark:bg-gray-700 px-1.5 py-0.5 rounded"
                 x-text="boards[activeBoardIndex].items[section.key].length + ' items'"></span>
         </div>
         {{-- Section subtotal --}}
@@ -104,7 +104,7 @@
                             {{-- Línea --}}
                             <td class="quote-table__td">
                                 <span
-                                    class="font-mono text-[11px] px-1 py-0.5 rounded bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 break-all"
+                                    class="text-[11px] px-1 py-0.5 rounded bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 break-all"
                                     x-text="item.code"></span>
                             </td>
 
@@ -132,12 +132,12 @@
                             </td>
 
                             {{-- P.U. --}}
-                            <td class="quote-table__td text-right text-gray-700 dark:text-gray-300 font-mono text-[11px]"
+                            <td class="quote-table__td text-right text-gray-700 dark:text-gray-300 text-[11px]"
                                 x-text="'S/ ' + parseFloat(item.unit_price).toLocaleString('es-PE', {minimumFractionDigits: 2})">
                             </td>
 
                             {{-- Subtotal --}}
-                            <td class="quote-table__td text-right font-bold text-gray-900 dark:text-white font-mono text-[11px]"
+                            <td class="quote-table__td text-right font-bold text-gray-900 dark:text-white text-[11px]"
                                 x-text="'S/ ' + (item.quantity * item.unit_price).toLocaleString('es-PE', {minimumFractionDigits: 2})">
                             </td>
 

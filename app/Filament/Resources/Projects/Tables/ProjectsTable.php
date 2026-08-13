@@ -11,6 +11,7 @@ use Filament\Actions\EditAction;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Select;
 use Filament\Notifications\Notification;
+use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
@@ -98,13 +99,55 @@ class ProjectsTable
                         'pending', 'Pendiente' => 'warning',
                         'Enviado' => 'info',
                         'Aprobado' => 'success',
-                        'En Ejecución' => 'primary',
-                        'Completado', 'Facturado' => 'success',
-                        'Anulado' => 'danger',
+                        'Rechazado', 'Anulado' => 'danger',
                         default => 'gray',
                     })
                     ->searchable()
                     ->sortable(),
+
+                TextColumn::make('emergency_response_time_hrs')
+                    ->label('Rsta. Emerg. Real')
+                    ->suffix(' Hrs')
+                    ->placeholder('-')
+                    ->toggleable(isToggledHiddenByDefault: true),
+
+                IconColumn::make('is_emergency_response_compliant')
+                    ->label('EE Respuesta')
+                    ->boolean()
+                    ->toggleable(isToggledHiddenByDefault: true),
+
+                TextColumn::make('emergency_attendance_time_hrs')
+                    ->label('Ate. Emerg. Real')
+                    ->suffix(' Hrs')
+                    ->placeholder('-')
+                    ->toggleable(isToggledHiddenByDefault: true),
+
+                IconColumn::make('is_emergency_attendance_compliant')
+                    ->label('EE Atendida')
+                    ->boolean()
+                    ->toggleable(isToggledHiddenByDefault: true),
+
+                TextColumn::make('corrective_quote_upload_time_hrs')
+                    ->label('Carga Cot. Real')
+                    ->suffix(' Hrs')
+                    ->placeholder('-')
+                    ->toggleable(isToggledHiddenByDefault: true),
+
+                IconColumn::make('is_quote_upload_compliant')
+                    ->label('Cumpl. Carga Cot.')
+                    ->boolean()
+                    ->toggleable(isToggledHiddenByDefault: true),
+
+                TextColumn::make('corrective_execution_time_hrs')
+                    ->label('Ejec. Correctivo Real')
+                    ->suffix(' Hrs')
+                    ->placeholder('-')
+                    ->toggleable(isToggledHiddenByDefault: true),
+
+                IconColumn::make('is_corrective_execution_compliant')
+                    ->label('Cumpl. Correctivo')
+                    ->boolean()
+                    ->toggleable(isToggledHiddenByDefault: true),
 
                 TextColumn::make('service_start_date')
                     ->label('Fecha Inicio')

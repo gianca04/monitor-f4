@@ -67,6 +67,7 @@ class Quote extends Model
         'quote_type',
         'quote_date',
         'execution_date',
+        'amount',
     ];
 
     /**
@@ -80,6 +81,7 @@ class Quote extends Model
         'energy_sci_manager' => 'string',
         'ceco' => 'string',
         'status' => 'string',
+        'amount' => 'decimal:2',
         'quote_type' => \App\Enums\QuoteType::class,
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
@@ -178,16 +180,29 @@ class Quote extends Model
     }
 
     /**
-     * Obtiene el monto total de la cotización (suma de todos los detalles).
+     * Recalcula el monto total de la cotización basado en sus detalles y actualiza el campo físico 'amount'.
+     *
+     * @return float
+     */
+    public function recalculateAmount(): float
+    {
+        $total = (float) round($this->details()->get()->sum(function ($detail) {
+            return $detail->subtotal ?? ($detail->quantity * $detail->unit_price);
+        }), 2);
+
+        $this->updateQuietly(['amount' => $total]);
+
+        return $total;
+    }
+
+    /**
+     * Obtiene el monto total de la cotización.
      *
      * @return float
      */
     public function getTotalAmountAttribute(): float
     {
-        // Suma el subtotal de cada detalle (más preciso si hay descuentos o cálculos especiales)
-        return (float) round($this->details->sum(function ($detail) {
-            return $detail->subtotal ?? ($detail->quantity * $detail->unit_price);
-        }), 1);
+        return (float) ($this->attributes['amount'] ?? 0.00);
     }
 
     /**
