@@ -1,30 +1,31 @@
 {{-- Quote Section Card Component (Accordion + Compact Spreadsheet) --}}
 {{-- Used inside x-for section loop, board context from activeBoardIndex --}}
 
-<div class="quote-section" :class="{ 'quote-section--collapsed': isSectionCollapsed(activeBoardIndex, section.key) }">
+<div class="mb-3 bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm dark:bg-gray-950 dark:border-gray-800"
+    :class="{ 'border-gray-200/60 dark:border-gray-800/60': isSectionCollapsed(activeBoardIndex, section.key) }">
 
     {{-- Section Header (Clickable Accordion) --}}
-    <div class="quote-section__header" @click="toggleSection(activeBoardIndex, section.key)">
-        <div class="flex items-center gap-2.5">
+    <div class="flex items-center justify-between px-3.5 py-2 cursor-pointer select-none bg-gray-50/50 hover:bg-gray-100/50 transition-colors dark:bg-gray-900/20 dark:hover:bg-gray-900/50"
+        @click="toggleSection(activeBoardIndex, section.key)">
+        <div class="flex items-center gap-2">
             {{-- Collapse chevron --}}
-            <span class="material-symbols-outlined text-sm text-gray-400 transition-transform duration-200"
+            <span class="material-symbols-outlined text-[14px] text-gray-400 transition-transform duration-200"
                 :class="{ '-rotate-90': isSectionCollapsed(activeBoardIndex, section.key) }">
                 expand_more
             </span>
             {{-- Section icon --}}
-            <div class="flex items-center justify-center w-6 h-6 rounded-lg" :class="section.bgClass">
-                <span class="material-symbols-outlined text-sm" :class="section.iconClass" x-text="section.icon"></span>
-            </div>
+            <span class="material-symbols-outlined text-[14px] text-gray-500 dark:text-gray-400" x-text="section.icon"></span>
             {{-- Section title --}}
-            <h3 class="text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wide"
-                x-text="section.title"></h3>
+            <h3 class="text-xs font-semibold text-gray-900 dark:text-gray-100 tracking-tight" x-text="section.title">
+            </h3>
             {{-- Item count --}}
-            <span class="text-[10px] text-gray-400 bg-gray-100 dark:bg-gray-700 px-1.5 py-0.5 rounded"
+            <span
+                class="text-[10px] text-gray-500 bg-gray-200/50 dark:bg-gray-800 px-1.5 py-0.5 rounded-full font-medium"
                 x-text="boards[activeBoardIndex].items[section.key].length + ' items'"></span>
         </div>
         {{-- Section subtotal --}}
         <div class="flex items-center gap-2">
-            <span class="text-xs font-bold text-gray-600 dark:text-gray-300 font-mono"
+            <span class="text-xs font-semibold text-gray-900 dark:text-gray-100 tabular-nums"
                 x-text="'S/ ' + getSectionSubtotal(activeBoardIndex, section.key).toLocaleString('es-PE', {minimumFractionDigits: 2})"></span>
         </div>
     </div>
@@ -83,21 +84,22 @@
                             <div @mousedown.prevent.stop="startResize('subtotal', $event)"
                                 class="quote-table__resize-handle"></div>
                         </th>
-                        <th class="quote-table__th" style="width: 32px;"></th>
+                        <th class="quote-table__th text-center" style="width: 48px;"></th>
                     </tr>
                 </thead>
                 <tbody>
                     <template x-for="(item, index) in boards[activeBoardIndex].items[section.key]" :key="item._uid">
-                        <tr class="quote-table__row" draggable="true"
-                            @dragstart="dragStart(activeBoardIndex, section.key, index)"
+                        <tr class="quote-table__row"
                             @dragover.prevent="dragOver($event)" @drop="dragDrop(activeBoardIndex, section.key, index)"
                             :class="{ 'quote-table__row--dragging': draggingItem === item && draggingSection === section.key && draggingBoard === activeBoardIndex }">
 
                             {{-- # / Drag Handle --}}
-                            <td class="quote-table__td quote-table__td--handle">
+                            <td class="quote-table__td quote-table__td--handle cursor-grab active:cursor-grabbing"
+                                draggable="true"
+                                @dragstart="dragStart(activeBoardIndex, section.key, index)">
                                 <div class="flex items-center justify-center gap-0.5">
-                                    <span class="material-symbols-outlined text-sm text-gray-300">drag_indicator</span>
-                                    <span class="text-[10px] text-gray-400" x-text="index + 1"></span>
+                                    <span class="material-symbols-outlined text-[13px] text-gray-400 hover:text-gray-700 dark:hover:text-gray-200">drag_indicator</span>
+                                    <span class="text-[10px] text-gray-400 font-medium" x-text="index + 1"></span>
                                 </div>
                             </td>
 
@@ -142,11 +144,19 @@
                             </td>
 
                             {{-- Actions --}}
-                            <td class="quote-table__td text-center">
-                                <button @click="removeItem(activeBoardIndex, section.key, index)"
-                                    class="quote-table__delete-btn">
-                                    <span class="material-symbols-outlined text-xs">close</span>
-                                </button>
+                            <td class="quote-table__td text-center whitespace-nowrap">
+                                <div class="flex items-center justify-center gap-1">
+                                    <button @click="openSearchModal(section.key, activeBoardIndex, index)"
+                                        class="p-0.5 text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 rounded transition-colors"
+                                        title="Reemplazar ítem (conserva posición)">
+                                        <span class="material-symbols-outlined text-[13px]">swap_horiz</span>
+                                    </button>
+                                    <button @click="removeItem(activeBoardIndex, section.key, index)"
+                                        class="p-0.5 text-gray-400 hover:text-red-600 rounded transition-colors"
+                                        title="Eliminar ítem">
+                                        <span class="material-symbols-outlined text-[12px]">close</span>
+                                    </button>
+                                </div>
                             </td>
                         </tr>
                     </template>
@@ -155,17 +165,18 @@
 
             {{-- Empty State --}}
             <div x-show="boards[activeBoardIndex].items[section.key].length === 0"
-                class="py-4 text-center border-t border-gray-100 dark:border-gray-700/50">
+                class="py-5 flex flex-col items-center justify-center text-center border-t border-gray-100 dark:border-gray-800">
                 <span
-                    class="material-symbols-outlined text-2xl text-gray-300 dark:text-gray-600 block mb-1">inventory_2</span>
-                <p class="text-[10px] text-gray-400 uppercase tracking-wider">Sin items</p>
+                    class="material-symbols-outlined text-xl text-gray-300 dark:text-gray-700 block mb-1">inventory_2</span>
+                <p class="text-xs font-medium text-gray-500 dark:text-gray-400">No hay items</p>
+                <p class="text-[11px] text-gray-400 dark:text-gray-500 mt-0.5">Añade elementos a esta sección para comenzar.</p>
             </div>
         </div>
 
         {{-- Add Button --}}
-        <div class="quote-section__add-row">
-            <button @click="openSearchModal(section.key, activeBoardIndex)" class="quote-section__add-btn">
-                <span class="material-symbols-outlined text-sm">add</span>
+        <div class="px-3.5 py-1.5 border-t border-gray-100 bg-gray-50/50 dark:border-gray-800 dark:bg-gray-900/30">
+            <button @click="openSearchModal(section.key, activeBoardIndex)" class="inline-flex items-center gap-1 px-2 py-0.5 text-[11px] font-medium text-gray-500 bg-transparent border border-dashed border-gray-300 rounded-md hover:text-gray-900 hover:border-gray-400 hover:bg-gray-100 transition-colors dark:border-gray-700 dark:text-gray-400 dark:hover:text-gray-100 dark:hover:border-gray-600 dark:hover:bg-gray-800">
+                <span class="material-symbols-outlined text-[13px]">add</span>
                 <span>Agregar item</span>
             </button>
         </div>

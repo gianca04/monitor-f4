@@ -70,7 +70,7 @@ export function quoteManager(
         quoteType,
 
         // ─── UI State ───────────────────────────────────────
-        sidebarOpen: true,
+        sidebarOpen: false,
         saving: false,
         igvRate: 0.18,
 

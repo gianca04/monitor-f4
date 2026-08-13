@@ -19,14 +19,16 @@ export function useSearchModal() {
             activeTabIndex: 0,
             loadingInitial: false,
             loadingMore: false,
+            replaceIndex: null,
         },
 
         // ─── Open / Close ──────────────────────────────────
 
-        async openSearchModal(sectionKey, bIndex) {
+        async openSearchModal(sectionKey, bIndex, replaceIndex = null) {
             this.searchModal.open = true;
             this.searchModal.section = sectionKey;
             this.searchModal.boardIndex = bIndex;
+            this.searchModal.replaceIndex = replaceIndex;
             this.searchModal.query = '';
             this.searchModal.results = [];
             this.searchModal.selectedItems = [];
@@ -60,6 +62,7 @@ export function useSearchModal() {
             this.searchModal.filter = null;
             this.searchModal.selectedItems = [];
             this.searchModal.activeTabIndex = 0;
+            this.searchModal.replaceIndex = null;
         },
 
         getCurrentSectionTitle() {
@@ -170,6 +173,27 @@ export function useSearchModal() {
 
         addSelectedItems() {
             const target = this.boards[this.searchModal.boardIndex].items[this.searchModal.section];
+            
+            // Item Replacement Mode
+            if (this.searchModal.replaceIndex !== null && this.searchModal.replaceIndex !== undefined) {
+                if (this.searchModal.selectedItems.length > 0) {
+                    const newItem = this.searchModal.selectedItems[0];
+                    const existing = target[this.searchModal.replaceIndex];
+                    if (existing) {
+                        existing.code = newItem.code;
+                        existing.description = newItem.description;
+                        existing.unit = newItem.unit;
+                        existing.unit_price = newItem.unit_price;
+                        existing.pricelist_id = newItem.id;
+                    }
+                }
+                this.searchModal.replaceIndex = null;
+                this.searchModal.selectedItems = [];
+                if (typeof this.recalculate === 'function') this.recalculate();
+                return;
+            }
+
+            // Normal Append Mode
             this.searchModal.selectedItems.forEach((result) => {
                 target.push({
                     _uid: crypto.randomUUID(),
@@ -183,6 +207,7 @@ export function useSearchModal() {
                 });
             });
             this.searchModal.selectedItems = [];
+            if (typeof this.recalculate === 'function') this.recalculate();
         },
 
         selectItem(result) {
