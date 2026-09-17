@@ -313,6 +313,46 @@ export function quoteManager(
         // ─── Persistence ────────────────────────────────────
 
         async saveQuote() {
+            // Validación previa en cliente para retroalimentación inmediata
+            const missingFields = [];
+            if (!this.quote.project_name || !this.quote.project_name.trim()) {
+                missingFields.push('Nombre del servicio / proyecto');
+            }
+            if (!this.quote.sub_client_id) {
+                missingFields.push('Cliente / Tienda');
+            }
+            if (!this.quote.quote_category_id) {
+                missingFields.push('Categoría de la cotización');
+            }
+            if (this.getTotalItems() === 0) {
+                missingFields.push('Debe agregar al menos una partida o ítem a la cotización');
+            }
+
+            if (missingFields.length > 0) {
+                this.sidebarOpen = true;
+                const listHtml = missingFields
+                    .map((field) => `<li style="display:flex;align-items:center;gap:8px;padding:3px 0;"><span style="color:#ef4444;font-weight:bold;font-size:16px;">•</span><span>${field}</span></li>`)
+                    .join('');
+
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Faltan campos por completar',
+                    html: `
+                        <div style="text-align: left; padding: 4px 8px; font-size: 13px;">
+                            <p style="margin-bottom: 10px; font-weight: 600; color: #374151;">
+                                Por favor complete los siguientes campos obligatorios antes de continuar:
+                            </p>
+                            <ul style="color: #dc2626; list-style: none; padding-left: 4px; margin: 0;">
+                                ${listHtml}
+                            </ul>
+                        </div>
+                    `,
+                    confirmButtonText: 'Completar datos',
+                    confirmButtonColor: '#111827',
+                });
+                return;
+            }
+
             this.saving = true;
             try {
                 const groupsData = this.boards.map((board) => {
@@ -378,23 +418,45 @@ export function quoteManager(
                         }, 1800);
                     }
                 } else if (result.errors) {
+                    const errorMessages = Object.values(result.errors).flat();
+                    const listHtml = errorMessages
+                        .map((err) => `<li style="display:flex;align-items:center;gap:8px;padding:3px 0;"><span style="color:#ef4444;font-weight:bold;font-size:16px;">•</span><span>${err}</span></li>`)
+                        .join('');
+
                     Swal.fire({
-                        icon: 'error',
-                        title: 'Errores de validación',
-                        html: Object.values(result.errors).flat().join('<br>'),
+                        icon: 'warning',
+                        title: 'Faltan campos por completar',
+                        html: `
+                            <div style="text-align: left; padding: 4px 8px; font-size: 13px;">
+                                <p style="margin-bottom: 10px; font-weight: 600; color: #374151;">
+                                    Por favor complete o corrija los siguientes campos:
+                                </p>
+                                <ul style="color: #dc2626; list-style: none; padding-left: 4px; margin: 0;">
+                                    ${listHtml}
+                                </ul>
+                            </div>
+                        `,
+                        confirmButtonText: 'Revisar datos',
+                        confirmButtonColor: '#111827',
                     });
+
+                    // Abrir panel lateral si los errores corresponden a campos de cabecera
+                    if (result.errors.project_name || result.errors.sub_client_id || result.errors.quote_category_id || result.errors.client_id) {
+                        this.sidebarOpen = true;
+                    }
                 } else {
                     Swal.fire({
                         icon: 'error',
-                        title: 'Error',
-                        text: result.message || 'Error desconocido al guardar la cotización',
+                        title: 'Error al guardar',
+                        text: result.error ? `${result.message}: ${result.error}` : (result.message || 'Error desconocido al guardar la cotización'),
                     });
                 }
-            } catch {
+            } catch (err) {
+                console.error('Error al guardar cotización:', err);
                 Swal.fire({
                     icon: 'error',
                     title: 'Error de conexión',
-                    text: 'Error de conexión al guardar la cotización',
+                    text: 'Error de conexión o fallo inesperado al guardar la cotización',
                 });
             } finally {
                 this.saving = false;

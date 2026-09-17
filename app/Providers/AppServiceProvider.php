@@ -48,19 +48,19 @@ class AppServiceProvider extends ServiceProvider
             fn(): string => Blade::render('@vite(\'resources/css/custom-login.css\')'),
         );
 
-        // Inyectar componente de suscripción push en el body del panel
-        FilamentView::registerRenderHook(
-            'panels::body.end',
-            fn(): string => Blade::render('<x-push-notification-subscriber />'),
-        );
+        // Inyectar componente de suscripción push en el body del panel (Desactivado)
+        // FilamentView::registerRenderHook(
+        //     'panels::body.end',
+        //     fn(): string => Blade::render('<x-push-notification-subscriber />'),
+        // );
 
-        // Inyectar burbuja flotante de chat en todas las pantallas del panel, excepto en el login
-        FilamentView::registerRenderHook(
-            'panels::user-menu.before',
-            fn(): string => request()->routeIs('filament.*.auth.login')
-            ? ''
-            : Blade::render('@livewire(\'chat-bubble\')'),
-        );
+        // Inyectar burbuja flotante de chat en todas las pantallas del panel, excepto en el login (Desactivado)
+        // FilamentView::registerRenderHook(
+        //     'panels::user-menu.before',
+        //     fn(): string => request()->routeIs('filament.*.auth.login')
+        //     ? ''
+        //     : Blade::render('@livewire(\'chat-bubble\')'),
+        // );
         if ($this->app->environment('production') || env('APP_URL') == 'https://superfood.sat-sistemas.uk') {
             URL::forceScheme('https');
 

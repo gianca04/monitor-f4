@@ -125,8 +125,9 @@ class DashboardPanelProvider extends PanelProvider
             ->brandLogo(asset('images/logo.svg'))
             ->brandLogoHeight('2rem')
             ->favicon(asset('images/favicon.svg'))
+            ->broadcasting(false) // Desactiva WebSockets/Broadcasting en el panel
             ->databaseNotifications()
-            ->databaseNotificationsPolling(null) // Desactivado: usa Reverb para tiempo real. Evita flood de POST /livewire/update
+            ->databaseNotificationsPolling(null)
         ;
     }
 }

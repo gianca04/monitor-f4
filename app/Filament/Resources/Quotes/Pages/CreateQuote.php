@@ -47,8 +47,9 @@ class CreateQuote extends CreateRecord
         $this->priceTypes = PriceType::select('id', 'name')->orderBy('id')->get();
 
         $projectId = request()->query('project_id');
+        $this->projectId = $projectId ? (int) $projectId : null;
         $this->project = $projectId ? Project::find($projectId) : null;
-        $this->subClientId = request()->query('sub_client_id');
+        $this->subClientId = request()->query('sub_client_id') ? (int) request()->query('sub_client_id') : null;
         $this->serviceCode = request()->query('service_code');
         $this->quoteType = request()->query('quote_type', 'Correctivo');
 
