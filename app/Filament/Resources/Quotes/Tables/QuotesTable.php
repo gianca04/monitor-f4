@@ -253,10 +253,7 @@ class QuotesTable
                         ->icon('heroicon-m-trash')
                         ->color('danger'),
                 ])
-                    ->icon('heroicon-m-cog-6-tooth')
-                    ->button()
-                    ->label('Opciones')
-                    ->color('gray'),
+                ,
             ])
             ->bulkActions([
                 BulkActionGroup::make([

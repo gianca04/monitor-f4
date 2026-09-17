@@ -58,6 +58,8 @@ return [
         'string' => 'El campo :attribute debe tener al menos :min caracteres.',
         'array' => 'El campo :attribute debe tener al menos :min elementos.',
     ],
+    'mimes' => 'El campo :attribute debe ser un archivo de tipo: :values.',
+    'mimetypes' => 'El campo :attribute debe ser un archivo de tipo: :values.',
     'numeric' => 'El campo :attribute debe ser un número.',
     'present' => 'El campo :attribute debe estar presente.',
     'required' => 'El campo :attribute es obligatorio.',

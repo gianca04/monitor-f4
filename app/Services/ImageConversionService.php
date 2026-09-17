@@ -26,8 +26,7 @@ class ImageConversionService
                 return null;
             }
 
-            $fullPath = Storage::disk($disk)->path($path);
-            $extension = strtolower(pathinfo($fullPath, PATHINFO_EXTENSION));
+            $extension = strtolower(pathinfo($path, PATHINFO_EXTENSION));
 
             // If already WebP, no conversion needed
             if ($extension === 'webp') {
@@ -41,48 +40,53 @@ class ImageConversionService
                 return $path; // Return original path for unsupported formats
             }
 
+            // Read the image content safely across any disk (Local, S3)
+            $fileContent = Storage::disk($disk)->get($path);
+            
+            // Create a temporary file to safely handle EXIF and ImageManager across disks
+            $tempDir = storage_path('app/temp');
+            if (!file_exists($tempDir)) {
+                mkdir($tempDir, 0755, true);
+            }
+            $tempFilePath = $tempDir . '/' . uniqid('img_') . '.' . $extension;
+            file_put_contents($tempFilePath, $fileContent);
+
             // Create image manager instance
             $manager = new ImageManager(new Driver());
-
-            // Read the image
-            $image = $manager->read($fullPath);
+            $image = $manager->read($tempFilePath);
 
             // Fix EXIF orientation for JPEG images
             if ($extension === 'jpg' || $extension === 'jpeg') {
                 if (function_exists('exif_read_data')) {
-                    $exif = @exif_read_data($fullPath);
+                    $exif = @exif_read_data($tempFilePath);
                     if ($exif && isset($exif['Orientation'])) {
                         $orientation = $exif['Orientation'];
-
-                        // Rotate based on EXIF orientation
                         switch ($orientation) {
-                            case 3:
-                                $image->rotate(180);
-                                break;
-                            case 6:
-                                $image->rotate(-90);
-                                break;
-                            case 8:
-                                $image->rotate(90);
-                                break;
+                            case 3: $image->rotate(180); break;
+                            case 6: $image->rotate(-90); break;
+                            case 8: $image->rotate(90); break;
                         }
                     }
                 }
             }
 
-            // Generate new WebP path
-            $pathInfo = pathinfo($path);
-            $newPath = $pathInfo['dirname'] . '/' . $pathInfo['filename'] . '.webp';
-            $newFullPath = Storage::disk($disk)->path($newPath);
-
             // Encode to WebP
             $encoded = $image->toWebp($quality);
 
-            // Save the WebP image
-            $encoded->save($newFullPath);
+            // Generate new WebP path
+            $pathInfo = pathinfo($path);
+            // Si $pathInfo['dirname'] es '.', entonces no agregar barra
+            $dir = ($pathInfo['dirname'] === '.') ? '' : $pathInfo['dirname'] . '/';
+            $newPath = $dir . $pathInfo['filename'] . '.webp';
+
+            // Upload the WebP image to the original disk
+            Storage::disk($disk)->put($newPath, (string) $encoded);
 
             // Delete original file after successful conversion
             Storage::disk($disk)->delete($path);
+            
+            // Clean up temp file
+            @unlink($tempFilePath);
 
             Log::info("ImageConversionService: Successfully converted {$path} to {$newPath}");
 

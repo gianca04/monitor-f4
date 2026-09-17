@@ -28,12 +28,14 @@ class VisitPhoto extends Model
         parent::boot();
 
         static::saved(function ($visitPhoto) {
-            // Convert photo_path to WebP if exists
-            if ($visitPhoto->photo_path) {
-                $convertedPath = ImageConversionService::convertToWebP($visitPhoto->photo_path);
-                if ($convertedPath && $convertedPath !== $visitPhoto->photo_path) {
-                    $visitPhoto->updateQuietly(['photo_path' => $convertedPath]);
-                }
+            // Convert photo_path to WebP in background
+            if ($visitPhoto->photo_path && !str_ends_with(strtolower($visitPhoto->photo_path), '.webp')) {
+                \App\Jobs\ConvertImageToWebPJob::dispatch(
+                    $visitPhoto, 
+                    'photo_path', 
+                    config('filesystems.default'), 
+                    auth()->id()
+                );
             }
         });
     }

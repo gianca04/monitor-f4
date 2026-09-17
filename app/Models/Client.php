@@ -28,13 +28,14 @@ class Client extends Model
         parent::boot();
 
         static::saved(function ($client) {
-            // Convert logo to WebP if exists
-            if ($client->logo) {
-                $convertedPath = \App\Services\ImageConversionService::convertToWebP($client->logo);
-                if ($convertedPath && $convertedPath !== $client->logo) {
-                    // Update without triggering another save event
-                    $client->updateQuietly(['logo' => $convertedPath]);
-                }
+            // Convert logo to WebP in background
+            if ($client->logo && !str_ends_with(strtolower($client->logo), '.webp')) {
+                \App\Jobs\ConvertImageToWebPJob::dispatch(
+                    $client, 
+                    'logo', 
+                    config('filesystems.default'), 
+                    auth()->id()
+                );
             }
         });
     }

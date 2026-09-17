@@ -28,22 +28,24 @@ class Photo extends Model
         parent::boot();
 
         static::saved(function ($photo) {
-            // Convert photo_path to WebP if exists
-            if ($photo->photo_path) {
-                $convertedPath = ImageConversionService::convertToWebP($photo->photo_path);
-                if ($convertedPath && $convertedPath !== $photo->photo_path) {
-                    // Update without triggering another save event
-                    $photo->updateQuietly(['photo_path' => $convertedPath]);
-                }
+            // Convert photo_path to WebP in background
+            if ($photo->photo_path && !str_ends_with(strtolower($photo->photo_path), '.webp')) {
+                \App\Jobs\ConvertImageToWebPJob::dispatch(
+                    $photo, 
+                    'photo_path', 
+                    config('filesystems.default'), 
+                    auth()->id()
+                );
             }
 
-            // Convert before_work_photo_path to WebP if exists
-            if ($photo->before_work_photo_path) {
-                $convertedPath = ImageConversionService::convertToWebP($photo->before_work_photo_path);
-                if ($convertedPath && $convertedPath !== $photo->before_work_photo_path) {
-                    // Update without triggering another save event
-                    $photo->updateQuietly(['before_work_photo_path' => $convertedPath]);
-                }
+            // Convert before_work_photo_path to WebP in background
+            if ($photo->before_work_photo_path && !str_ends_with(strtolower($photo->before_work_photo_path), '.webp')) {
+                \App\Jobs\ConvertImageToWebPJob::dispatch(
+                    $photo, 
+                    'before_work_photo_path', 
+                    config('filesystems.default'), 
+                    auth()->id()
+                );
             }
         });
     }
