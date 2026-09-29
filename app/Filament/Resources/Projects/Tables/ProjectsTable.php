@@ -26,68 +26,112 @@ class ProjectsTable
             ->columns([
                 TextColumn::make('service_code')
                     ->label('Correlativo')
-                    ->alignJustify()
                     ->badge()
                     ->searchable()
                     ->extraAttributes(['class' => 'font-bold'])
-                    ->sortable(),
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: false),
+
+                TextColumn::make('requested_at')
+                    ->label('Fecha de solicitud')
+                    ->placeholder('No definido')
+                    ->dateTime('d/m/Y H:i')
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: false),
 
                 TextColumn::make('name')
-                    ->label('Nombre del Proyecto')
+                    ->label('Descripción')
                     ->searchable()
                     ->alignJustify()
+                    ->wrap()
                     ->extraAttributes(['class' => 'font-bold'])
-                    ->limit(30)
-                    ->tooltip(fn($record) => $record->name)
-                    ->sortable(),
-
-                TextColumn::make('service_type')
-                    ->label('Tipo de Servicio')
-                    ->badge()
-                    ->placeholder('No definido')
-                    ->colors([
-                        'info' => 'Correctivo',
-                        'danger' => 'Emergencia',
-                        'warning' => 'ITSE',
-                        'success' => 'Preventivo',
-                    ])
-                    ->searchable()
-                    ->sortable(),
-
-                TextColumn::make('subClient.client.business_name')
-                    ->label('Cliente')
-                    ->placeholder('No definido')
-                    ->searchable()
-                    ->toggleable(isToggledHiddenByDefault: true)
-                    ->sortable(),
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: false),
 
                 TextColumn::make('subClient.name')
-                    ->label('Tienda')
+                    ->label('Centro de costos')
                     ->placeholder('No definido')
                     ->searchable()
-                    ->sortable(),
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: false),
 
-                TextColumn::make('visit.quotedBy.first_name')
-                    ->label('Cotizador')
+                TextColumn::make('amount')
+                    ->label('Monto')
                     ->placeholder('No definido')
-                    ->formatStateUsing(fn($record) => $record->visit?->quotedBy
-                        ? $record->visit->quotedBy->first_name . ' ' . $record->visit->quotedBy->last_name
-                        : null)
+                    ->prefix('S/ ')
+                    ->numeric(decimalPlaces: 2)
+                    ->sortable(query: function (Builder $query, string $direction): Builder {
+                        return $query->select('projects.*')
+                            ->leftJoin('quotes', function ($join) {
+                                $join->on('quotes.project_id', '=', 'projects.id')
+                                    ->whereRaw('quotes.id = (select max(q2.id) from quotes q2 where q2.project_id = projects.id)');
+                            })
+                            ->orderBy('quotes.amount', $direction);
+                    })
+                    ->toggleable(isToggledHiddenByDefault: false),
+
+                TextColumn::make('supervisor.short_name')
+                    ->label('Sup. Seguimiento')
+                    ->placeholder('No definido')
                     ->searchable(query: function (Builder $query, string $search): Builder {
-                        return $query->whereHas('visit.quotedBy', function (Builder $q) use ($search) {
+                        return $query->whereHas('supervisor', function (Builder $q) use ($search) {
                             $q->where('first_name', 'like', "%{$search}%")
-                                ->orWhere('last_name', 'like', "%{$search}%");
+                                ->orWhere('last_name', 'like', "%{$search}%")
+                                ->orWhere('document_number', 'like', "%{$search}%");
                         });
                     })
-                    ->sortable(query: function (Builder $query, string $direction): Builder {
-                        return $query->join('visits', 'projects.id', '=', 'visits.project_id')
-                            ->join('employees', 'visits.quoted_by_id', '=', 'employees.id')
-                            ->orderBy('employees.first_name', $direction);
+                    ->toggleable(isToggledHiddenByDefault: false),
+
+                TextColumn::make('task_type')
+                    ->label('Tarea')
+                    ->placeholder('No definido')
+                    ->badge()
+                    ->color(fn(?string $state): string => match ($state) {
+                        'OPEX' => 'info',
+                        'CAPEX' => 'warning',
+                        default => 'gray',
                     })
-                    ->toggleable(isToggledHiddenByDefault: true),
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: false),
+
+                IconColumn::make('has_quote')
+                    ->label('Cot')
+                    ->tooltip('Tiene cotización')
+                    ->boolean()
+                    ->getStateUsing(fn($record): bool => $record->has_quote === 'SI')
+                    ->trueIcon('heroicon-o-check-circle')
+                    ->falseIcon('heroicon-o-x-circle')
+                    ->trueColor('success')
+                    ->falseColor('danger')
+                    ->alignCenter()
+                    ->toggleable(isToggledHiddenByDefault: false),
+
+                IconColumn::make('has_report')
+                    ->label('Inf')
+                    ->tooltip('Tiene informe')
+                    ->boolean()
+                    ->getStateUsing(fn($record): bool => $record->has_report === 'SI')
+                    ->trueIcon('heroicon-o-check-circle')
+                    ->falseIcon('heroicon-o-x-circle')
+                    ->trueColor('success')
+                    ->falseColor('danger')
+                    ->alignCenter()
+                    ->toggleable(isToggledHiddenByDefault: false),
+
+                IconColumn::make('has_compliance')
+                    ->label('Ac')
+                    ->tooltip('Tiene acta de conformidad')
+                    ->boolean()
+                    ->getStateUsing(fn($record): bool => $record->hasCompliance())
+                    ->trueIcon('heroicon-o-check-circle')
+                    ->falseIcon('heroicon-o-x-circle')
+                    ->trueColor('success')
+                    ->falseColor('danger')
+                    ->alignCenter()
+                    ->toggleable(isToggledHiddenByDefault: false),
 
                 TextColumn::make('status')
-                    ->label('Estado')
+                    ->label('Estado de invitación')
                     ->placeholder('No definido')
                     ->badge()
                     ->formatStateUsing(fn(?string $state): string => match ($state) {
@@ -103,172 +147,8 @@ class ProjectsTable
                         default => 'gray',
                     })
                     ->searchable()
-                    ->sortable(),
-
-                TextColumn::make('emergency_response_time_hrs')
-                    ->label('Rsta. Emerg. Real')
-                    ->suffix(' Hrs')
-                    ->placeholder('-')
-                    ->toggleable(isToggledHiddenByDefault: true),
-
-                IconColumn::make('is_emergency_response_compliant')
-                    ->label('EE Respuesta')
-                    ->boolean()
-                    ->toggleable(isToggledHiddenByDefault: true),
-
-                TextColumn::make('emergency_attendance_time_hrs')
-                    ->label('Ate. Emerg. Real')
-                    ->suffix(' Hrs')
-                    ->placeholder('-')
-                    ->toggleable(isToggledHiddenByDefault: true),
-
-                IconColumn::make('is_emergency_attendance_compliant')
-                    ->label('EE Atendida')
-                    ->boolean()
-                    ->toggleable(isToggledHiddenByDefault: true),
-
-                TextColumn::make('corrective_quote_upload_time_hrs')
-                    ->label('Carga Cot. Real')
-                    ->suffix(' Hrs')
-                    ->placeholder('-')
-                    ->toggleable(isToggledHiddenByDefault: true),
-
-                IconColumn::make('is_quote_upload_compliant')
-                    ->label('Cumpl. Carga Cot.')
-                    ->boolean()
-                    ->toggleable(isToggledHiddenByDefault: true),
-
-                TextColumn::make('corrective_execution_time_hrs')
-                    ->label('Ejec. Correctivo Real')
-                    ->suffix(' Hrs')
-                    ->placeholder('-')
-                    ->toggleable(isToggledHiddenByDefault: true),
-
-                IconColumn::make('is_corrective_execution_compliant')
-                    ->label('Cumpl. Correctivo')
-                    ->boolean()
-                    ->toggleable(isToggledHiddenByDefault: true),
-
-                TextColumn::make('service_start_date')
-                    ->label('Fecha Inicio')
-                    ->placeholder('No definido')
-                    ->date('d/m/Y')
-                    ->toggleable(isToggledHiddenByDefault: true)
-                    ->sortable(),
-
-                TextColumn::make('request_number')
-                    ->label('N° de Solicitud (ST)')
-                    ->placeholder('No definido')
-                    ->toggleable(isToggledHiddenByDefault: true)
-                    ->sortable(),
-
-                TextColumn::make('service_end_date')
-                    ->label('Fecha Fin')
-                    ->placeholder('No definido')
-                    ->date('d/m/Y')
-                    ->toggleable(isToggledHiddenByDefault: true)
-                    ->sortable(),
-
-                TextColumn::make('work_order_number')
-                    ->label('N° de Orden de Trabajo')
-                    ->placeholder('No definido')
-                    ->toggleable(isToggledHiddenByDefault: true)
-                    ->searchable(),
-
-                TextColumn::make('fracttal_status')
-                    ->label('Estado Fracttal')
-                    ->placeholder('No definido')
-                    ->toggleable(isToggledHiddenByDefault: true)
                     ->sortable()
-                    ->badge()
-                    ->color(fn(?string $state): string => match ($state) {
-                        'Sin OT' => 'gray',
-                        'En Proceso' => 'warning',
-                        'En Revisión' => 'info',
-                        'Finalizado' => 'success',
-                        'Cancelada' => 'danger',
-                    }),
-
-                TextColumn::make('purchase_order')
-                    ->label('OC')
-                    ->placeholder('No definido')
-                    ->toggleable(isToggledHiddenByDefault: true)
-                    ->sortable(),
-
-                TextColumn::make('migo_code')
-                    ->label('MIGO')
-                    ->placeholder('No definido')
-                    ->toggleable(isToggledHiddenByDefault: true)
-                    ->sortable(),
-
-                // Columnas adicionales del modelo
-                TextColumn::make('service_days')
-                    ->label('Días de Servicio')
-                    ->placeholder('No definido')
-                    ->suffix(' días')
-                    ->numeric()
-                    ->toggleable(isToggledHiddenByDefault: true)
-                    ->sortable(),
-
-                TextColumn::make('task_type')
-                    ->label('Tipo de Tarea')
-                    ->placeholder('No definido')
-                    ->badge()
-                    ->color(fn(?string $state): string => match ($state) {
-                        'OPEX' => 'info',
-                        'CAPEX' => 'warning',
-                        default => 'gray',
-                    })
-                    ->toggleable(isToggledHiddenByDefault: true)
-                    ->sortable(),
-
-                TextColumn::make('quote_sent_at')
-                    ->label('Cotización Enviada')
-                    ->placeholder('No definido')
-                    ->dateTime('d/m/Y H:i')
-                    ->toggleable(isToggledHiddenByDefault: true)
-                    ->sortable(),
-
-                TextColumn::make('quote_approved_at')
-                    ->label('Cotización Aprobada')
-                    ->placeholder('No definido')
-                    ->dateTime('d/m/Y H:i')
-                    ->toggleable(isToggledHiddenByDefault: true)
-                    ->sortable(),
-
-                TextColumn::make('wo_review_at')
-                    ->label('OT en Revisión')
-                    ->placeholder('No definido')
-                    ->dateTime('d/m/Y H:i')
-                    ->toggleable(isToggledHiddenByDefault: true)
-                    ->sortable(),
-
-                TextColumn::make('wo_completed_at')
-                    ->label('OT Finalizado')
-                    ->placeholder('No definido')
-                    ->dateTime('d/m/Y H:i')
-                    ->toggleable(isToggledHiddenByDefault: true)
-                    ->sortable(),
-
-                TextColumn::make('days_to_completion')
-                    ->label('Días hasta Finalización')
-                    ->placeholder('No definido')
-                    ->suffix(' días')
-                    ->numeric()
-                    ->toggleable(isToggledHiddenByDefault: true)
-                    ->sortable(),
-
-                TextColumn::make('created_at')
-                    ->label('Creado')
-                    ->dateTime('d/m/Y H:i')
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
-
-                TextColumn::make('updated_at')
-                    ->label('Actualizado')
-                    ->dateTime('d/m/Y H:i')
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
+                    ->toggleable(isToggledHiddenByDefault: false),
             ])
             ->filtersFormColumns(3)
             ->columnToggleFormColumns(3)
@@ -437,9 +317,6 @@ class ProjectsTable
                         ->openUrlInNewTab(),
 
                 ])
-                    ->icon('heroicon-m-cog-6-tooth')
-                    ->button()
-                    ->label('Opciones')
                     ->color('gray')
             ])
             ->bulkActions([

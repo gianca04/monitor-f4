@@ -26,6 +26,7 @@ use Filament\Schemas\Components\Tabs;
 use Filament\Schemas\Components\Tabs\Tab;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Schema;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
 use Mpdf\Tag\A;
 use Filament\Schemas\Components\Utilities\Set;
@@ -46,6 +47,7 @@ class ProjectForm
                                             ->label('Descripción de la solicitud')
                                             ->required()
                                             ->columnSpan(2),
+
                                         TextInput::make('service_code')
                                             ->label('Codigo de Servicio')
                                             ->default('COT-' . (Project::max('id') + 1))
@@ -53,533 +55,334 @@ class ProjectForm
                                             ->disabled()
                                             ->dehydrated()
                                             ->columnSpan(1),
-                                    ]),
-                                Hidden::make('employee_id')
-                                    ->default(fn() => Auth::user()?->employee_id),
 
-                                Grid::make(4)
-                                    ->schema([
+                                        Hidden::make('employee_id')
+                                            ->default(fn() => Auth::user()?->employee_id),
+
                                         TextInput::make('request_number')
                                             ->label('N° de Solicitud (ST)')
-                                            ->columnSpan(2)
+                                            ->columnSpan(1)
                                             ->maxLength(255),
-                                        DatePicker::make('requested_at')
-                                            ->label('Fecha de Solicitud')
-                                            ->columnSpan(2)
+
+                                        Grid::make(2)->schema([
+                                            Select::make('client_id')
+                                                ->required()
+                                                ->columnSpan(1)
+                                                ->prefixIcon('heroicon-m-briefcase')
+                                                ->label('Compañia') // Título para el campo 'Cliente'
+                                                ->preload()
+                                                ->searchable() // Activa la búsqueda asincrónica
+                                                ->options(
+                                                    Client::whereIn('id', [127, 164])
+                                                        ->get()
+                                                        ->mapWithKeys(fn($client) => [
+                                                            $client->id => "{$client->business_name} - {$client->document_number}"
+                                                        ])
+                                                )
+                                                ->getOptionLabelUsing(fn($value): ?string => Client::find($value)?->business_name)
+                                                ->reactive() // Hace el campo reactivo
+                                                ->afterStateUpdated(fn($state, callable $set) => $set('sub_client_id', null))
+                                                ->helperText('Selecciona el cliente para esta cotización.')
+
+                                                // Botón para ver información del cliente
+                                                ->suffixAction(
+                                                    Action::make('view_client')
+                                                        ->icon('heroicon-o-eye')
+                                                        ->tooltip('Ver información del cliente')
+                                                        ->color('info')
+                                                        ->action(function (callable $get) {
+                                                            $clientId = $get('client_id');
+                                                            if (!$clientId) {
+                                                                Notification::make()
+                                                                    ->title('Selecciona un cliente primero')
+                                                                    ->warning()
+                                                                    ->send();
+                                                                return;
+                                                            }
+                                                        })
+                                                        ->modalContent(function (callable $get) {
+                                                            $clientId = $get('client_id');
+                                                            if (!$clientId)
+                                                                return null;
+
+                                                            $client = Client::with('subClients')->find($clientId);
+                                                            if (!$client)
+                                                                return null;
+
+                                                            return view('filament.components.client-info-modal', compact('client'));
+                                                        })
+                                                        ->modalHeading('Información del Cliente')
+                                                        ->modalSubmitAction(false)
+                                                        ->modalCancelActionLabel('Cerrar')
+                                                        ->modalWidth('2xl')
+                                                        ->visible(fn(callable $get) => !empty($get('client_id')))
+                                                )
+
+                                                ->createOptionForm([
+                                                    ClientMainInfo::make()
+                                                ])
+
+                                                ->createOptionUsing(function (array $data): int {
+                                                    $client = Client::create($data);
+                                                    return $client->id;
+                                                })
+                                                ->createOptionAction(function (Action $action) {
+                                                    return $action
+                                                        ->modalHeading('Crear nuevo cliente')
+                                                        ->modalButton('Crear cliente')
+                                                        ->modalWidth('6xl');
+                                                })
+
+                                                ->afterStateUpdated(function (callable $get, callable $set) {
+                                                    $clientId = $get('client_id');
+                                                    if ($clientId) {
+                                                        // Cargar toda la información del cliente en una sola consulta
+                                                        $client = Client::find($clientId);
+                                                        if ($client) {
+                                                            // Actualizar los campos de 'business_name' y 'document_number' solo si hay un cliente
+                                                            $set('business_name', $client->business_name);
+                                                            $set('document_type_client', $client->document_type);
+                                                            $set('document_number_client', $client->document_number);
+                                                            $set('contact_phone', $client->contact_phone);
+                                                            $set('contact_email', $client->contact_email);
+                                                        }
+                                                    } else {
+                                                        // Limpiar los campos si no hay cliente seleccionado
+                                                        $set('business_name', null);
+                                                        $set('document_number', null);
+                                                    }
+                                                }),
+
+                                            Select::make('sub_client_id')
+                                                ->prefixIcon('heroicon-m-home-modern')
+                                                ->label('Centro de costos') // Título para el campo 'Tienda'
+                                                ->required()
+                                                ->columnSpan(1)
+                                                ->options(
+                                                    function (callable $get) {
+                                                        $clientId = $get('client_id');
+                                                        return SubClient::where('client_id', $clientId)
+                                                            ->get()
+                                                            ->mapWithKeys(function ($subClient) {
+                                                                return [$subClient->id => $subClient->name];
+                                                            })
+                                                            ->toArray();
+                                                    }
+                                                )
+                                                ->reactive()
+                                                ->searchable()
+                                                ->disabled(fn($get) => !$get('client_id')) // Deshabilita si no hay cliente seleccionado
+                                                ->helperText('Selecciona el Sede para esta cotización.') // Ayuda para el campo 'Tienda'
+
+                                                // Cuando se carga un registro existente, seleccionar automáticamente el cliente
+                                                ->afterStateHydrated(function ($state, callable $set) {
+                                                    if ($state) {
+                                                        $subClient = SubClient::find($state);
+                                                        if ($subClient) {
+                                                            $set('client_id', $subClient->client_id);
+                                                        }
+                                                    }
+                                                })
+
+                                                // Botón para ver información de la tienda
+                                                ->suffixAction(
+                                                    Action::make('view_sub_client')
+                                                        ->icon('heroicon-o-eye')
+                                                        ->tooltip('Ver información de la tienda')
+                                                        ->color('info')
+                                                        ->action(function (callable $get) {
+                                                            $subClientId = $get('sub_client_id');
+                                                            if (!$subClientId) {
+                                                                Notification::make()
+                                                                    ->title('Selecciona una tienda primero')
+                                                                    ->warning()
+                                                                    ->send();
+                                                                return;
+                                                            }
+                                                        })
+                                                        ->modalContent(function (callable $get) {
+                                                            $subClientId = $get('sub_client_id');
+                                                            if (!$subClientId)
+                                                                return null;
+
+                                                            $subClient = SubClient::with('client')->find($subClientId);
+                                                            if (!$subClient)
+                                                                return null;
+
+                                                            return view('filament.components.sub-client-info-modal', compact('subClient'));
+                                                        })
+                                                        ->modalHeading('Información de la Sede')
+                                                        ->modalSubmitAction(false)
+                                                        ->modalCancelActionLabel('Cerrar')
+                                                        ->modalWidth('2xl')
+                                                        ->visible(fn(callable $get) => !empty($get('sub_client_id')))
+                                                )
+
+                                                ->createOptionForm([
+                                                    TextInput::make('name')
+                                                        ->label('Nombre del subcliente')
+                                                        ->required()
+                                                        ->maxLength(255)
+                                                        ->prefixIcon('heroicon-o-user'),
+
+                                                    TextInput::make('address')
+                                                        ->label('Dirección')
+                                                        ->columnSpanFull()
+                                                        ->placeholder('Dirección del subcliente')
+                                                        ->maxLength(255)
+                                                        ->prefixIcon('heroicon-o-map-pin'),
+
+                                                    Textarea::make('description')
+                                                        ->label('Descripción')
+                                                        ->maxLength(500)
+                                                        ->autosize()
+                                                        ->columnSpanFull(),
+                                                ])
+                                                ->createOptionUsing(function (array $data, callable $get): int {
+                                                    $data['client_id'] = $get('client_id');
+                                                    $subClient = SubClient::create($data);
+                                                    return $subClient->id;
+                                                })
+                                                ->createOptionAction(function (Action $action) {
+                                                    return $action
+                                                        ->modalHeading('Crear nueva tienda')
+                                                        ->modalButton('Crear tienda')
+                                                        ->modalWidth('2xl');
+                                                })
+                                                ->afterStateUpdated(function (callable $get, callable $set) {
+                                                    $subClientId = $get('sub_client_id');
+                                                    if ($subClientId) {
+                                                        // Cargar toda la información del Sede en una sola consulta
+                                                        $subClient = SubClient::find($subClientId);
+                                                        if ($subClient) {
+                                                        }
+                                                    } else {
+                                                        // Limpiar los campos si no hay Sede seleccionado
+                                                        $set('name', null);
+                                                        $set('location', null);
+                                                    }
+                                                }),
+                                        ])->columnSpan(4),
+
+                                    ])
+                                    ->columnSpanFull(),
+
+                                Grid::make(3)
+                                    ->schema([
+                                        DateTimePicker::make('requested_at')
+                                            ->label('Fecha y Hora de Invitación')
+                                            ->columnSpan(1)
                                             ->default(now()),
 
+                                        DateTimePicker::make('invitation_responded_at')
+                                            ->label('Fecha y Hora de Respuesta de Invitación')
+                                            ->columnSpan(1),
+
                                         Select::make('service_type')
-                                            ->label('Tipo de Servicio')
-                                            ->columnSpan(4)
+                                            ->label('Tipo de atención')
+                                            ->columnSpan(1)
                                             ->options([
                                                 'Correctivo' => 'Correctivo',
                                                 'Emergencia' => 'Emergencia',
                                                 'ITSE' => 'ITSE',
                                                 'Preventivo' => 'Preventivo',
                                             ])
-                                            ->placeholder('Seleccionar tipo de servicio')
+                                            ->placeholder('Seleccionar tipo de atención')
                                             ->searchable()
                                             ->preload()
                                             ->prefixIcon('heroicon-m-wrench-screwdriver'),
 
-                                        Select::make('client_id')
-                                            ->required()
-                                            ->columnSpan(2)
-                                            ->prefixIcon('heroicon-m-briefcase')
-                                            ->label('Cliente') // Título para el campo 'Cliente'
-                                            ->preload()
-                                            ->searchable() // Activa la búsqueda asincrónica
-                                            ->options(
-                                                Client::whereIn('id', [127, 164])
-                                                    ->get()
-                                                    ->mapWithKeys(fn($client) => [
-                                                        $client->id => "{$client->business_name} - {$client->document_number}"
-                                                    ])
-                                            )
-                                            ->getOptionLabelUsing(fn($value): ?string => Client::find($value)?->business_name)
-                                            ->reactive() // Hace el campo reactivo
-                                            ->afterStateUpdated(fn($state, callable $set) => $set('sub_client_id', null))
-                                            ->helperText('Selecciona el cliente para esta cotización.')
+                                    ])
+                                    ->columnSpanFull(),
 
-                                            // Botón para ver información del cliente
-                                            ->suffixAction(
-                                                Action::make('view_client')
-                                                    ->icon('heroicon-o-eye')
-                                                    ->tooltip('Ver información del cliente')
-                                                    ->color('info')
-                                                    ->action(function (callable $get) {
-                                                        $clientId = $get('client_id');
-                                                        if (!$clientId) {
-                                                            Notification::make()
-                                                                ->title('Selecciona un cliente primero')
-                                                                ->warning()
-                                                                ->send();
-                                                            return;
-                                                        }
-                                                    })
-                                                    ->modalContent(function (callable $get) {
-                                                        $clientId = $get('client_id');
-                                                        if (!$clientId)
-                                                            return null;
-
-                                                        $client = Client::with('subClients')->find($clientId);
-                                                        if (!$client)
-                                                            return null;
-
-                                                        return view('filament.components.client-info-modal', compact('client'));
-                                                    })
-                                                    ->modalHeading('Información del Cliente')
-                                                    ->modalSubmitAction(false)
-                                                    ->modalCancelActionLabel('Cerrar')
-                                                    ->modalWidth('2xl')
-                                                    ->visible(fn(callable $get) => !empty($get('client_id')))
-                                            )
-
-                                            ->createOptionForm([
-                                                ClientMainInfo::make()
+                                Grid::make(2)
+                                    ->schema([
+                                        Select::make('status')
+                                            ->label('Estado de invitación')
+                                            ->options([
+                                                'Pendiente' => 'Pendiente',
+                                                'Enviado' => 'Enviado',
+                                                'Aprobado' => 'Aprobado',
+                                                'En Ejecución' => 'En Ejecución',
+                                                'Completado' => 'Completado',
+                                                'Facturado' => 'Facturado',
+                                                'Anulado' => 'Anulado',
                                             ])
+                                            ->default('Pendiente'),
 
-                                            ->createOptionUsing(function (array $data): int {
-                                                $client = Client::create($data);
-                                                return $client->id;
-                                            })
-                                            ->createOptionAction(function (Action $action) {
-                                                return $action
-                                                    ->modalHeading('Crear nuevo cliente')
-                                                    ->modalButton('Crear cliente')
-                                                    ->modalWidth('6xl');
-                                            })
-
-                                            ->afterStateUpdated(function (callable $get, callable $set) {
-                                                $clientId = $get('client_id');
-                                                if ($clientId) {
-                                                    // Cargar toda la información del cliente en una sola consulta
-                                                    $client = Client::find($clientId);
-                                                    if ($client) {
-                                                        // Actualizar los campos de 'business_name' y 'document_number' solo si hay un cliente
-                                                        $set('business_name', $client->business_name);
-                                                        $set('document_type_client', $client->document_type);
-                                                        $set('document_number_client', $client->document_number);
-                                                        $set('contact_phone', $client->contact_phone);
-                                                        $set('contact_email', $client->contact_email);
-                                                    }
-                                                } else {
-                                                    // Limpiar los campos si no hay cliente seleccionado
-                                                    $set('business_name', null);
-                                                    $set('document_number', null);
-                                                }
-                                            }),
-
-                                        Select::make('sub_client_id')
-                                            ->columnSpan(2)
-                                            ->prefixIcon('heroicon-m-home-modern')
-                                            ->label('Tienda') // Título para el campo 'Tienda'
-                                            ->required()
-                                            ->options(
-                                                function (callable $get) {
-                                                    $clientId = $get('client_id');
-                                                    return SubClient::where('client_id', $clientId)
-                                                        ->get()
-                                                        ->mapWithKeys(function ($subClient) {
-                                                            return [$subClient->id => $subClient->name];
-                                                        })
-                                                        ->toArray();
-                                                }
-                                            )
-                                            ->reactive()
-                                            ->searchable()
-                                            ->disabled(fn($get) => !$get('client_id')) // Deshabilita si no hay cliente seleccionado
-                                            ->helperText('Selecciona el Sede para esta cotización.') // Ayuda para el campo 'Tienda'
-
-                                            // Cuando se carga un registro existente, seleccionar automáticamente el cliente
-                                            ->afterStateHydrated(function ($state, callable $set) {
-                                                if ($state) {
-                                                    $subClient = SubClient::find($state);
-                                                    if ($subClient) {
-                                                        $set('client_id', $subClient->client_id);
-                                                    }
-                                                }
-                                            })
-
-                                            // Botón para ver información de la tienda
-                                            ->suffixAction(
-                                                Action::make('view_sub_client')
-                                                    ->icon('heroicon-o-eye')
-                                                    ->tooltip('Ver información de la tienda')
-                                                    ->color('info')
-                                                    ->action(function (callable $get) {
-                                                        $subClientId = $get('sub_client_id');
-                                                        if (!$subClientId) {
-                                                            Notification::make()
-                                                                ->title('Selecciona una tienda primero')
-                                                                ->warning()
-                                                                ->send();
-                                                            return;
-                                                        }
-                                                    })
-                                                    ->modalContent(function (callable $get) {
-                                                        $subClientId = $get('sub_client_id');
-                                                        if (!$subClientId)
-                                                            return null;
-
-                                                        $subClient = SubClient::with('client')->find($subClientId);
-                                                        if (!$subClient)
-                                                            return null;
-
-                                                        return view('filament.components.sub-client-info-modal', compact('subClient'));
-                                                    })
-                                                    ->modalHeading('Información de la Sede')
-                                                    ->modalSubmitAction(false)
-                                                    ->modalCancelActionLabel('Cerrar')
-                                                    ->modalWidth('2xl')
-                                                    ->visible(fn(callable $get) => !empty($get('sub_client_id')))
-                                            )
-
-                                            ->createOptionForm([
-                                                TextInput::make('name')
-                                                    ->label('Nombre del subcliente')
-                                                    ->required()
-                                                    ->maxLength(255)
-                                                    ->prefixIcon('heroicon-o-user'),
-
-                                                TextInput::make('address')
-                                                    ->label('Dirección')
-                                                    ->columnSpanFull()
-                                                    ->placeholder('Dirección del subcliente')
-                                                    ->maxLength(255)
-                                                    ->prefixIcon('heroicon-o-map-pin'),
-
-                                                Textarea::make('description')
-                                                    ->label('Descripción')
-                                                    ->maxLength(500)
-                                                    ->autosize()
-                                                    ->columnSpanFull(),
+                                        Select::make('fracttal_status')
+                                            ->label('Estado en Fracttal')
+                                            ->native(false)
+                                            ->options([
+                                                'Sin OT' => 'Sin OT',
+                                                'En Proceso' => 'En Proceso',
+                                                'En Revisión' => 'En Revisión',
+                                                'Finalizado' => 'Finalizado',
+                                                'Cancelada' => 'Cancelada',
+                                                'Resuelta | Sin OT' => 'Resuelta | Sin OT',
                                             ])
-                                            ->createOptionUsing(function (array $data, callable $get): int {
-                                                $data['client_id'] = $get('client_id');
-                                                $subClient = SubClient::create($data);
-                                                return $subClient->id;
-                                            })
-                                            ->createOptionAction(function (Action $action) {
-                                                return $action
-                                                    ->modalHeading('Crear nueva tienda')
-                                                    ->modalButton('Crear tienda')
-                                                    ->modalWidth('2xl');
-                                            })
-                                            ->afterStateUpdated(function (callable $get, callable $set) {
-                                                $subClientId = $get('sub_client_id');
-                                                if ($subClientId) {
-                                                    // Cargar toda la información del Sede en una sola consulta
-                                                    $subClient = SubClient::find($subClientId);
-                                                    if ($subClient) {
-                                                    }
-                                                } else {
-                                                    // Limpiar los campos si no hay Sede seleccionado
-                                                    $set('name', null);
-                                                    $set('location', null);
-                                                }
-                                            }),
+                                            ->default('Sin OT'),
 
-                                    ]),
+                                        Textarea::make('comment')
+                                            ->label('Comentario')
+                                            ->rows(3)
+                                            ->columnSpanFull(),
+                                    ])
+                                    ->columnSpanFull(),
 
-                                Textarea::make('comment')
-                                    ->label('Comentario')
-                                    ->rows(3),
+
                             ]),
 
                         Tabs\Tab::make('Datos de la Visita')
                             ->schema([
-                                // ACA COLOCAREMOS SOLAMENTE  A Supervisor de seguimiento.
-                                // ACA COLOCAREMOS SOLAMENTE  A Supervisor de seguimiento.
-                                Select::make('supervisor_id')
-                                    ->placeholder('Seleccionar un supervisor') // Placeholder
-                                    ->label('Supervisor de seguimiento')
-                                    ->prefixIcon('heroicon-m-user')
-                                    ->options(
-                                        function (callable $get) {
-                                            return Employee::query()
-                                                ->select('id', 'first_name', 'last_name', 'document_number')
-                                                // Filtrar solo empleados con rol 'supervisor'
-                                                ->whereHas('user.roles', function ($query) {
-                                                    $query->where('name', 'Supervisor');
-                                                })
-                                                ->when($get('search'), function ($query, $search) {
-                                                    $query->where('first_name', 'like', "%{$search}%")
-                                                        ->orWhere('last_name', 'like', "%{$search}%")
-                                                        ->orWhere('document_number', 'like', "%{$search}%");
-                                                })
-                                                ->get()
-                                                ->mapWithKeys(function ($employee) {
-                                                    return [$employee->id => $employee->full_name];
-                                                })
-                                                ->toArray();
-                                        }
-                                    )
-                                    ->searchable()
-                                    ->helperText('Solo el personal con el rol de "Supervisor" podra ser seleccionado.'),
-                                Repeater::make('inspectors')
-                                    ->relationship()
-                                    ->label('Inspectores asignados')
-                                    ->minItems(1)
-                                    ->schema([
-                                        Select::make('employee_id')
-                                            //->default(fn() => Auth::user()?->employee_id)->required()
-                                            ->columns(2)
-                                            ->reactive()
-                                            ->prefixIcon('heroicon-m-user')
-                                            ->label('Inspector de la visita') // Título para el campo 'Empleado'
-                                            ->options(
-                                                function (callable $get) {
-                                                    return Employee::query()
-                                                        ->select('id', 'first_name', 'last_name', 'document_number')
-                                                        // Filtrar solo empleados con rol 'supervisor'
-                                                        ->whereHas('user.roles', function ($query) {
-                                                            $query->where('name', 'Inspector');
-                                                        })
-                                                        ->when($get('search'), function ($query, $search) {
-                                                            $query->where('first_name', 'like', "%{$search}%")
-                                                                ->orWhere('last_name', 'like', "%{$search}%")
-                                                                ->orWhere('document_number', 'like', "%{$search}%");
-                                                        })
-                                                        ->get()
-                                                        ->mapWithKeys(function ($employee) {
-                                                            return [$employee->id => $employee->full_name];
-                                                        })
-                                                        ->toArray();
-                                                }
-                                            )
-                                            ->createOptionForm([
-                                                Section::make('Nuevo Empleado')
-                                                    ->description('Datos básicos del empleado')
-                                                    ->schema([
-                                                        TextInput::make('first_name')
-                                                            ->label('Nombres')
-                                                            ->required()
-                                                            ->maxLength(255),
-                                                        TextInput::make('last_name')
-                                                            ->label('Apellidos')
-                                                            ->required()
-                                                            ->maxLength(255),
-                                                        Select::make('document_type')
-                                                            ->label('Tipo de documento')
-                                                            ->options([
-                                                                'DNI' => 'DNI',
-                                                                'PASAPORTE' => 'Pasaporte',
-                                                                'CARNET DE EXTRANJERIA' => 'Carné de Extranjería',
-                                                            ])
-                                                            ->default('DNI'),
-                                                        TextInput::make('document_number')
-                                                            ->label('Número de documento')
-                                                            ->required()
-                                                            ->maxLength(20),
-                                                        Select::make('position_id')
-                                                            ->label('Cargo')
-                                                            ->options(fn() => Position::orderBy('name')->pluck('name', 'id'))
-                                                            ->searchable()
-                                                            ->preload(),
-                                                    ])
-                                                    ->columns(2),
-                                            ])
-                                            ->createOptionUsing(function (array $data): int {
-                                                $data['active'] = true;
-                                                $employee = Employee::create($data);
-                                                return $employee->id;
-                                            })
-                                            ->createOptionAction(function (Action $action) {
-                                                return $action
-                                                    ->modalHeading('Crear nuevo empleado')
-                                                    ->modalButton('Crear empleado')
-                                                    ->modalWidth('2xl');
-                                            })
-                                            ->searchable() // Activa la búsqueda asincrónica
-                                            ->placeholder('Seleccionar un empleado') // Placeholder
-                                            ->helperText('Solo el personal con el rol de "Inspector" podra ser seleccionado.') // Ayuda para el campo de empleado
-
-                                            // Botón para ver información del empleado
-                                            ->suffixAction(
-                                                Action::make('view_employee')
-                                                    ->icon('heroicon-o-eye')
-                                                    ->tooltip('Ver información del supervisor')
-                                                    ->color('info')
-                                                    ->action(function (callable $get) {
-                                                        $employeeId = $get('employee_id');
-                                                        if (!$employeeId) {
-                                                            Notification::make()
-                                                                ->title('Selecciona un supervisor primero')
-                                                                ->warning()
-                                                                ->send();
-                                                            return;
-                                                        }
+                                Grid::make(2)->schema([
+                                    // ACA COLOCAREMOS SOLAMENTE  A Supervisor de seguimiento.
+                                    Select::make('supervisor_id')
+                                        ->placeholder('Seleccionar un supervisor') // Placeholder
+                                        ->label('Supervisor de seguimiento')
+                                        ->prefixIcon('heroicon-m-user')
+                                        ->options(
+                                            function (callable $get) {
+                                                return Employee::query()
+                                                    ->select('id', 'first_name', 'last_name', 'document_number')
+                                                    // Filtrar solo empleados con rol 'supervisor'
+                                                    ->whereHas('user.roles', function ($query) {
+                                                        $query->where('name', 'Supervisor');
                                                     })
-                                                    ->modalContent(function (callable $get) {
-                                                        $employeeId = $get('employee_id');
-                                                        if (!$employeeId)
-                                                            return null;
-
-                                                        $employee = Employee::with('user')->find($employeeId);
-                                                        if (!$employee)
-                                                            return null;
-
-                                                        return view('filament.components.employee-info-modal', compact('employee'));
+                                                    ->when($get('search'), function ($query, $search) {
+                                                        $query->where('first_name', 'like', "%{$search}%")
+                                                            ->orWhere('last_name', 'like', "%{$search}%")
+                                                            ->orWhere('document_number', 'like', "%{$search}%");
                                                     })
-                                                    ->modalHeading('Información del Supervisor')
-                                                    ->modalSubmitAction(false)
-                                                    ->modalCancelActionLabel('Cerrar')
-                                                    ->modalWidth('2xl')
-                                                    ->visible(fn(callable $get) => !empty($get('employee_id')))
-                                            )
-                                            ->afterStateHydrated(function (callable $get, callable $set) {
-                                                $employeeId = $get('employee_id');
-                                                if ($employeeId) {
-                                                    $employee = Employee::with('user')->find($employeeId);
-                                                    if ($employee) {
-                                                        $set('document_type', $employee->document_type);
-                                                        $set('document_number', $employee->document_number);
-                                                        $set('address', $employee->address);
-                                                        $set('date_contract', $employee->date_contract);
-                                                        $set('user_email', $employee->user?->email);
-                                                        $set('user_is_active', $employee->user?->is_active ? 'Activo' : 'Inactivo');
-                                                    } else {
-                                                        $set('user_email', null);
-                                                        $set('user_is_active', null);
-                                                    }
-                                                }
-                                            }),
-                                    ])
-                                    ->createItemButtonLabel('Agregar Empleado')
-                                    ->columnSpanFull(),
+                                                    ->get()
+                                                    ->mapWithKeys(function ($employee) {
+                                                        return [$employee->id => $employee->full_name];
+                                                    })
+                                                    ->toArray();
+                                            }
+                                        )
+                                        ->searchable()
+                                        ->helperText('Solo el personal con el rol de "Supervisor" podra ser seleccionado.'),
+                                    Select::make('inspectors')
+                                        ->label('Inspectores asignados')
+                                        ->multiple()
+                                        ->relationship(
+                                            name: 'inspectors',
+                                            titleAttribute: 'first_name',
+                                            modifyQueryUsing: fn(Builder $query) => $query->whereHas('user.roles', fn($q) => $q->where('name', 'Inspector'))
+                                        )
+                                        ->getOptionLabelFromRecordUsing(fn(Employee $record) => $record->full_name)
+                                        ->preload()
+                                        ->searchable()
+                                        ->prefixIcon('heroicon-m-user')
+                                        ->placeholder('Seleccionar inspectores')
+                                        ->helperText('Solo el personal con el rol de "Inspector" podrá ser seleccionado.'),
+                                ]),
 
                                 Group::make()
                                     ->relationship('visit')
                                     ->schema([
-                                        // INICIO DE SELECT DE EMPLEADO
-                                        Select::make('quoted_by_id')
-                                            //->default(fn() => Auth::user()?->employee_id)->required()
-                                            ->columns(2)
-                                            ->reactive()
-                                            ->prefixIcon('heroicon-m-user')
-                                            ->label('Cotizador') // Título para el campo 'Empleado'
-                                            ->options(
-                                                function (callable $get) {
-                                                    return Employee::query()
-                                                        ->select('id', 'first_name', 'last_name', 'document_number')
-                                                        // Filtrar solo empleados con rol 'cotizador'
-                                                        ->whereHas('user.roles', function ($query) {
-                                                            $query->where('name', 'cotizador');
-                                                        })
-                                                        ->when($get('search'), function ($query, $search) {
-                                                            $query->where('first_name', 'like', "%{$search}%")
-                                                                ->orWhere('last_name', 'like', "%{$search}%")
-                                                                ->orWhere('document_number', 'like', "%{$search}%");
-                                                        })
-                                                        ->get()
-                                                        ->mapWithKeys(function ($employee) {
-                                                            return [$employee->id => $employee->full_name];
-                                                        })
-                                                        ->toArray();
-                                                }
-                                            )
-                                            ->getOptionLabelUsing(fn($value): ?string => Employee::find($value)?->full_name)
-                                            ->searchable() // Activa la búsqueda asincrónica
-                                            ->placeholder('Seleccionar un empleado') // Placeholder
-                                            ->helperText('Solo el personal con el rol de "Cotizador" podra ser seleccionado.') // Ayuda para el campo de empleado
 
-                                            ->createOptionForm([
-                                                Section::make('Nuevo Empleado')
-                                                    ->description('Datos básicos del empleado')
-                                                    ->schema([
-                                                        TextInput::make('first_name')
-                                                            ->label('Nombres')
-                                                            ->required()
-                                                            ->maxLength(255),
-                                                        TextInput::make('last_name')
-                                                            ->label('Apellidos')
-                                                            ->required()
-                                                            ->maxLength(255),
-                                                        Select::make('document_type')
-                                                            ->label('Tipo de documento')
-                                                            ->options([
-                                                                'DNI' => 'DNI',
-                                                                'PASAPORTE' => 'Pasaporte',
-                                                                'CARNET DE EXTRANJERIA' => 'Carné de Extranjería',
-                                                            ])
-                                                            ->default('DNI'),
-                                                        TextInput::make('document_number')
-                                                            ->label('Número de documento')
-                                                            ->required()
-                                                            ->maxLength(20),
-                                                        Select::make('position_id')
-                                                            ->label('Cargo')
-                                                            ->options(fn() => Position::orderBy('name')->pluck('name', 'id'))
-                                                            ->searchable()
-                                                            ->preload(),
-                                                    ])
-                                                    ->columns(2),
-                                            ])
-                                            ->createOptionUsing(function (array $data): int {
-                                                $data['active'] = true;
-                                                $employee = Employee::create($data);
-                                                return $employee->id;
-                                            })
-                                            ->createOptionAction(function (Action $action) {
-                                                return $action
-                                                    ->modalHeading('Crear nuevo empleado')
-                                                    ->modalButton('Crear empleado')
-                                                    ->modalWidth('2xl');
-                                            })
-
-                                            // Botón para ver información del empleado
-                                            ->suffixAction(
-                                                Action::make('view_employee')
-                                                    ->icon('heroicon-o-eye')
-                                                    ->tooltip('Ver información del supervisor')
-                                                    ->color('info')
-                                                    ->action(function (callable $get) {
-                                                        $employeeId = $get('employee_id');
-                                                        if (!$employeeId) {
-                                                            Notification::make()
-                                                                ->title('Selecciona un supervisor primero')
-                                                                ->warning()
-                                                                ->send();
-                                                            return;
-                                                        }
-                                                    })
-                                                    ->modalContent(function (callable $get) {
-                                                        $employeeId = $get('employee_id');
-                                                        if (!$employeeId)
-                                                            return null;
-
-                                                        $employee = Employee::with('user')->find($employeeId);
-                                                        if (!$employee)
-                                                            return null;
-
-                                                        return view('filament.components.employee-info-modal', compact('employee'));
-                                                    })
-                                                    ->modalHeading('Información del Supervisor')
-                                                    ->modalSubmitAction(false)
-                                                    ->modalCancelActionLabel('Cerrar')
-                                                    ->modalWidth('2xl')
-                                                    ->visible(fn(callable $get) => !empty($get('employee_id')))
-                                            )
-                                            ->afterStateHydrated(function (callable $get, callable $set) {
-                                                $employeeId = $get('employee_id');
-                                                if ($employeeId) {
-                                                    $employee = Employee::with('user')->find($employeeId);
-                                                    if ($employee) {
-                                                        $set('document_type', $employee->document_type);
-                                                        $set('document_number', $employee->document_number);
-                                                        $set('address', $employee->address);
-                                                        $set('date_contract', $employee->date_contract);
-                                                        $set('user_email', $employee->user?->email);
-                                                        $set('user_is_active', $employee->user?->is_active ? 'Activo' : 'Inactivo');
-                                                    } else {
-                                                        $set('user_email', null);
-                                                        $set('user_is_active', null);
-                                                    }
-                                                }
-                                            }),
-
-                                        // FIN DE SELECT DE EMPLEADO COTIZADOR
 
                                         Grid::make(3)
                                             ->columnSpanFull()
@@ -598,31 +401,6 @@ class ProjectForm
                                                     ->displayFormat('H:i'),
 
                                             ]),
-                                        TextInput::make('amount')
-                                            ->numeric()
-                                            ->prefix('S/ ')
-                                            ->label('Monto del Proyecto')
-                                            ->readOnly()
-                                            ->visibleOn('edit')
-                                            ->formatStateUsing(function ($state, $livewire) {
-                                                if ($state)
-                                                    return $state;
-
-                                                $project = null;
-                                                // Filament v3 access to record might vary, but usually getRecord works on pages.
-                                                // Safer to check if method exists.
-                                                if (method_exists($livewire, 'getRecord')) {
-                                                    $project = $livewire->getRecord();
-                                                }
-
-                                                if (!$project instanceof Project)
-                                                    return null;
-
-                                                // Use the latestQuote relationship and the scopeWithTotal
-                                                $quote = $project->latestQuote()->withTotal()->first();
-
-                                                return $quote ? $quote->total_cost : null;
-                                            }),
 
                                         Textarea::make('description')
                                             ->label('Comentarios de la visita')
@@ -630,55 +408,192 @@ class ProjectForm
                                     ]),
                             ]),
 
-                        Tabs\Tab::make('Datos del Servicio')
+                        Tabs\Tab::make('Datos de la cotización')
+
                             ->schema([
-                                TextInput::make('work_order_number')
-                                    ->label('N° de Orden de Trabajo')
-                                    ->maxLength(255),
+                                // INICIO DE SELECT DE EMPLEADO
 
-                                Grid::make(3)->schema([
+                                // TODO_ AQUI SOLO QUEDARA: COTIZADOR, MONTO Y FECHA DE ENVIO.
 
-                                    // 1. FECHA INICIO
-                                    DatePicker::make('service_start_date')
-                                        ->label('Fecha de inicio del servicio')
-                                        ->live() // ⚡ IMPORTANTE: Escucha cambios
-                                        ->afterStateUpdated(function (Get $get, Set $set) {
-                                            // Recalcular cuando cambia la fecha de inicio
-                                            $start = $get('service_start_date');
-                                            $end = $get('service_end_date');
+                                Select::make('quoted_by_id')
+                                    //->default(fn() => Auth::user()?->employee_id)->required()
+                                    ->reactive()
+                                    ->prefixIcon('heroicon-m-user')
+                                    ->label('Cotizador') // Título para el campo 'Empleado'
+                                    ->options(
+                                        function (callable $get) {
+                                            return Employee::query()
+                                                ->select('id', 'first_name', 'last_name', 'document_number')
+                                                // Filtrar solo empleados con rol 'cotizador'
+                                                ->whereHas('user.roles', function ($query) {
+                                                    $query->where('name', 'cotizador');
+                                                })
+                                                ->when($get('search'), function ($query, $search) {
+                                                    $query->where('first_name', 'like', "%{$search}%")
+                                                        ->orWhere('last_name', 'like', "%{$search}%")
+                                                        ->orWhere('document_number', 'like', "%{$search}%");
+                                                })
+                                                ->get()
+                                                ->mapWithKeys(function ($employee) {
+                                                    return [$employee->id => $employee->full_name];
+                                                })
+                                                ->toArray();
+                                        }
+                                    )
+                                    ->getOptionLabelUsing(fn($value): ?string => Employee::find($value)?->full_name)
+                                    ->searchable() // Activa la búsqueda asincrónica
+                                    ->placeholder('Seleccionar un empleado') // Placeholder
+                                    ->helperText('Solo el personal con el rol de "Cotizador" podra ser seleccionado.') // Ayuda para el campo de empleado
 
-                                            if ($start && $end) {
-                                                $startDate = Carbon::parse($start);
-                                                $endDate = Carbon::parse($end);
+                                    ->createOptionForm([
+                                        Section::make('Nuevo Empleado')
+                                            ->description('Datos básicos del empleado')
+                                            ->schema([
+                                                TextInput::make('first_name')
+                                                    ->label('Nombres')
+                                                    ->required()
+                                                    ->maxLength(255),
+                                                TextInput::make('last_name')
+                                                    ->label('Apellidos')
+                                                    ->required()
+                                                    ->maxLength(255),
+                                                Select::make('document_type')
+                                                    ->label('Tipo de documento')
+                                                    ->options([
+                                                        'DNI' => 'DNI',
+                                                        'PASAPORTE' => 'Pasaporte',
+                                                        'CARNET DE EXTRANJERIA' => 'Carné de Extranjería',
+                                                    ])
+                                                    ->default('DNI'),
+                                                TextInput::make('document_number')
+                                                    ->label('Número de documento')
+                                                    ->required()
+                                                    ->maxLength(20),
+                                                Select::make('position_id')
+                                                    ->label('Cargo')
+                                                    ->options(fn() => Position::orderBy('name')->pluck('name', 'id'))
+                                                    ->searchable()
+                                                    ->preload(),
+                                            ])
+                                            ->columns(2),
+                                    ])
+                                    ->createOptionUsing(function (array $data): int {
+                                        $data['active'] = true;
+                                        $employee = Employee::create($data);
+                                        return $employee->id;
+                                    })
+                                    ->createOptionAction(function (Action $action) {
+                                        return $action
+                                            ->modalHeading('Crear nuevo empleado')
+                                            ->modalButton('Crear empleado')
+                                            ->modalWidth('2xl');
+                                    })
 
-                                                // Evitar negativos
-                                                if ($endDate->lt($startDate)) {
-                                                    $set('service_days', 0);
+                                    // Botón para ver información del empleado
+                                    ->suffixAction(
+                                        Action::make('view_employee')
+                                            ->icon('heroicon-o-eye')
+                                            ->tooltip('Ver información del supervisor')
+                                            ->color('info')
+                                            ->action(function (callable $get) {
+                                                $employeeId = $get('employee_id');
+                                                if (!$employeeId) {
+                                                    Notification::make()
+                                                        ->title('Selecciona un supervisor primero')
+                                                        ->warning()
+                                                        ->send();
                                                     return;
                                                 }
+                                            })
+                                            ->modalContent(function (callable $get) {
+                                                $employeeId = $get('employee_id');
+                                                if (!$employeeId)
+                                                    return null;
 
-                                                // diffInDays + 1 para incluir el día de inicio como trabajado
-                                                $set('service_days', $startDate->diffInDays($endDate) + 1);
+                                                $employee = Employee::with('user')->find($employeeId);
+                                                if (!$employee)
+                                                    return null;
+
+                                                return view('filament.components.employee-info-modal', compact('employee'));
+                                            })
+                                            ->modalHeading('Información del Supervisor')
+                                            ->modalSubmitAction(false)
+                                            ->modalCancelActionLabel('Cerrar')
+                                            ->modalWidth('2xl')
+                                            ->visible(fn(callable $get) => !empty($get('employee_id')))
+                                    )
+                                    ->afterStateHydrated(function (callable $get, callable $set) {
+                                        $employeeId = $get('employee_id');
+                                        if ($employeeId) {
+                                            $employee = Employee::with('user')->find($employeeId);
+                                            if ($employee) {
+                                                $set('document_type', $employee->document_type);
+                                                $set('document_number', $employee->document_number);
+                                                $set('address', $employee->address);
+                                                $set('date_contract', $employee->date_contract);
+                                                $set('user_email', $employee->user?->email);
+                                                $set('user_is_active', $employee->user?->is_active ? 'Activo' : 'Inactivo');
+                                            } else {
+                                                $set('user_email', null);
+                                                $set('user_is_active', null);
                                             }
+                                        }
+                                    }),
+
+
+                                Grid::make(2)->schema([
+
+                                    TextInput::make('amount')
+                                        ->numeric()
+                                        ->prefix('S/ ')
+                                        ->label('Monto del Proyecto')
+                                        ->readOnly()
+                                        ->visibleOn('edit')
+                                        ->formatStateUsing(function ($state, $livewire) {
+                                            if ($state)
+                                                return $state;
+
+                                            $project = null;
+                                            // Filament v3 access to record might vary, but usually getRecord works on pages.
+                                            // Safer to check if method exists.
+                                            if (method_exists($livewire, 'getRecord')) {
+                                                $project = $livewire->getRecord();
+                                            }
+
+                                            if (!$project instanceof Project)
+                                                return null;
+
+                                            // Use the latestQuote relationship and the scopeWithTotal
+                                            $quote = $project->latestQuote()->withTotal()->first();
+
+                                            return $quote ? $quote->total_cost : null;
                                         }),
 
-                                    // 2. FECHA FIN
-                                    DatePicker::make('service_end_date')
-                                        ->label('Fecha de fin del servicio')
-                                        ->live()
-                                        ->afterStateUpdated(fn(Get $get, Set $set) => self::calculateDays($get, $set)),
-                                    // 3. DÍAS (AUTOMÁTICO)
-                                    TextInput::make('service_days')
-                                        ->label('Días de servicio')
-                                        ->numeric()
-                                        ->readOnly() // Bloqueado para que el usuario no lo rompa
-                                        ->dehydrated() // Asegura que se envíe a la BD aunque sea ReadOnly
-                                        ->suffix('días'),
+
+                                    // 1. FECHA INICIO
+                                    DateTimePicker::make('quote_sent_at')
+                                        ->label('Fecha Cotización Enviada'),
+
                                 ]),
 
                                 Grid::make(2)
                                     ->columnSpanFull()
                                     ->schema([
+
+
+                                    ]),
+
+                            ]),
+
+                        Tabs\Tab::make('Seguimiento')
+                            ->schema([
+                                Grid::make(4)
+                                    ->columnSpanFull()
+                                    ->schema([
+                                        TextInput::make('work_order_number')
+                                            ->label('N° de Orden de Trabajo (OT)')
+                                            ->maxLength(255),
+
                                         Select::make('task_type')
                                             ->label('Tipo de tarea')
                                             ->options([
@@ -686,6 +601,17 @@ class ProjectForm
                                                 'CAPEX' => 'CAPEX',
                                             ]),
 
+                                        TextInput::make('purchase_order')
+                                            ->label('Orden de Compra (OC)')
+                                            ->maxLength(255),
+
+                                        TextInput::make('migo_code')
+                                            ->label('MIGO')
+                                            ->maxLength(255),
+                                    ]),
+                                Grid::make(3)
+                                    ->columnSpanFull()
+                                    ->schema([
                                         TextInput::make('has_quote')
                                             ->label('¿Tiene cotización?')
                                             ->disabled()
@@ -737,90 +663,66 @@ class ProjectForm
                                                     ->color('success')
                                                     ->url(
                                                         fn(?Project $record) => $record?->compliance
-                                                        ? url("/actas/{$record->compliance->id}/preview")
-                                                        : null
+                                                            ? url("/actas/{$record->compliance->id}/preview")
+                                                            : null
                                                     )
                                                     ->openUrlInNewTab()
                                                     ->visible(fn(?Project $record) => $record?->compliance !== null)
                                             ),
                                     ]),
-
-                            ]),
-
-                        Tabs\Tab::make('Datos de Facturación')
-                            ->schema([
                                 Grid::make(3)
-                                    ->columnSpanFull()
                                     ->schema([
-                                        Select::make('fracttal_status')
-                                            ->label('Estado en Fracttal')
-                                            ->native(false)
-                                            ->options([
-                                                'Sin OT' => 'Sin OT',
-                                                'En Proceso' => 'En Proceso',
-                                                'En Revisión' => 'En Revisión',
-                                                'Finalizado' => 'Finalizado',
-                                                'Cancelada' => 'Cancelada',
-                                            ])
-                                            ->default('Sin OT'),
-
-                                        TextInput::make('purchase_order')
-                                            ->label('Orden de Compra (OC)')
-                                            ->maxLength(255),
-
-                                        TextInput::make('migo_code')
-                                            ->label('MIGO')
-                                            ->maxLength(255),
+                                        DateTimePicker::make('service_start_date')
+                                            ->label('Fecha de inicio del servicio')
+                                            ->live()
+                                            ->afterStateUpdated(fn(Get $get, Set $set) => self::calculateDays($get, $set)),
+                                        // 2. FECHA FIN
+                                        DateTimePicker::make('service_end_date')
+                                            ->label('Fecha de fin del servicio')
+                                            ->live()
+                                            ->afterStateUpdated(fn(Get $get, Set $set) => self::calculateDays($get, $set)),
+                                        // 3. DÍAS (AUTOMÁTICO)
+                                        TextInput::make('service_days')
+                                            ->label('Días de servicio')
+                                            ->numeric()
+                                            ->readOnly() // Bloqueado para que el usuario no lo rompa
+                                            ->dehydrated() // Asegura que se envíe a la BD aunque sea ReadOnly
+                                            ->suffix('días'),
                                     ]),
-                            ]),
-
-                        Tabs\Tab::make('Seguimiento')
-                            ->columns(3)
-                            ->schema([
-                                Select::make('status')
-                                    ->label('Estado del servicio')
-                                    ->options([
-                                        'Pendiente' => 'Pendiente',
-                                        'Enviado' => 'Enviado',
-                                        'Aprobado' => 'Aprobado',
-                                        'En Ejecución' => 'En Ejecución',
-                                        'Completado' => 'Completado',
-                                        'Facturado' => 'Facturado',
-                                        'Anulado' => 'Anulado',
-                                    ])
-                                    ->default('Pendiente'),
-
-
-                                DatePicker::make('quote_sent_at')
-                                    ->label('Fecha Cotización Enviada'),
-
-                                DatePicker::make('quote_approved_at')
-                                    ->label('Fecha Cotización Aprobada'),
-
-                                DatePicker::make('wo_review_at')
-                                    ->label('Fecha OT en Revisión')
-                                    ->live(),
-
-                                DatePicker::make('wo_completed_at')
-                                    ->label('Fecha OT Finalizado')
-                                    ->live() // Importante para que el cambio sea instantáneo
-                                    ->afterStateUpdated(fn(Get $get, Set $set) => self::calculateDays($get, $set)),
-
-                                TextInput::make('days_to_completion')
-                                    ->label('Días desde OT Finalizado')
-                                    ->readOnly()
-                                    ->numeric()
-                                    ->dehydrated(),
-
+                                Grid::make(3)
+                                    ->schema([
+                                        DatePicker::make('quote_approved_at')
+                                            ->label('Fecha Cotización Aprobada'),
+                                        DatePicker::make('wo_review_at')
+                                            ->label('Fecha OT en Revisión')
+                                            ->live(),
+                                        DatePicker::make('wo_completed_at')
+                                            ->label('Fecha OT Finalizado')
+                                            ->live() // Importante para que el cambio sea instantáneo
+                                            ->afterStateUpdated(fn(Get $get, Set $set) => self::calculateDays($get, $set)),
+                                        /*TextInput::make('days_to_completion')
+                                            ->label('Días desde OT Finalizado')
+                                            ->readOnly()
+                                            ->numeric()
+                                            ->dehydrated(),
+                                            */
+                                    ]),
                                 Textarea::make('final_comments')
                                     ->label('Comentarios Finales')
                                     ->maxLength(255)
                                     ->columnSpanFull()
                                     ->rows(2),
+                            ]),
+
+                        Tabs\Tab::make('KPI')
+                            ->schema([
 
                                 Grid::make(4)
                                     ->columnSpanFull()
                                     ->schema([
+
+
+
                                         TextInput::make('emergency_response_time_hrs')
                                             ->label('Rsta. Emergencia Real (Hrs)')
                                             ->numeric()
@@ -888,7 +790,6 @@ class ProjectForm
             $completedDate = Carbon::parse($completedAt);
 
             // diffInDays devuelve el valor absoluto, si quieres permitir negativos quita el 'true'
-            // o usa un cálculo manual según tu necesidad de negocio
             $diff = $endDate->diffInDays($completedDate, false);
 
             $set('days_to_completion', (int) $diff);

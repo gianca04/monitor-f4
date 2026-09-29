@@ -14,8 +14,8 @@ return new class extends Migration
         Schema::table('projects', function (Blueprint $table) {
             // 2. SERVICE DATA (EXECUTION)
             $table->string('work_order_number')->nullable()->after('comment')->comment('OT / Orden de Trabajo');
-            $table->date('service_start_date')->nullable();
-            $table->date('service_end_date')->nullable();
+            $table->dateTime('service_start_date')->nullable();
+            $table->dateTime('service_end_date')->nullable();
             $table->integer('service_days')->nullable()->comment('Días calculados');
             $table->string('task_type')->nullable()->comment('OPEX / CAPEX');
 

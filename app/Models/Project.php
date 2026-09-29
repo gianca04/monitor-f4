@@ -28,7 +28,8 @@ class Project extends Model
         'service_code',     // Código de Servicio Correlativo
         'request_number',   // N° de Solicitud (ST)
         'service_type',     // Tipo de Servicio: Correctivo, Emergencia, ITSE, Preventivo
-        'service_start_date',       // Fecha solicitud
+        'requested_at',     // Fecha y hora de invitación
+        'invitation_responded_at', // Fecha y hora de respuesta de invitación
         'sub_client_id',    // Cliente (ID)
         'location',         // Tienda (JSON)
         'comment',          // Comentario
@@ -70,6 +71,8 @@ class Project extends Model
 
     protected $casts = [
         // 1. DATOS GENERALES
+        'requested_at' => 'datetime',
+        'invitation_responded_at' => 'datetime',
         'start_date' => 'date',
         'end_date' => 'date',
         'latitude' => 'decimal:7',
@@ -78,8 +81,8 @@ class Project extends Model
         'sub_client_id' => 'integer',
 
         // 2. SERVICE (EXECUTION)
-        'service_start_date' => 'date',
-        'service_end_date' => 'date',
+        'service_start_date' => 'datetime',
+        'service_end_date' => 'datetime',
         'service_days' => 'integer',
         'has_quote' => 'string',
         'has_report' => 'string',
@@ -170,9 +173,45 @@ class Project extends Model
         return $this->corrective_execution_time_hrs <= $target;
     }
 
+    /**
+     * Re-calcula los días de servicio (service_days) y días hasta la finalización de OT (days_to_completion).
+     */
+    public function calculateDays(): void
+    {
+        // 1. Cálculo de días de servicio
+        if ($this->service_start_date && $this->service_end_date) {
+            $startDate = \Carbon\Carbon::parse($this->service_start_date);
+            $endDate = \Carbon\Carbon::parse($this->service_end_date);
+
+            if ($endDate->lt($startDate)) {
+                $this->service_end_date = null;
+                $this->service_days = 0;
+            } else {
+                $this->service_days = $startDate->diffInDays($endDate) + 1;
+            }
+        } else {
+            $this->service_days = 0;
+        }
+
+        // 2. Cálculo de días hasta finalización de OT
+        if ($this->service_end_date && $this->wo_completed_at) {
+            $endDate = \Carbon\Carbon::parse($this->service_end_date);
+            $completedDate = \Carbon\Carbon::parse($this->wo_completed_at);
+
+            $diff = $endDate->diffInDays($completedDate, false);
+            $this->days_to_completion = (int) $diff;
+        } else {
+            $this->days_to_completion = null;
+        }
+    }
+
     protected static function boot()
     {
         parent::boot();
+
+        static::saving(function (Project $project) {
+            $project->calculateDays();
+        });
 
         static::created(function (Project $project) {
             // Verificar si no existe ninguna cotización asociada a este proyecto
@@ -328,9 +367,20 @@ class Project extends Model
 
     public function inspectors()
     {
-        // Esto apunta al modelo intermedio EmployeeProject
-        return $this->hasMany(EmployeeProject::class, 'project_id');
+        return $this->belongsToMany(Employee::class, 'employee_project')
+            ->withTimestamps();
     }
+
+    /**
+     * Obtiene el monto total de la última cotización asociada al proyecto.
+     */
+    public function getAmountAttribute(): ?float
+    {
+        $quote = $this->latestQuote()->withTotal()->first();
+
+        return $quote ? (float) $quote->total_cost : null;
+    }
+
 
     // Relación BelongsTo para el supervisor único
     public function supervisor()
@@ -353,9 +403,22 @@ class Project extends Model
         return 'NO';
     }
 
+    /**
+     * Valida la existencia de un registro de acta de conformidad asociado.
+     * Devuelve true si existe, o false en caso de no existir.
+     */
+    public function hasCompliance(): bool
+    {
+        if ($this->relationLoaded('compliance')) {
+            return $this->compliance !== null;
+        }
+
+        return $this->compliance()->exists();
+    }
+
     public function getHasComplianceAttribute(): bool
     {
-        return $this->compliance()->exists();
+        return $this->hasCompliance();
     }
 
 
