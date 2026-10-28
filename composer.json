@@ -9,7 +9,7 @@
     ],
     "license": "MIT",
     "require": {
-        "php": "^8.2",
+        "php": "^8.2.35"
         "ext-gd": "*",
         "ext-pdo_mysql": "*",
         "ext-redis": "*",
